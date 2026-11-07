@@ -209,7 +209,7 @@ export function Composer({
 						type="submit"
 						data-testid="next-problem-button"
 						aria-label={t.chat.composer.nextProblem}
-						className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-green-600 px-4 font-ui text-xs font-medium uppercase tracking-wide text-white transition-colors hover:bg-green-500"
+						className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-success-solid px-4 font-ui text-xs font-medium uppercase tracking-wide text-white transition-colors hover:bg-success-solid-hover"
 					>
 						{t.chat.composer.nextProblem}
 						<ArrowRightIcon className="size-4 rtl:-scale-x-100" />

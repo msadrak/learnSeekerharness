@@ -21,6 +21,12 @@ import {
 } from "../src/core/settings-resolution.ts";
 import { BACKGROUND_MODEL_ROLES, type UserSettings } from "../src/core/settings.ts";
 
+
+describe("appearance.mode resolution", () => {
+	it("resolves mode \"system\" through unchanged", () => {
+		assert.equal(resolveSettings({ version: 1, appearance: { mode: "system" } } as UserSettings).appearance.mode, "system");
+	});
+});
 describe("resolveSettings", () => {
 	it("null record (first boot): non-model knobs land on factory defaults; every model view is EMPTY", () => {
 		const eff = resolveSettings(null);

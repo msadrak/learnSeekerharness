@@ -123,7 +123,7 @@ export function NotesImportControl({ importing, onImportFiles }: { importing: bo
 
 export function NotesImportErrors({ errors }: { errors: readonly string[] }) {
 	return <>{errors.map((error, i) => (
-		<p key={i} role="alert" dir={textDirection(error)} className="max-w-full whitespace-pre-wrap break-words text-xs text-red-400">{error}</p>
+		<p key={i} role="alert" dir={textDirection(error)} className="max-w-full whitespace-pre-wrap break-words text-xs text-danger">{error}</p>
 	))}</>;
 }
 export function NotesImportNotices({ notices }: { notices: readonly string[] }) {

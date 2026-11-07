@@ -77,6 +77,7 @@ import { DeleteNodeDialog } from "@/components/delete-node-dialog.tsx";
 import { ChainTableOverlay } from "@/components/chain-table.tsx";
 import { Hint } from "@/components/ui/hint";
 import { useT } from "@/components/i18n";
+import { useAppearance } from "@/components/settings/appearance";
 import { planCostLabel } from "@/components/usage-format";
 import type { Messages } from "@/lib/i18n/messages";
 import { inputDirection, textDirection } from "@/lib/i18n/direction";
@@ -1286,6 +1287,7 @@ export function GraphView({
 	// away (the empty-graph placeholder replaces it). The callbacks are
 	// created once and read through refs, so they never go stale.
 	const isEmpty = snapshot === null || snapshot.nodes.length === 0;
+	const { scheme } = useAppearance();
 	useEffect(() => {
 		if (isEmpty) return;
 		const canvas = canvasRef.current;
@@ -1417,8 +1419,9 @@ export function GraphView({
 			},
 			// Match the app typography (Geist via the body's stack).
 			fontFamily: getComputedStyle(document.body).fontFamily,
+			scheme,
 		});
-	}, [snapshot, isEmpty]);
+	}, [snapshot, isEmpty, scheme]);
 
 	// Feed #2 — settings: just marks the frame dirty. No rebuild, no
 	// re-layout, no camera touch (the whole point of the new renderer).

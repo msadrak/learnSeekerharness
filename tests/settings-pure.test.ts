@@ -7,7 +7,7 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { appearanceVars, derivedPalette, resolveAppearance, staleVarNames } from "../components/settings/appearance.tsx";
+import { appearanceVars, derivedPalette, resolveAppearance, resolveScheme, staleVarNames } from "../components/settings/appearance.tsx";
 import {
 	PROMPT_IN_USE_HINT,
 	composePromptSwitch,
@@ -72,7 +72,7 @@ describe("derivedPalette — the dark curve keeps today's relationships", () => 
 
 describe("appearanceVars — the mapping the provider applies", () => {
 	it("factory appearance: only the always-applied tokens move", () => {
-		const vars = appearanceVars(resolveAppearance(undefined));
+		const vars = appearanceVars(resolveAppearance(undefined), "dark");
 		assert.equal(vars["--lh-prose-size"], "16px");
 		assert.equal(vars["--lh-heading-weight"], "900");
 		assert.equal(vars["--font-prose"], undefined, "no font override at factory");
@@ -90,6 +90,7 @@ describe("appearanceVars — the mapping the provider applies", () => {
 				sessionNameSerif: false,
 				mdRendering: { headingWeight: 700, boldColor: "#ff0000", italicColor: "#00ff00" },
 			}),
+			"dark",
 		);
 		assert.equal(vars["--background"], "#101820");
 		assert.equal(vars["--card"], "#182028", "raised +8 per channel: 10→18, 18→20, 20→28");
@@ -102,9 +103,25 @@ describe("appearanceVars — the mapping the provider applies", () => {
 	});
 
 	it("sessionNameSerif false alone: titles move, nothing else does", () => {
-		const vars = appearanceVars(resolveAppearance({ sessionNameSerif: false }));
+		const vars = appearanceVars(resolveAppearance({ sessionNameSerif: false }), "dark");
 		assert.equal(vars["--font-title"], "var(--font-prose)");
 		assert.equal(Object.keys(vars).length, 3, "prose-size, heading-weight, font-title only");
+	});
+
+	it("light scheme: the dark-only background derivation is withheld", () => {
+		const vars = appearanceVars(resolveAppearance({ background: "#101820" }), "light");
+		assert.equal(vars["--background"], undefined);
+		assert.equal(vars["--card"], undefined);
+	});
+});
+
+describe("resolveScheme", () => {
+	it("fixed modes pass through; system waits for the OS preference", () => {
+		assert.equal(resolveScheme("dark", true), "dark");
+		assert.equal(resolveScheme("light", false), "light");
+		assert.equal(resolveScheme("system", null), null);
+		assert.equal(resolveScheme("system", true), "light");
+		assert.equal(resolveScheme("system", false), "dark");
 	});
 });
 
@@ -117,9 +134,10 @@ describe("staleVarNames — the removal half of application (owner repro: resets
 				sessionNameSerif: false,
 				mdRendering: { headingWeight: 700, boldColor: "#ff0000", italicColor: "#00ff00" },
 			}),
+			"dark",
 		);
 		const applied = Object.keys(fullDelta);
-		const factory = appearanceVars(resolveAppearance(undefined));
+		const factory = appearanceVars(resolveAppearance(undefined), "dark");
 		const stale = staleVarNames(applied, factory);
 		assert.ok(stale.includes("--background"));
 		assert.ok(stale.includes("--font-prose"));
@@ -131,8 +149,8 @@ describe("staleVarNames — the removal half of application (owner repro: resets
 	});
 
 	it("an empty background commit (null = factory) frees the palette vars", () => {
-		const withBg = appearanceVars(resolveAppearance({ background: "#101010" }));
-		const emptied = appearanceVars(resolveAppearance({ background: null }));
+		const withBg = appearanceVars(resolveAppearance({ background: "#101010" }), "dark");
+		const emptied = appearanceVars(resolveAppearance({ background: null }), "dark");
 		const stale = staleVarNames(Object.keys(withBg), emptied);
 		assert.ok(stale.includes("--background"));
 		assert.ok(stale.includes("--card"), "the derived palette follows the background out");
@@ -140,7 +158,7 @@ describe("staleVarNames — the removal half of application (owner repro: resets
 	});
 
 	it("no previous applications → nothing stale", () => {
-		assert.deepEqual(staleVarNames([], appearanceVars(resolveAppearance(undefined))), []);
+		assert.deepEqual(staleVarNames([], appearanceVars(resolveAppearance(undefined), "dark")), []);
 	});
 });
 

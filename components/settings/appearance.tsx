@@ -19,8 +19,9 @@
  * with the other navigations — mod+, pushes /settings from anywhere.)
  */
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { FACTORY_SETTINGS, type AppearanceSettings } from "@/src/core";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Direction } from "radix-ui";
+import { FACTORY_SETTINGS, type AppearanceMode, type AppearanceSettings } from "@/src/core";
 import { languageDirection } from "@/lib/i18n/direction";
 
 /** The resolved, fully-concrete appearance view (delta + factory merged). */
@@ -73,12 +74,24 @@ export function derivedPalette(background: string): Record<string, string> {
 	};
 }
 
+/** Pure: the concrete scheme a mode implies. "system" is unknown (null)
+ *  until the OS preference has been read on the client. */
+export function resolveScheme(mode: AppearanceMode, prefersLight: boolean | null): "dark" | "light" | null {
+	if (mode !== "system") return mode;
+	if (prefersLight === null) return null;
+	return prefersLight ? "light" : "dark";
+}
+
 /** THE mapping: resolved appearance → the CSS variables to set on <html>.
  *  Absent entries = leave the factory stylesheet value in place. Pure —
  *  exported for tests. */
-export function appearanceVars(a: ReturnType<typeof resolveAppearance>): Record<string, string> {
+export function appearanceVars(
+	a: ReturnType<typeof resolveAppearance>,
+	scheme: "dark" | "light",
+): Record<string, string> {
 	const vars: Record<string, string> = {};
-	if (a.background !== null) Object.assign(vars, derivedPalette(a.background));
+	// The derivation curve is dark-only; light keeps the stylesheet palette.
+	if (a.background !== null && scheme === "dark") Object.assign(vars, derivedPalette(a.background));
 	if (a.fontFamily !== null) {
 		// Vazirmatn before the next/font var: its CLS fallback is Arial,
 		// which would swallow Persian glyphs (see globals.css font stacks).
@@ -114,12 +127,15 @@ export function staleVarNames(
 interface AppearanceContextValue {
 	/** Resolved appearance; factory until the record arrives. */
 	appearance: ReturnType<typeof resolveAppearance>;
+	/** The concrete scheme in effect ("system" resolved; dark until known). */
+	scheme: "dark" | "light";
 	/** Called by the settings page after a successful section PUT. */
 	onAppearanceChange: (delta: AppearanceSettings | undefined) => void;
 }
 
 const AppearanceContext = createContext<AppearanceContextValue>({
 	appearance: resolveAppearance(undefined),
+	scheme: "dark",
 	onAppearanceChange: () => {},
 });
 
@@ -141,7 +157,29 @@ export function AppearanceProvider({
 	const appliedRef = useRef<string>("");
 
 	// The vars apply on every change — stringified as the change signal.
-	const vars = useMemo(() => appearanceVars(resolveAppearance(delta)), [delta]);
+	const mode = resolveAppearance(delta).mode;
+	// OS preference, tracked only in "system" mode. null until the first
+	// client read — the layout's inline script already set <html> then.
+	const [prefersLight, setPrefersLight] = useState<boolean | null>(null);
+	useEffect(() => {
+		if (mode !== "system") return;
+		const mq = window.matchMedia("(prefers-color-scheme: light)");
+		setPrefersLight(mq.matches);
+		const onChange = (e: MediaQueryListEvent) => setPrefersLight(e.matches);
+		mq.addEventListener("change", onChange);
+		return () => mq.removeEventListener("change", onChange);
+	}, [mode]);
+	const resolvedScheme = resolveScheme(mode, prefersLight);
+	// Layout effect: descendants that sample CSS tokens in a passive effect
+	// (graph canvas colours) must see the new scheme's variables.
+	useLayoutEffect(() => {
+		if (resolvedScheme === null) return;
+		const root = document.documentElement;
+		root.classList.toggle("dark", resolvedScheme === "dark");
+		root.classList.toggle("light", resolvedScheme === "light");
+	}, [resolvedScheme]);
+
+	const vars = useMemo(() => appearanceVars(resolveAppearance(delta), resolvedScheme ?? "dark"), [delta, resolvedScheme]);
 	const key = useMemo(() => JSON.stringify(vars), [vars]);
 	// REMOVAL is half the job (owner repro, fix wave): a later write that
 	// OMITS a var (empty field = factory, serif toggle back on) must clear
@@ -198,9 +236,14 @@ export function AppearanceProvider({
 		setDelta(next);
 	}, []);
 
+	const scheme = resolvedScheme ?? "dark";
 	const value = useMemo(
-		() => ({ appearance: resolveAppearance(delta), onAppearanceChange }),
-		[delta, onAppearanceChange],
+		() => ({ appearance: resolveAppearance(delta), scheme, onAppearanceChange }),
+		[delta, scheme, onAppearanceChange],
 	);
-	return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;
+	return (
+		<AppearanceContext.Provider value={value}>
+			<Direction.Provider dir={languageDirection(language)}>{children}</Direction.Provider>
+		</AppearanceContext.Provider>
+	);
 }

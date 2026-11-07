@@ -253,14 +253,14 @@ function KeyTableRow({
 							onClick={() => void onDelete()}
 							disabled={busy}
 							data-testid={`${testid}-delete`}
-							className="shrink-0 text-xs text-muted-foreground/70 underline-offset-2 hover:text-red-500 hover:underline"
+							className="shrink-0 text-xs text-muted-foreground/70 underline-offset-2 hover:text-danger hover:underline"
 						>
 							{t.common.actions.delete}
 						</button>
 					)}
 				</div>
 				{error && (
-					<p role="alert" dir={textDirection(error)} data-testid={`${testid}-error`} className="px-1 text-xs text-red-500">
+					<p role="alert" dir={textDirection(error)} data-testid={`${testid}-error`} className="px-1 text-xs text-danger">
 						{error}
 					</p>
 				)}
@@ -298,7 +298,7 @@ function KeyTableRow({
 				</span>
 			</button>
 			{error && (
-				<p role="alert" dir={textDirection(error)} data-testid={`${testid}-error`} className="ps-6 text-xs text-red-500">
+				<p role="alert" dir={textDirection(error)} data-testid={`${testid}-error`} className="ps-6 text-xs text-danger">
 					{error}
 				</p>
 			)}
@@ -677,7 +677,7 @@ function AddProviderEditor({
 				{t.common.actions.cancel}
 			</button>
 			{error && (
-				<p role="alert" dir={textDirection(error)} className="w-full ps-0 text-xs text-red-500" data-testid={`key-${provider.id}-error`}>
+				<p role="alert" dir={textDirection(error)} className="w-full ps-0 text-xs text-danger" data-testid={`key-${provider.id}-error`}>
 					{error}
 				</p>
 			)}
@@ -965,7 +965,7 @@ function CustomEndpointEditor({
 						onClick={async () => { setBusy(true); const err = await onDelete(revision); if (err) setError(err); setBusy(false); }}
 						disabled={busy || pinsBusy}
 						data-testid="custom-delete"
-						className="shrink-0 text-xs text-muted-foreground/70 underline-offset-2 hover:text-red-500 hover:underline"
+						className="shrink-0 text-xs text-muted-foreground/70 underline-offset-2 hover:text-danger hover:underline"
 					>
 						Disconnect
 					</button>
@@ -1022,7 +1022,7 @@ function CustomEndpointEditor({
 					</div>
 					<div className="flex items-center gap-2">
 						{pinsError && (
-							<p role="alert" data-testid="custom-pins-error" className="text-[11px] text-red-500">
+							<p role="alert" data-testid="custom-pins-error" className="text-[11px] text-danger">
 								{pinsError}
 							</p>
 						)}
@@ -1044,7 +1044,7 @@ function CustomEndpointEditor({
 			</div>
 			{(error || pinsError) && <button type="button" data-testid="custom-reload" onClick={() => void onReload()} className="text-left text-xs underline">Reload configuration</button>}
 			{error && (
-				<p role="alert" data-testid="custom-error" className="text-xs text-red-500">
+				<p role="alert" data-testid="custom-error" className="text-xs text-danger">
 					{error}
 				</p>
 			)}

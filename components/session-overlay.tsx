@@ -5,6 +5,7 @@ import { MaximizeIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fitGraphView, fitZoomFor, zoomedGraphView, type Viewport } from "@/components/pan-zoom";
 import { renderMermaid } from "@/components/mermaid-render";
+import { useAppearance } from "@/components/settings/appearance";
 import { MermaidError } from "@/components/mermaid-error";
 import { Hint } from "@/components/ui/hint";
 import { SvgImage } from "@/components/artifacts/svg-image";
@@ -87,6 +88,7 @@ export function MermaidOverlay({
 }) {
 	const t = useT();
 	const o = t.shell.diagramOverlay;
+	const { scheme } = useAppearance();
 	// ── chart render (own instance, own ids); figure mode uses the raw svg ──
 	const [svg, setSvg] = useState<string | null>(rawSvg ?? null);
 	const [error, setError] = useState<string | null>(null);
@@ -101,7 +103,7 @@ export function MermaidOverlay({
 		let cancelled = false;
 		setSvg(null);
 		setError(null);
-		renderMermaid(chart)
+		renderMermaid(chart, scheme)
 			.then((s) => {
 				if (!cancelled) setSvg(s);
 			})
@@ -111,7 +113,7 @@ export function MermaidOverlay({
 		return () => {
 			cancelled = true;
 		};
-	}, [rawSvg, chart, attempt]);
+	}, [rawSvg, chart, attempt, scheme]);
 
 	// Esc closes — claimed at the document level (THE ONE-ESC LAW, owner
 	// keyboard round 2026-10-06): one Esc, one action; the window chain

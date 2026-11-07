@@ -395,10 +395,14 @@ export function isUiLanguage(value: unknown): value is UiLanguage {
 	return typeof value === "string" && (UI_LANGUAGES as readonly string[]).includes(value);
 }
 
+/** The colour-scheme choice: fixed dark, fixed light, or follow the OS. */
+export const APPEARANCE_MODES = ["dark", "light", "system"] as const;
+export type AppearanceMode = (typeof APPEARANCE_MODES)[number];
+
 /** Appearance settings — mode, colors, type, markdown emphasis. */
 export interface AppearanceSettings {
-	/** "dark" | "light" (default dark). */
-	mode?: "dark" | "light";
+	/** "dark" | "light" | "system" (default dark). */
+	mode?: AppearanceMode;
 	/** The one user-chosen color; everything else derives per-mode in code.
 	 *  null = the mode's default background. */
 	background?: string | null;
@@ -509,7 +513,7 @@ export interface FactorySettings {
 	general: Required<GeneralSettings>;
 	dictation: Required<DictationSettings>;
 	appearance: {
-		mode: "dark" | "light";
+		mode: AppearanceMode;
 		background: string | null;
 		fontFamily: string | null;
 		proseFontSize: number;
@@ -764,7 +768,7 @@ function sanitizeMdRendering(raw: unknown): MdRenderingSettings {
 
 function sanitizeAppearance(raw: Record<string, unknown>): AppearanceSettings {
 	const out: AppearanceSettings = {};
-	if (raw.mode === "dark" || raw.mode === "light") out.mode = raw.mode;
+	if (typeof raw.mode === "string" && (APPEARANCE_MODES as readonly string[]).includes(raw.mode)) out.mode = raw.mode as AppearanceMode;
 	if (raw.background !== undefined) out.background = sanitizeHexOrNull(raw.background);
 	if (raw.fontFamily !== undefined) {
 		out.fontFamily = typeof raw.fontFamily === "string" && raw.fontFamily.trim() ? raw.fontFamily : null;

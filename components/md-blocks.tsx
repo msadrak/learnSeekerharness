@@ -38,6 +38,7 @@ import {
 } from "streamdown";
 import type { ExtraProps } from "streamdown";
 import { MERMAID_FONT_SIZE, renderMermaid } from "@/components/mermaid-render";
+import { useAppearance } from "@/components/settings/appearance";
 import { MermaidError } from "@/components/mermaid-error";
 import { blurAfterPointerClick } from "@/components/focus-hygiene";
 import { chartSize, useSessionMermaid } from "@/components/session-overlay";
@@ -155,6 +156,7 @@ function MermaidInline({ chart }: { chart: string }) {
 	// fit the column, but never blow its text up past the chat's.
 	const holderRef = useRef<HTMLDivElement>(null);
 	const [capW, setCapW] = useState<number | null>(null);
+	const { scheme } = useAppearance();
 	useEffect(() => {
 		if (!svg || !holderRef.current) return;
 		const fs = Number.parseFloat(getComputedStyle(holderRef.current).fontSize);
@@ -168,7 +170,7 @@ function MermaidInline({ chart }: { chart: string }) {
 		let cancelled = false;
 		setSvg(null);
 		setError(null);
-		renderMermaid(chart)
+		renderMermaid(chart, scheme)
 			.then((s) => {
 				if (!cancelled) setSvg(s);
 			})
@@ -178,7 +180,7 @@ function MermaidInline({ chart }: { chart: string }) {
 		return () => {
 			cancelled = true;
 		};
-	}, [chart, attempt, incomplete]);
+	}, [chart, attempt, incomplete, scheme]);
 
 	if (incomplete || (svg === null && error === null)) {
 		return (
@@ -336,7 +338,7 @@ export function parseAlertMarker(children: ReactNode): ParsedAlert | null {
 	return { kind, children: restChildren };
 }
 
-/** The key-idea callout (owner rulings, 2026-10-07): SHARP corners, a white
+/** The key-idea callout (owner rulings, 2026-10-07): SHARP corners, a foreground
  *  stroke, NO background, NO label, NO icon — just the outline. The box
  *  hugs its text (width: fit-content, capped at the column) instead of
  *  stretching full-width into empty space. */
@@ -363,7 +365,7 @@ export function MarkdownBlockquote(props: ComponentProps<"blockquote"> & ExtraPr
 			data-testid="md-callout"
 			data-alert-kind={alert.kind}
 			dir={rest.dir}
-			className="my-4 w-fit max-w-full border border-white px-4 py-3 [&> :first-child]:mt-0 [&> :last-child]:mb-0"
+			className="my-4 w-fit max-w-full border border-foreground px-4 py-3 [&> :first-child]:mt-0 [&> :last-child]:mb-0"
 		>
 			{alert.children}
 		</div>

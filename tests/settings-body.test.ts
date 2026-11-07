@@ -129,6 +129,15 @@ describe("parseAppearanceSettingsBody", () => {
 		});
 	});
 
+	it("accepts mode \"system\" and names all three modes in the rejection", () => {
+		const ok = parseAppearanceSettingsBody({ mode: "system" });
+		assert.ok(ok.ok);
+		assert.deepEqual(ok.settings, { mode: "system" });
+		const bad = parseAppearanceSettingsBody({ mode: "sepia" });
+		assert.ok(!bad.ok);
+		assert.equal(bad.error, "mode must be \"dark\", \"light\", or \"system\"");
+	});
+
 	it("rejects bad enums, ranges, and colors — with specific messages, never clamps", () => {
 		const cases: unknown[] = [
 			{ mode: "sepia" },

@@ -260,7 +260,7 @@ function ProviderEditor({
 			</div>
 
 			{error && (
-				<p role="alert" dir={textDirection(error)} data-testid="custom-provider-error" className="text-xs text-red-500">
+				<p role="alert" dir={textDirection(error)} data-testid="custom-provider-error" className="text-xs text-danger">
 					{error}
 				</p>
 			)}
@@ -272,7 +272,7 @@ function ProviderEditor({
 					{t.common.actions.cancel}
 				</button>
 				{onDelete && (
-					<button type="button" className={`${mutedButton} hover:text-red-500`} disabled={busy} onClick={onDelete} data-testid="custom-provider-delete">
+					<button type="button" className={`${mutedButton} hover:text-danger`} disabled={busy} onClick={onDelete} data-testid="custom-provider-delete">
 						{t.common.actions.delete}
 					</button>
 				)}

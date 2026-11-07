@@ -591,7 +591,7 @@ export function AgentSection({
 								<button
 									type="button"
 									onClick={() => void deleteSegment(info.path)}
-									className="text-xs text-muted-foreground/70 underline-offset-2 hover:text-red-500 hover:underline"
+									className="text-xs text-muted-foreground/70 underline-offset-2 hover:text-danger hover:underline"
 								>
 									{t.common.actions.delete}
 								</button>
@@ -633,7 +633,7 @@ export function AgentSection({
 					onClick={() => { setAdvancedModels(!advancedModels); setOpenMenu(null); }}
 					className="mb-1 self-start text-xs text-muted-foreground hover:text-foreground"
 				>{advancedModels ? "Hide advanced settings" : "Show advanced settings"}</button>
-				{catalogFailed && <p role="alert" className="text-xs text-red-400">Model catalog could not be loaded. Check the connection and retry. <button type="button" className="underline" onClick={refreshCatalog}>{t.common.actions.retry}</button></p>}
+				{catalogFailed && <p role="alert" className="text-xs text-danger">Model catalog could not be loaded. Check the connection and retry. <button type="button" className="underline" onClick={refreshCatalog}>{t.common.actions.retry}</button></p>}
 				{MODEL_SLOTS.map((slot) => {
 					const override = models?.[slot];
 					const modelId = override?.model?.id ?? "";
@@ -872,7 +872,7 @@ export function AgentSection({
 									<Toggle checked={restricted} label="Restrict to listed folders" onChange={(on) => onSectionChange(composeFileRestriction(effectiveAgent, on))} />
 								</div>
 							</SettingsRow>
-							{fileAccessError && <p role="alert" dir={textDirection(fileAccessError)} data-testid="file-access-config-error" className="text-xs text-red-500">{fileAccessError}</p>}
+							{fileAccessError && <p role="alert" dir={textDirection(fileAccessError)} data-testid="file-access-config-error" className="text-xs text-danger">{fileAccessError}</p>}
 							<div className="flex gap-2 ps-3">
 								<input dir="ltr" value={folderInput} aria-label="Allowed folder path" data-testid="file-access-add" placeholder="Absolute path or ~/folder"
 									onChange={(event) => { setFolderInput(event.target.value); setFolderError(null); }}
@@ -880,7 +880,7 @@ export function AgentSection({
 									className="min-w-0 flex-1 rounded-sm border border-border bg-background px-2 py-1 font-ui text-xs" />
 								<button type="button" data-testid="file-access-add-button" disabled={!folderInput.trim()} onClick={addFolder} className="rounded-sm border border-border px-2 text-xs disabled:opacity-40">Add folder</button>
 							</div>
-							{folderError && <p role="alert" data-testid="file-access-input-error" className="ps-3 text-xs text-red-500">{folderError}</p>}
+							{folderError && <p role="alert" data-testid="file-access-input-error" className="ps-3 text-xs text-danger">{folderError}</p>}
 							{folders.map((folder) => (
 								<div key={folder} data-testid="file-access-folder" className="flex items-center justify-between gap-4 ps-3 text-xs">
 									<span title={folder} dir="ltr" className="min-w-0 truncate font-ui text-muted-foreground">{folder}</span>

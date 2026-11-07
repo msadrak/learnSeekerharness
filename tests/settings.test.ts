@@ -83,6 +83,11 @@ describe("sanitizeUserSettings", () => {
 		assert.deepEqual(sanitizeUserSettings(record), record);
 	});
 
+	it("keeps appearance.mode \"system\" and drops unknown modes", () => {
+		assert.deepEqual(sanitizeUserSettings({ appearance: { mode: "system" } })?.appearance, { mode: "system" });
+		assert.deepEqual(sanitizeUserSettings({ appearance: { mode: "sepia" } })?.appearance, {});
+	});
+
 	it("null and non-objects → null (first-boot semantics), never throws", () => {
 		assert.equal(sanitizeUserSettings(null), null);
 		assert.equal(sanitizeUserSettings("junk"), null);

@@ -24,9 +24,11 @@ export const settings: typeof en = {
 		language: "زبان",
 		languageAria: "زبان",
 		mode: "حالت",
-		comingSoon: "به‌زودی",
 		modeAria: "حالت",
 		dark: "تیره",
+		light: "روشن",
+		system: "مطابق سیستم",
+		backgroundDarkOnly: "فقط در حالت تیره اعمال می‌شود",
 		background: "پس‌زمینه",
 		// U+2068/U+2069 (FSI/PDI) isolate the embedded non-dictionary value.
 		emptyIs: (value: string) => `خالی = \u2068${value}\u2069`,

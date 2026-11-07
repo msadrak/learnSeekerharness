@@ -81,7 +81,7 @@ export function ToolCallCard({ part }: ArtifactPartProps) {
 			className="group my-1 w-full max-w-2xl select-none"
 		>
 			<summary className="flex cursor-pointer list-none items-center gap-2 text-xs text-muted-foreground [&::-webkit-details-marker]:hidden">
-				<span dir={textDirection(tool)} className={`font-medium uppercase tracking-wide ${failed ? "text-red-500" : ""}`}>
+				<span dir={textDirection(tool)} className={`font-medium uppercase tracking-wide ${failed ? "text-danger" : ""}`}>
 					{tool}
 				</span>
 				{arg && <span dir={textDirection(arg)} className="truncate">{arg}</span>}
@@ -107,7 +107,7 @@ export function ToolCallCard({ part }: ArtifactPartProps) {
 						<div className="mb-1 font-medium uppercase tracking-wide text-muted-foreground">
 							{t.cards.tools.error}
 						</div>
-						<pre className="whitespace-pre-wrap break-all font-mono text-[11px] text-red-500">
+						<pre className="whitespace-pre-wrap break-all font-mono text-[11px] text-danger">
 							{p.errorText === CLIENT_CALL_FAILED ? t.cards.tools.callFailed : p.errorText}
 						</pre>
 					</div>

@@ -135,6 +135,8 @@ export interface CanvasData {
 	colors: CanvasColors;
 	/** Body font family (labels must match the app typography). */
 	fontFamily: string;
+	/** Concrete colour scheme: cluster labels flip lightness so they stay legible. */
+	scheme: "dark" | "light";
 }
 
 export interface RendererCallbacks {
@@ -1728,7 +1730,7 @@ export class GraphCanvasRenderer {
 			const lineH = (settings.clusterLabelSize * REGION_LABEL_LINE_HEIGHT) / k;
 			for (const rm of this.regionMeta) {
 				if (!rm.lines) continue;
-				ctx.fillStyle = `hsla(${rm.hue}, 55%, 78%, 0.85)`;
+				ctx.fillStyle = `hsla(${rm.hue}, 55%, ${data.scheme === "light" ? 32 : 78}%, 0.85)`;
 				const firstOffset = (-(rm.lines.length - 1) / 2) * lineH;
 				ctx.direction = textDirection(rm.lines.join(""));
 				for (let i = 0; i < rm.lines.length; i++) {

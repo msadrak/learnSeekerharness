@@ -86,9 +86,9 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 					(answer.dontKnow ? (
 						<span className="rounded bg-muted px-1.5 py-0.5">{t.cards.answered.didntKnow}</span>
 					) : answer.correct ? (
-						<span className="rounded bg-green-500/15 px-1.5 py-0.5 text-green-500">{t.cards.answered.correct}</span>
+						<span className="rounded bg-success/15 px-1.5 py-0.5 text-success">{t.cards.answered.correct}</span>
 					) : (
-						<span className="rounded bg-red-500/15 px-1.5 py-0.5 text-red-500">{t.cards.answered.incorrect}</span>
+						<span className="rounded bg-danger/15 px-1.5 py-0.5 text-danger">{t.cards.answered.incorrect}</span>
 					))}
 			</div>
 			<div className="mb-3 font-medium">
@@ -112,10 +112,10 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 								key={opt.index}
 								className={cn(
 									"flex items-center gap-2 rounded-lg border px-3 py-1.5",
-									sel && key && "border-green-500/60 bg-green-500/10",
-									sel && !key && isQuiz && "border-red-500/60 bg-red-500/10",
+									sel && key && "border-success/60 bg-success/10",
+									sel && !key && isQuiz && "border-danger/60 bg-danger/10",
 									sel && !isQuiz && "border-primary bg-accent",
-									!sel && key && "border-green-500/40",
+									!sel && key && "border-success/40",
 								)}
 							>
 								{isQuiz && (
@@ -126,9 +126,9 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 										data-mark={sel && key ? "check" : sel && !key ? "x" : !sel && key ? "check" : undefined}
 										className={cn(
 											"flex shrink-0 items-center",
-											sel && key && "text-green-500",
-											sel && !key && "text-red-500",
-											!sel && key && "text-green-500",
+											sel && key && "text-success",
+											sel && !key && "text-danger",
+											!sel && key && "text-success",
 										)}
 									>
 										{/* Owner round 8: a touch smaller than the text (size-4→size-3.5,

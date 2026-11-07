@@ -241,7 +241,7 @@ export function SubscriptionsList() {
 							<span className="flex shrink-0 items-center gap-3">
 								<span className="font-mono text-[11px] text-muted-foreground">{p.connected ? s.connected : ""}</span>
 								{p.connected ? (
-									<button type="button" className={`${mutedButton} hover:text-red-500`} onClick={() => void disconnect(p.id)} data-testid={`subscription-${p.id}-disconnect`}>
+									<button type="button" className={`${mutedButton} hover:text-danger`} onClick={() => void disconnect(p.id)} data-testid={`subscription-${p.id}-disconnect`}>
 										{t.common.actions.disconnect}
 									</button>
 								) : (
@@ -257,7 +257,7 @@ export function SubscriptionsList() {
 				);
 			})}
 			{error && (
-				<p role="alert" dir={textDirection(error)} data-testid="subscriptions-error" className="px-1 py-1 text-xs text-red-500">
+				<p role="alert" dir={textDirection(error)} data-testid="subscriptions-error" className="px-1 py-1 text-xs text-danger">
 					{error}
 				</p>
 			)}

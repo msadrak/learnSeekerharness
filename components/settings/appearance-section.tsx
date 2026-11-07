@@ -7,9 +7,8 @@
  * variables move IMMEDIATELY (the section's whole point — it must DO
  * something). Hex inputs commit on blur/Enter; the background derives the
  * raised/accent/edge palette in code (components/settings/appearance.tsx).
- * Mode is dark-only this wave: control rendered DISABLED with a note — the
- * light palette is the design wave's work, and a lying control is worse
- * than an honest disabled one.
+ * Mode is dark / light / system; the background override derives a DARK
+ * palette only, so its row locks while the light scheme is in effect.
  *
  * Graph graying (owner, 2026-09-20) follows the graph viewer's render-panel
  * convention: the whole row dims when a parent is off (stored values
@@ -32,6 +31,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+	APPEARANCE_MODES,
+	type AppearanceMode,
 	EXTRACTION_CHUNK_TOKENS_FLOOR,
 	isUiLanguage,
 	resolveSettings,
@@ -102,7 +103,8 @@ export function AppearanceSection({
 }) {
 	const t = useT();
 	const a = t.settings.appearance;
-	const { appearance: resolved } = useAppearance();
+	const { appearance: resolved, scheme } = useAppearance();
+	const bgLocked = scheme === "light";
 	const md = appearance?.mdRendering;
 
 	// The font dropdown's open state + its enumeration cache. undefined =
@@ -206,21 +208,32 @@ export function AppearanceSection({
 					<option value="fa">فارسی</option>
 				</ThinSelect>
 			</SettingsRow>
-			<SettingsRow label={a.mode} hint={a.comingSoon} testid="row-mode" dimmed>
-				<ThinSelect value="dark" ariaLabel={a.modeAria} onChange={() => {}} testid="select-mode" disabled>
+			<SettingsRow label={a.mode} testid="row-mode">
+				<ThinSelect
+					value={resolved.mode}
+					ariaLabel={a.modeAria}
+					testid="select-mode"
+					onChange={(v) => {
+						if ((APPEARANCE_MODES as readonly string[]).includes(v)) onSectionChange({ ...appearance, mode: v as AppearanceMode });
+					}}
+				>
 					<option value="dark">{a.dark}</option>
+					<option value="light">{a.light}</option>
+					<option value="system">{a.system}</option>
 				</ThinSelect>
 			</SettingsRow>
 			<SettingsRow
 				label={a.background}
-				hint={a.emptyIs(resolved.background ?? "#141414")}
+				hint={bgLocked ? a.backgroundDarkOnly : a.emptyIs(resolved.background ?? "#141414")}
 				testid="row-background"
+				dimmed={bgLocked}
 			>
 				<CommitInput
 					value={appearance?.background ?? ""}
 					placeholder="#141414"
 					ariaLabel={a.backgroundAria}
 					testid="input-background"
+					disabled={bgLocked}
 					onCommit={(v) => onSectionChange({ ...appearance, background: v === "" ? null : v })}
 				/>
 			</SettingsRow>

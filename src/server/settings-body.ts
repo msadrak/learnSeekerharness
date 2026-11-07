@@ -27,7 +27,7 @@ import type {
 	ModelSlot,
 	RoleModelOverride,
 } from "../core/settings.ts";
-import { BACKGROUND_MODEL_ROLES, CACHE_RETENTIONS, COMPACTION_THRESHOLD_FLOOR, CUSTOM_MODEL_PIN_FLOOR, EXTRACTION_CHUNK_TOKENS_FLOOR, isUiLanguage, MODEL_SLOTS, UI_LANGUAGES } from "../core/settings.ts";
+import { APPEARANCE_MODES, BACKGROUND_MODEL_ROLES, CACHE_RETENTIONS, COMPACTION_THRESHOLD_FLOOR, CUSTOM_MODEL_PIN_FLOOR, EXTRACTION_CHUNK_TOKENS_FLOOR, isUiLanguage, MODEL_SLOTS, UI_LANGUAGES, type AppearanceMode } from "../core/settings.ts";
 import { WRITABLE_TOOL_KEYS } from "../core/pending.ts";
 import { isSearchEngineId, SEARCH_ENGINES } from "../core/search.ts";
 import { isDictationLanguage } from "../core/dictation.ts";
@@ -238,10 +238,10 @@ export function parseAppearanceSettingsBody(body: unknown): SettingsBodyResult<A
 	if (!raw) return { ok: false, error: "Invalid JSON body" };
 	const settings: AppearanceSettings = {};
 	if (raw.mode !== undefined) {
-		if (raw.mode !== "dark" && raw.mode !== "light") {
-			return { ok: false, error: "mode must be \"dark\" or \"light\"" };
+		if (typeof raw.mode !== "string" || !(APPEARANCE_MODES as readonly string[]).includes(raw.mode)) {
+			return { ok: false, error: "mode must be \"dark\", \"light\", or \"system\"" };
 		}
-		settings.mode = raw.mode;
+		settings.mode = raw.mode as AppearanceMode;
 	}
 	if (raw.background !== undefined) {
 		const parsed = parseHexOrNull(raw.background, "background");

@@ -79,7 +79,7 @@ describe("PlanMarginalia render", () => {
 	it("glows the current node and dims the not-yet-visited (live statuses)", () => {
 		const html = renderToStaticMarkup(<PlanMarginalia messages={transcript(CHAIN, "b")} />);
 		// The yellow blurred halo marks the tagged check's node…
-		assert.ok(html.includes("fill-yellow-400/25"), "glow on the current node");
+		assert.ok(html.includes("fill-warning/25"), "glow on the current node");
 		assert.ok(html.includes('data-testid="plan-node-b" data-status="current"'), "b is current");
 		// …and arrows into upcoming nodes carry the dimmed head.
 		assert.ok(

@@ -117,7 +117,7 @@ export function DemoOutputCard({
 			<div className="rounded-xl border bg-card p-4 text-card-foreground" data-testid="demo-card-failed">
 				<div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
 					{t.cards.demo.label}
-					<span className="rounded bg-red-500/15 px-1.5 py-0.5 text-red-500">{t.cards.status.failed}</span>
+					<span className="rounded bg-danger/15 px-1.5 py-0.5 text-danger">{t.cards.status.failed}</span>
 				</div>
 				{result.notes != null ? (
 					<p dir={textDirection(result.notes)} className="mt-2 text-sm text-muted-foreground">{result.notes}</p>
@@ -256,7 +256,7 @@ export function DemoErrorChip({
 	const t = useT();
 	return (
 		<div
-			className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500"
+			className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger"
 			data-testid="demo-error-chip"
 		>
 			<span className="font-medium">{t.cards.demo.threwError}</span>
@@ -267,7 +267,7 @@ export function DemoErrorChip({
 				<button
 					type="button"
 					onClick={onSend}
-					className="rounded-md border border-red-500/40 px-2 py-1 text-xs font-medium hover:bg-red-500/15"
+					className="rounded-md border border-danger/40 px-2 py-1 text-xs font-medium hover:bg-danger/15"
 					data-testid="demo-error-send"
 				>
 					{t.cards.demo.sendToTeacher}

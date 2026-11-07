@@ -7,6 +7,7 @@ import { ActivityProvider } from "@/components/activity-dock";
 import { ServerEventsProvider } from "@/components/server-events";
 import { AppearanceProvider } from "@/components/settings/appearance";
 import UpdateBanner from "@/components/update-banner";
+import { InlineScript } from "@/components/inline-script";
 import { languageDirection } from "@/lib/i18n/direction";
 import { resolveSettings } from "@/src/core";
 import { readSettingsRecord } from "@/src/server";
@@ -19,6 +20,10 @@ const ui = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" });
 const prose = Source_Sans_3({ subsets: ["latin"], variable: "--font-sans3" });
 const persian = Vazirmatn({ subsets: ["arabic"], variable: "--font-vazirmatn" });
 
+// "system" mode: the server can't know the OS scheme, so it renders dark and
+// this script flips <html> to light before first paint (no flash on reload).
+const SYSTEM_SCHEME_SCRIPT = `(function(){try{if(window.matchMedia("(prefers-color-scheme: light)").matches){var c=document.documentElement.classList;c.remove("dark");c.add("light");}}catch(e){}})()`;
+
 // Dynamic: <html lang/dir> comes from the settings record on every request
 // (a prerendered shell would freeze the build machine's language).
 export const dynamic = "force-dynamic";
@@ -30,8 +35,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	const record = readSettingsRecord();
-	const appearance = record?.appearance;
-	const language = resolveSettings(record ?? null).appearance.language;
+	const appearance = resolveSettings(record ?? null).appearance;
+	const language = appearance.language;
 	return (
 		// suppressHydrationWarning: browser extensions (Grammarly, asbplayer …)
 		// inject attributes into <html>/<body> before React hydrates. One level
@@ -39,14 +44,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 		<html
 			lang={language}
 			dir={languageDirection(language)}
-			className={`dark ${ui.variable} ${prose.variable} ${persian.variable}`}
+			className={`${appearance.mode === "light" ? "light" : "dark"} ${ui.variable} ${prose.variable} ${persian.variable}`}
 			suppressHydrationWarning
 		>
+			<head>{appearance.mode === "system" && <InlineScript html={SYSTEM_SCHEME_SCRIPT} />}</head>
 			<body className="min-h-dvh antialiased" suppressHydrationWarning>
 			{/* The notification channel rides OUTSIDE everything: sidebar, dock,
 				 and pages all subscribe as the polls retire (push S3, 2026-10-02). */}
 			<ServerEventsProvider>
-				<AppearanceProvider initialAppearance={appearance}>
+				<AppearanceProvider initialAppearance={record?.appearance}>
 					<SidebarProvider>
 						<ActivityProvider>
 							<AppShell>{children}</AppShell>

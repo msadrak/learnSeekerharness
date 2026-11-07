@@ -219,7 +219,7 @@ export function SetupKeysBody({
 					</div>
 				))}
 				{error && (
-					<p role="alert" data-testid="setup-key-error" dir={textDirection(error)} className="text-xs text-red-400">
+					<p role="alert" data-testid="setup-key-error" dir={textDirection(error)} className="text-xs text-danger">
 						{error}
 					</p>
 				)}
@@ -625,7 +625,7 @@ function OpenSetupDialog({ onClose, onDone }: SetupDialogProps) {
 							>
 								{saving ? t.common.states.saving : s.saveModels}
 							</button>
-							{error && <p dir={textDirection(error)} className="text-xs text-red-400">{error}</p>}
+							{error && <p dir={textDirection(error)} className="text-xs text-danger">{error}</p>}
 						</div>
 					</div>
 				)}

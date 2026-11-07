@@ -92,7 +92,7 @@ export function VisualOutputCard({
 			<div className="rounded-xl border bg-card p-4 text-card-foreground" data-testid="visual-card-failed">
 				<div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
 					{t.cards.figure.label}
-					<span className="rounded bg-red-500/15 px-1.5 py-0.5 text-red-500">{t.cards.status.failed}</span>
+					<span className="rounded bg-danger/15 px-1.5 py-0.5 text-danger">{t.cards.status.failed}</span>
 				</div>
 				{result.notes != null ? (
 					<p dir={textDirection(result.notes)} className="mt-2 text-sm text-muted-foreground">{result.notes}</p>

@@ -440,30 +440,30 @@ export function edgePathD(
 
 // ─── Status styling (the retired panel's color language, unchanged) ──────────
 
-// The simple look (owner, plan-graph round 4): rectangular boxes, white
-// outlines/arrows/text; no fill on visited, today's gray look on upcoming,
+// The simple look (owner, plan-graph round 4): rectangular boxes,
+// foreground-coloured outlines/arrows/text; no fill on visited, today's gray look on upcoming,
 // and the current node carries a faint yellow glow (a blurred yellow fill
-// bleeding over the edges). The IN-CHAT block is monochrome white instead
+// bleeding over the edges). The IN-CHAT block is monochrome foreground instead
 // — no status language; the popup/window show the progression.
 const BOX: Record<PlanNodeStatus, string> = {
 	// 50%-opacity app background instead of true transparency: a routed
 	// edge passing behind the box composites UNDER the fill — dimmed to
 	// half, not shown straight through (owner, round 9).
-	visited: "fill-background/50 stroke-white",
-	current: "fill-background/50 stroke-white",
+	visited: "fill-background/50 stroke-foreground",
+	current: "fill-background/50 stroke-foreground",
 	// The grayed-out not-yet-visited look stays as-is (owner).
 	upcoming: "fill-card stroke-border",
 };
 const TEXT: Record<PlanNodeStatus, string> = {
-	visited: "fill-white text-xs",
-	current: "fill-white text-xs font-medium",
+	visited: "fill-foreground text-xs",
+	current: "fill-foreground text-xs font-medium",
 	upcoming: "fill-muted-foreground/80 text-xs",
 };
 // The in-chat block speaks the dock language now (owner, plan-hug
 // round 2026-10-07): boxes in the lighter background variant like
-// the composer/dock shells — but the outlines STAY white (owner
-// follow-up: the gray fill is good, white box edges).
-const MONO_BOX = "fill-card stroke-white";
+// the composer/dock shells — but the outlines STAY foreground-coloured (owner
+// follow-up: the gray fill is good, bright box edges).
+const MONO_BOX = "fill-card stroke-foreground";
 const MONO_TEXT = "fill-foreground text-xs";
 
 /** The diagram itself: positioned nodes + bezier edges. Pure-ish render —
@@ -561,7 +561,7 @@ export function PlanDiagram({
 				>
 					{/* The owner's arrowhead. The mouth (x 27.2) sits at refX so the
 					    line ends AT the notch — the tip beyond it is solid fill. */}
-					<path d={ARROW_HEAD} className="fill-white" />
+					<path d={ARROW_HEAD} className="fill-foreground" />
 				</marker>
 				{/* Same head, grayed — arrows into not-yet-visited nodes are
 				    grayed out like the nodes themselves (owner, round 6). */}
@@ -610,7 +610,7 @@ export function PlanDiagram({
 					<path
 						key={`${e.from}->${e.to}`}
 						d={edgePathD(pts, target)}
-						className={dim ? "fill-none stroke-border" : "fill-none stroke-white"}
+						className={dim ? "fill-none stroke-border" : "fill-none stroke-foreground"}
 						strokeWidth={STROKE_W}
 						markerEnd={`url(#${markerId}${dim ? "-dim" : ""})`}
 					/>
@@ -651,7 +651,7 @@ export function PlanDiagram({
 								y={-GLOW_MARGIN}
 								width={w + 2 * GLOW_MARGIN}
 								height={h + 2 * GLOW_MARGIN}
-								className="fill-yellow-400/25"
+								className="fill-warning/25"
 								filter={`url(#${markerId}-glow)`}
 							/>
 						)}

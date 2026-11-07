@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -27,80 +28,6 @@
 	outline: none;
 }
 
-/* Palette (owner's hexes): main #141414, raised #1C1C1C, edges #434343.
-   Mono chrome = JetBrains Mono; prose = Source Sans 3; titles = CMU Serif. */
-:root {
-	color-scheme: dark;
-	--radius: 8px;
-	--background: #141414;
-	--foreground: #e6e6e6;
-	--card: #1c1c1c;
-	--card-foreground: #e6e6e6;
-	--popover: #1c1c1c;
-	--popover-foreground: #e6e6e6;
-	--primary: #e6e6e6;
-	--primary-foreground: #141414;
-	--secondary: #1c1c1c;
-	--secondary-foreground: #e6e6e6;
-	--muted: #1c1c1c;
-	--muted-foreground: #8d8d8d;
-	--accent: #2a2a2a;
-	--accent-foreground: #e6e6e6;
-	--destructive: oklch(0.704 0.191 22.216);
-	--border: #434343;
-	--input: #434343;
-	--ring: #8d8d8d;
-	/* Emphasis inks default to the REGULAR TEXT COLOR (owner ruling,
-	   appearance wave 2026-09-26 — the old #ee928c/#6fa9d6 factory
-	   emphasis colors are gone). Explicit overrides land via the
-	   appearance settings vars. */
-	--lh-ink-strong: var(--foreground);
-	--lh-ink-italic: var(--foreground);
-	/* THE READING SIZE = the ladder's 16px rung (--text-lg). Can't be
-	   var()-linked: @theme inline inlines literals into utilities without
-	   emitting runtime vars — so this is the one documented duplication:
-	   change one, change both. (owner, typography round 4: snapped from
-	   the reskin's hand-tuned 16.5 to the ladder's 16.) */
-	--lh-prose-size: 16px;
-	--lh-prose-leading: 1.5;
-	/* Markdown heading weight (appearance settings; 900 = the Black cut). */
-	--lh-heading-weight: 900;
-}
-
-/* The app is always dark (<html class="dark">); mirror the same values so
-   the block stays coherent under Tailwind's variant. */
-.dark {
-	--background: #141414;
-	--foreground: #e6e6e6;
-	--card: #1c1c1c;
-	--card-foreground: #e6e6e6;
-	--popover: #1c1c1c;
-	--popover-foreground: #e6e6e6;
-	--primary: #e6e6e6;
-	--primary-foreground: #141414;
-	--secondary: #1c1c1c;
-	--secondary-foreground: #e6e6e6;
-	--muted: #1c1c1c;
-	--muted-foreground: #8d8d8d;
-	--accent: #2a2a2a;
-	--accent-foreground: #e6e6e6;
-	--destructive: oklch(0.704 0.191 22.216);
-	--border: #434343;
-	--input: #434343;
-	--ring: #8d8d8d;
-	/* Same emphasis ruling as the block above: unset = text color. */
-	--lh-ink-strong: var(--foreground);
-	--lh-ink-italic: var(--foreground);
-	/* THE READING SIZE = the ladder's 16px rung (--text-lg). Can't be
-	   var()-linked: @theme inline inlines literals into utilities without
-	   emitting runtime vars — so this is the one documented duplication:
-	   change one, change both. (owner, typography round 4: snapped from
-	   the reskin's hand-tuned 16.5 to the ladder's 16.) */
-	--lh-prose-size: 16px;
-	--lh-prose-leading: 1.5;
-	/* Markdown heading weight (appearance settings; 900 = the Black cut). */
-	--lh-heading-weight: 900;
-}
 
 /* CMU Serif bold (titles) — bundled local file, no CDN dependency. */
 @font-face {
@@ -396,6 +323,9 @@ body {
 [data-streamdown="code-block"] {
 	border: 1px solid var(--border);
 	background: color-mix(in oklab, var(--background) 86%, black);
+}
+:root.light :is([data-streamdown="inline-code"], [data-streamdown="code-block"]) {
+	background: color-mix(in oklab, var(--background) 96%, black);
 }
 [data-streamdown="code-block"] {
 	border-radius: 0.75rem;
