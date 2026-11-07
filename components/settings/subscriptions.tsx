@@ -16,6 +16,7 @@ import { notifySettingsSaved } from "@/components/settings-signal";
 import { useT } from "@/components/i18n";
 import { textDirection } from "@/lib/i18n/direction";
 import { localizeServerError } from "@/lib/i18n/server-errors";
+import { toast } from "sonner";
 
 const POLL_MS = 1000;
 
@@ -120,6 +121,9 @@ export function SubscriptionsList() {
 	const opened = useRef<string | null>(null);
 	/** Provider whose login request is in flight (the POST can take a while on a cold server); shows "Signing in…" instantly. */
 	const [starting, setStarting] = useState<string | null>(null);
+	/** Latest provider list for the connect/disconnect toasts (the poll effect's closure outlives renders). */
+	const providersRef = useRef<SubscriptionProviderInfo[] | null>(null);
+	providersRef.current = providers;
 
 	const reload = () =>
 		fetch("/api/subscriptions/providers")
@@ -164,7 +168,11 @@ export function SubscriptionsList() {
 				if (body.session.status !== "running") {
 					if (body.session.status === "failed") setError(body.session.error ?? s.signInFailed);
 					await reload();
-					if (body.session.status === "succeeded") notifySettingsSaved("keys");
+					if (body.session.status === "succeeded") {
+						notifySettingsSaved("keys");
+						const providerId = body.session.providerId;
+						toast.success(t.settings.toasts.connected(providersRef.current?.find((p) => p.id === providerId)?.name ?? providerId));
+					}
 				}
 			} finally {
 				inFlight = false;
@@ -222,9 +230,10 @@ export function SubscriptionsList() {
 	}
 
 	async function disconnect(id: string) {
-		await fetch(`/api/subscriptions/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => undefined);
+		const res = await fetch(`/api/subscriptions/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => undefined);
 		await reload();
 		notifySettingsSaved("keys");
+		if (res?.ok) toast.success(t.settings.toasts.disconnected(providersRef.current?.find((p) => p.id === id)?.name ?? id));
 	}
 	const shown = error ? localizeServerError(error, t) : null;
 

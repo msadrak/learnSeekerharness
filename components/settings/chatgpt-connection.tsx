@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import type { ChatGPTStatus } from "@/src/core";
 import { ConnectionDialog, ConnectionFooter, ConnectionRow } from "./connection-controls";
 import { Button } from "@/components/ui/button";
@@ -76,10 +77,15 @@ export function ChatGPTUIProvider({ children }: { children: React.ReactNode }) {
 	const dialogRef = useRef<Dialog | null>(null);
 	const statusRef = useRef(status);
 	const loginAttempt = useRef<LoginAttempt | null>(null);
+	/** Previous "any account connected" reading; null until the first status lands (no toast for an already-connected start). */
+	const wasConnected = useRef<boolean | null>(null);
 	const receive = useRef<(value: unknown) => void>(() => {});
 	function showDialog(next: Dialog | null) { dialogRef.current = next; setDialog(next); }
 	function publishStatus(value: unknown): ChatGPTStatus | null {
 		if (!isStatus(value)) { setError(replyError(value)); return null; }
+		const connected = value.accounts.some((a) => a.connected);
+		if (wasConnected.current === false && connected) toast.success(t.settings.toasts.connected(c.label));
+		wasConnected.current = connected;
 		statusSequence.current++; statusRef.current = value; setStatus(value);
 		return value;
 	}
@@ -227,6 +233,7 @@ export function ChatGPTUIProvider({ children }: { children: React.ReactNode }) {
 					if (failure === REVOCATION_WARNING) showDialog({ kind: "warning" });
 					else if (!failure) showDialog(null);
 				}
+				if (!failure) toast.success(t.settings.toasts.disconnected(c.label));
 				setError(failure);
 			} else setError(failure || (kind === "disconnect" ? CONTROL_ERROR : null));
 		} catch { if (mounted.current && intent === generation.current) setError(CONTROL_ERROR); }

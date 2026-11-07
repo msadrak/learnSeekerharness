@@ -10,6 +10,7 @@ import { useNativeSubscriptionBridge } from "./subscription-client";
 import { useT } from "@/components/i18n";
 import { en } from "@/lib/i18n/messages";
 import { localizeServerError } from "@/lib/i18n/server-errors";
+import { toast } from "sonner";
 
 const ns0 = en.settings.nativeSubscriptions;
 export const COPILOT_POLICY_NOTICE = ns0.copilotPolicy;
@@ -31,6 +32,8 @@ export function NativeSubscriptionUIProvider({ children }: { children: React.Rea
 	const [confirm, setConfirm] = useState(false), [background, setBackground] = useState(true), [backgroundDirty, setBackgroundDirty] = useState(false), [promptValue, setPromptValue] = useState("");
 	const [operation, setOperation] = useState<"login" | "control" | null>(null), [error, setError] = useState<string | null>(null);
 	const mounted = useRef(false), sequence = useRef(0), generation = useRef(0), statusesRef = useRef(statuses);
+	/** Previous connected flag per provider (absent until its first status lands, so an already-connected start never toasts). */
+	const wasConnected = useRef(new Map<NativeSubscriptionProviderId, boolean>());
 	const descriptor = NATIVE_SUBSCRIPTIONS.find((p) => p.providerId === dialog);
 	const status = statuses.find((s) => s.providerId === dialog) ?? (dialog ? emptySubscriptionStatus(dialog) : undefined);
 	const interaction = status?.interaction, prompt = interaction?.prompt;
@@ -45,6 +48,11 @@ export function NativeSubscriptionUIProvider({ children }: { children: React.Rea
 				const next = values.find((s) => s.providerId === providerId), old = statusesRef.current.find((s) => s.providerId === providerId);
 				return next && (!old || next.revision >= old.revision) ? next : old ?? emptySubscriptionStatus(providerId);
 			});
+			for (const s of accepted) {
+				const label = NATIVE_SUBSCRIPTIONS.find((p) => p.providerId === s.providerId)?.label ?? s.providerId;
+				if (wasConnected.current.get(s.providerId) === false && s.connected) toast.success(t.settings.toasts.connected(label));
+				wasConnected.current.set(s.providerId, s.connected);
+			}
 			statusesRef.current = accepted; setStatuses(accepted);
 		} catch { if (mounted.current && request === sequence.current) setError(t.settings.chatgpt.bridgeUnavailable); }
 	}
@@ -119,7 +127,7 @@ export function NativeSubscriptionUIProvider({ children }: { children: React.Rea
 					<Button variant="outline" size="sm" disabled={!status.available || busy || !!operation} onClick={beginSignIn}>{ns.signInAgain}</Button>
 				</>}
 				<Button variant={!confirm && management ? "outline" : "ghost"} size="sm" disabled={busy} onClick={close}>{confirm || !management ? t.common.actions.cancel : t.common.actions.close}</Button>
-				{confirm ? <Button variant="destructive" size="sm" disabled={busy} onClick={() => bridge && void control(() => bridge.disconnect(dialog), true)}>{t.common.actions.disconnect}</Button> : view === "notice" ? <Button variant="outline" size="sm" disabled={!status.available || !!operation} onClick={() => setView("connection")}>{t.common.actions.continue}</Button> : view === "connection" && <Button variant="outline" size="sm" disabled={!status.available || !!operation || status.pending} onClick={() => void login()}>{t.common.actions.connect}</Button>}
+				{confirm ? <Button variant="destructive" size="sm" disabled={busy} onClick={() => bridge && void control(async () => { await bridge.disconnect(dialog); toast.success(t.settings.toasts.disconnected(descriptor.label)); }, true)}>{t.common.actions.disconnect}</Button> : view === "notice" ? <Button variant="outline" size="sm" disabled={!status.available || !!operation} onClick={() => setView("connection")}>{t.common.actions.continue}</Button> : view === "connection" && <Button variant="outline" size="sm" disabled={!status.available || !!operation || status.pending} onClick={() => void login()}>{t.common.actions.connect}</Button>}
 			</ConnectionFooter>
 		</ConnectionDialog>}
 	</Context.Provider>;

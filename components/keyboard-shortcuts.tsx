@@ -37,6 +37,7 @@ import {
 } from "@/src/core";
 import { isDictationActive } from "@/components/dictation";
 import { installFocusVisibility } from "@/components/focus-visibility";
+import { CommandPalette } from "@/components/command-palette";
 import { useSettingsDialog } from "@/components/settings/settings-dialog.tsx";
 import { useT } from "@/components/i18n";
 
@@ -48,6 +49,7 @@ export { kbdEventForAction };
 export function KeyboardShortcuts() {
 	const router = useRouter();
 	const [cheatOpen, setCheatOpen] = useState(false);
+	const [paletteOpen, setPaletteOpen] = useState(false);
 	const { open: openSettings } = useSettingsDialog();
 
 	// Router + cheat + settings state inside a ref so the keydown listener
@@ -55,9 +57,10 @@ export function KeyboardShortcuts() {
 	const handlersRef = useRef<{
 		router: ReturnType<typeof useRouter>;
 		setCheatOpen: (v: boolean) => void;
+		setPaletteOpen: (v: boolean) => void;
 		openSettings: () => void;
-	}>({ router, setCheatOpen, openSettings });
-	handlersRef.current = { router, setCheatOpen, openSettings };
+	}>({ router, setCheatOpen, setPaletteOpen, openSettings });
+	handlersRef.current = { router, setCheatOpen, setPaletteOpen, openSettings };
 
 	useEffect(() => installFocusVisibility(), []);
 
@@ -81,7 +84,13 @@ export function KeyboardShortcuts() {
 			}
 
 			if (e.key === "Escape") {
-				// Our own overlay is the topmost layer.
+				// Our own overlays are the topmost layer; the palette sits
+				// above the cheat sheet.
+				if (paletteOpen) {
+					setPaletteOpen(false);
+					e.preventDefault();
+					return;
+				}
 				if (cheatOpen) {
 					setCheatOpen(false);
 					e.preventDefault();
@@ -134,6 +143,10 @@ export function KeyboardShortcuts() {
 				case "cheat-sheet":
 					handlersRef.current.setCheatOpen(true);
 					break;
+				case "open-command-palette":
+					e.preventDefault();
+					handlersRef.current.setPaletteOpen(true);
+					break;
 				case "find":
 					// The mounted surface owns Find (session text / graph nodes).
 					// Claim Mod+F so Chromium's whole-window finder cannot open too.
@@ -146,9 +159,14 @@ export function KeyboardShortcuts() {
 		};
 		window.addEventListener("keydown", onKeyDown);
 		return () => window.removeEventListener("keydown", onKeyDown);
-	}, [cheatOpen]);
+	}, [cheatOpen, paletteOpen]);
 
-	return <CheatSheet open={cheatOpen} onClose={() => setCheatOpen(false)} />;
+	return (
+		<>
+			<CheatSheet open={cheatOpen} onClose={() => setCheatOpen(false)} />
+			<CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onCheatSheet={() => setCheatOpen(true)} />
+		</>
+	);
 }
 
 /** The ? overlay — the registry rendered as a table (grouped by scope).

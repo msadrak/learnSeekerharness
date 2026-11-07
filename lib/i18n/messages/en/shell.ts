@@ -123,6 +123,7 @@ export const shell = {
 			"toggle-dictation": "Toggle dictation",
 			"open-settings": "Open settings",
 			"open-model-picker": "Model selector",
+			"open-command-palette": "Command palette",
 			"cycle-thinking": "Cycle thinking level",
 			"toggle-sidebar": "Toggle sessions sidebar",
 			"sessions-search": "Search sessions",
@@ -138,6 +139,20 @@ export const shell = {
 			"question-pick-row": "Question · pick row",
 			"question-submit": "Question · submit",
 		} satisfies Record<KeyAction, string>,
+	},
+	palette: {
+		title: "Command palette",
+		placeholder: "Search actions, sessions, propositions, settings…",
+		empty: "No results.",
+		groups: {
+			actions: "Actions",
+			sessions: "Sessions",
+			propositions: "Propositions",
+			settings: "Settings",
+		},
+		newTeaching: "New teaching session",
+		newPractice: "New practice session",
+		openGraph: "Open knowledge graph",
 	},
 	updateBanner: {
 		ready: (version: string | null) => `LearnHarness ${version ?? "update"} is ready`,

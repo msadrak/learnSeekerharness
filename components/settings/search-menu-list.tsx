@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { fuzzyScore } from "@/src/core";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /** The model picker's search, arrow-walk, row styling and scrolling machine.
  * Models and dictation languages supply only their catalog and row content.
@@ -82,7 +83,10 @@ export function SearchMenuList<T>({
 			placeholder={placeholder}
 			className="lh-input mb-1.5 w-full rounded-lg border bg-background px-2 py-1.5 text-foreground outline-none focus:ring-1 focus:ring-ring"
 		/>
-		{!items && loading && <div className="px-2 py-3 text-center text-muted-foreground">{loading}</div>}
+		{!items && loading && <div>
+			{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="mx-2 my-1 h-8" />)}
+			<span className="sr-only">{loading}</span>
+		</div>}
 		{items && results.length === 0 && <div className="px-2 py-3 text-center text-muted-foreground">{empty}</div>}
 		<ul ref={listRef} data-testid={listTestid} className="flex max-h-72 flex-col overflow-y-auto px-1">
 			{results.map((item, i) => <li key={itemKey(item)}>

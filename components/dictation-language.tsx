@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { toast } from "sonner";
 import { DICTATION_LANGUAGES, type DictationLanguage } from "@/src/core";
 import { MenuShell } from "@/components/menu-shell";
 import { Hint } from "@/components/ui/hint";
@@ -27,8 +28,14 @@ function DictationLanguagePicker({ preference, disabled }: {
 }) {
 	const d = useT().settings.dictation;
 	const { language, saving, error: rawError, load, save } = preference;
-	/** The store keeps English sentinels; the display site maps them. */
-	const error = rawError === DICTATION_LOAD_ERROR ? d.loadFailed : rawError === DICTATION_SAVE_ERROR ? d.saveFailed : rawError;
+	/** The store keeps English sentinels; the display site maps them. The
+	 *  load sentinel renders inline; the save sentinel is a toast (below). */
+	const error = rawError === DICTATION_LOAD_ERROR ? d.loadFailed : rawError === DICTATION_SAVE_ERROR ? null : rawError;
+	const previousError = useRef(rawError);
+	useEffect(() => {
+		if (previousError.current !== rawError && rawError === DICTATION_SAVE_ERROR) toast.error(d.saveFailed);
+		previousError.current = rawError;
+	}, [rawError, d.saveFailed]);
 	const [open, setOpen] = useState(false);
 	const triggerRef = useRef<HTMLButtonElement>(null);
 	const label = DICTATION_LANGUAGES.find((item) => item.code === language)?.label ?? "—";

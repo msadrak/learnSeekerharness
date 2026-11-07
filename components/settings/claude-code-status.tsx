@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { CLAUDE_CODE_MINIMUM_VERSION, type ClaudeCodeStatus, type UserSettings } from "@/src/core";
 import { notifySettingsSaved, useSettingsSaved } from "@/components/settings-signal";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ export function ClaudeCodeInstallationStatus() {
 	const [enabled, setEnabled] = useState(false);
 	const [loaded, setLoaded] = useState(false);
 	const [saving, setSaving] = useState(false);
-	const [error, setError] = useState<"load" | "save" | null>(null);
+	const [error, setError] = useState<"load" | null>(null);
 	const [status, setStatus] = useState<ClaudeCodeStatus | null>(null);
 	const [busy, setBusy] = useState(false);
 	const request = useRef<AbortController | null>(null);
@@ -69,7 +70,7 @@ export function ClaudeCodeInstallationStatus() {
 				notifySettingsSaved("claudeCode");
 			}
 		} catch {
-			if (!controller.signal.aborted) setError("save");
+			if (!controller.signal.aborted) toast.error(c.saveFailed);
 		} finally {
 			if (!controller.signal.aborted) setSaving(false);
 		}
@@ -106,7 +107,7 @@ export function ClaudeCodeInstallationStatus() {
 			<span className="font-prose text-(length:--lh-prose-size) text-foreground">{c.label}</span>
 			<Toggle label={c.label} checked={enabled} disabled={!loaded || saving} onChange={(next) => void save(next)} />
 		</div>
-		{error && <p role="alert" className="text-xs text-danger">{error === "load" ? c.loadFailed : c.saveFailed}</p>}
+		{error && <p role="alert" className="text-xs text-danger">{c.loadFailed}</p>}
 		{enabled && <>
 			<div className="flex flex-wrap items-center gap-3">
 				<span role="status" className="text-xs text-muted-foreground">{busy ? c.checking : claudeCodeStatusLabel(status, c)}</span>

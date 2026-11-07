@@ -22,6 +22,7 @@ import { notifySettingsSaved } from "@/components/settings-signal";
 import { useT } from "@/components/i18n";
 import { inputDirection, textDirection } from "@/lib/i18n/direction";
 import { localizeServerError } from "@/lib/i18n/server-errors";
+import { toast } from "sonner";
 import { SettingsGroup, ThinSelect } from "./controls.tsx";
 
 interface ProviderView extends CustomProviderDef {
@@ -318,19 +319,23 @@ export function CustomProvidersGroup() {
 			const body = (await res.json().catch(() => ({}))) as { error?: string };
 			return setError(body.error ?? c.saveFailed(res.status));
 		}
+		const name = draft.name.trim() || draft.id;
 		setDraft(null);
 		await reload();
 		notifySettingsSaved("keys");
+		toast.success(t.settings.toasts.providerSaved(name));
 	}
 
 	async function remove() {
 		if (!draft || busy) return;
 		setBusy(true);
-		await fetch(`/api/providers/${encodeURIComponent(draft.id)}`, { method: "DELETE" }).catch(() => undefined);
+		const res = await fetch(`/api/providers/${encodeURIComponent(draft.id)}`, { method: "DELETE" }).catch(() => undefined);
+		const name = providers?.find((p) => p.id === draft.id)?.name ?? (draft.name.trim() || draft.id);
 		setBusy(false);
 		setDraft(null);
 		await reload();
 		notifySettingsSaved("keys");
+		if (res?.ok) toast.success(t.settings.toasts.providerDeleted(name));
 	}
 
 	return (

@@ -22,6 +22,7 @@
 export type KeyAction =
 	| "toggle-dictation"
 	| "open-model-picker"
+	| "open-command-palette"
 	| "cycle-thinking"
 	| "toggle-sidebar"
 	| "sessions-search"
@@ -58,6 +59,7 @@ export const KEYBOARD_ACTIONS: readonly KeyActionDef[] = [
 	{ id: "toggle-dictation", label: "Toggle dictation", scope: "global", binding: "mod+d" },
 	{ id: "open-settings", label: "Open settings", scope: "global", binding: "mod+," },
 	{ id: "open-model-picker", label: "Model selector", scope: "global", binding: "mod+k" },
+	{ id: "open-command-palette", label: "Command palette", scope: "global", binding: "mod+p" },
 	{ id: "cycle-thinking", label: "Cycle thinking level", scope: "global", binding: "shift+tab" },
 	{ id: "toggle-sidebar", label: "Toggle sessions sidebar", scope: "global", binding: "mod+b" },
 	{ id: "sessions-search", label: "Search sessions", scope: "global", binding: "mod+shift+f" },

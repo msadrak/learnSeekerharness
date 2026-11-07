@@ -103,7 +103,7 @@ test("failed opt-in save stays collapsed/off and never probes", async () => {
 	const calls = fixture(async () => assert.fail("must not probe"), false, true);
 	await mount(); await act(async () => toggle().click());
 	assert.equal(toggle().getAttribute("aria-checked"), "false"); assert(!button());
-	assert.match(document.querySelector('[role="alert"]')?.textContent ?? "", /Could not save/);
+	assert.equal(document.querySelector('[role="alert"]'), null);
 	assert(!calls.includes("GET /api/claude-code"));
 });
 

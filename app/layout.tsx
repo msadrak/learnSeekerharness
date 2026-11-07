@@ -7,6 +7,7 @@ import { ActivityProvider } from "@/components/activity-dock";
 import { ServerEventsProvider } from "@/components/server-events";
 import { AppearanceProvider } from "@/components/settings/appearance";
 import UpdateBanner from "@/components/update-banner";
+import { AppToaster } from "@/components/ui/sonner";
 import { InlineScript } from "@/components/inline-script";
 import { languageDirection } from "@/lib/i18n/direction";
 import { MESSAGES } from "@/lib/i18n/messages";
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 							<AppShell>{children}</AppShell>
 						</ActivityProvider>
 					</SidebarProvider>
+					<AppToaster />
 				</AppearanceProvider>
 			</ServerEventsProvider>
 			{/* Auto-update banner (Wave C): fixed card, Electron-only pushes. */}

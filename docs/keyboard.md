@@ -11,6 +11,7 @@ in-app cheat sheet. See [Getting started](getting-started.md) for setup.
 | Toggle dictation | Mod+D |
 | Open settings | Mod+, |
 | Model selector | Mod+K |
+| Command palette | Mod+P |
 | Cycle thinking level | Shift+Tab |
 | Toggle sessions sidebar | Mod+B |
 | Search sessions | Mod+Shift+F |

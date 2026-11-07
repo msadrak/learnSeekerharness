@@ -126,6 +126,7 @@ export const shell: typeof en = {
 			"toggle-dictation": "روشن/خاموش کردن دیکته",
 			"open-settings": "باز کردن تنظیمات",
 			"open-model-picker": "انتخابگر مدل",
+			"open-command-palette": "پالت فرمان",
 			"cycle-thinking": "چرخش سطح تفکر",
 			"toggle-sidebar": "نمایش/پنهان کردن نوار جلسه‌ها",
 			"sessions-search": "جست‌وجوی جلسه‌ها",
@@ -141,6 +142,20 @@ export const shell: typeof en = {
 			"question-pick-row": "پرسش · انتخاب گزینه",
 			"question-submit": "پرسش · ارسال",
 		},
+	},
+	palette: {
+		title: "پالت فرمان",
+		placeholder: "جست‌وجوی فرمان‌ها، جلسه‌ها، گزاره‌ها و تنظیمات…",
+		empty: "نتیجه‌ای پیدا نشد.",
+		groups: {
+			actions: "فرمان‌ها",
+			sessions: "جلسه‌ها",
+			propositions: "گزاره‌ها",
+			settings: "تنظیمات",
+		},
+		newTeaching: "جلسهٔ آموزشی جدید",
+		newPractice: "جلسهٔ تمرین جدید",
+		openGraph: "باز کردن گراف دانش",
 	},
 	updateBanner: {
 		ready: (version: string | null) => (version ? `LearnHarness ${iso(version)} آماده است` : "به‌روزرسانی LearnHarness آماده است"),

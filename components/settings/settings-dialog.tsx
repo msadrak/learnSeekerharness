@@ -53,7 +53,9 @@ import { KeyboardSection } from "./keyboard-section.tsx";
 import { ChatGPTUIProvider } from "./chatgpt-connection.tsx";
 import { NativeSubscriptionUIProvider } from "./subscription-connections.tsx";
 import { useT } from "@/components/i18n";
-import { textDirection } from "@/lib/i18n/direction";
+import { localizeServerError } from "@/lib/i18n/server-errors";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 /** Owner (2026-09-20): hints earn their place — mechanics-explaining
  *  prose is out; only the keyboard note stays (storage location is a
@@ -149,7 +151,6 @@ export function SettingsDialogBody({
 	const [record, setRecord] = useState<UserSettings | null | undefined>(
 		undefined,
 	);
-	const [error, setError] = useState<string | null>(null);
 	const [fileAccessError, setFileAccessError] = useState<string | null>(null);
 	// MenuShell open-count — drives the content column's scroll lock.
 	const [openMenus, setOpenMenus] = useState(0);
@@ -227,14 +228,13 @@ export function SettingsDialogBody({
 	}, [onClose]);
 
 	/** ONE writer for the whole dialog: PUT the whole section, keep the
-	 *  record mirror in sync, surface route errors inline (a 400 is a
+	 *  record mirror in sync, surface route errors as a toast (a 400 is a
 	 *  schema mistake caught by the validation surface). */
 	const write = useCallback(
 		async (
 			section: "general" | "agent" | "models" | "appearance" | "graph" | "compaction",
 			body: object,
 		) => {
-			setError(null);
 			const res = await fetch(`/api/settings/${section}`, {
 				method: "PUT",
 				headers: { "content-type": "application/json" },
@@ -244,7 +244,14 @@ export function SettingsDialogBody({
 				const detail = (await res.json().catch(() => ({}))) as {
 					error?: string;
 				};
-				setError(`${section}: ${detail.error ?? res.status}`);
+				const navId =
+					section === "models" || section === "compaction" ? "agent" : section;
+				toast.error(
+					t.settings.dialog.saveFailed(
+						t.settings.dialog.nav[navId] ?? section,
+						localizeServerError(String(detail.error ?? res.status), t),
+					),
+				);
 				return;
 			}
 			// Server truth, never the request body (fix wave, owner repro):
@@ -263,7 +270,7 @@ export function SettingsDialogBody({
 			if (section === "appearance")
 				onAppearanceChange(body as AppearanceSettings);
 		},
-		[onAppearanceChange],
+		[onAppearanceChange, t],
 	);
 
 	return (
@@ -341,20 +348,13 @@ export function SettingsDialogBody({
 					className="min-w-0 flex-1 overflow-y-auto"
 					data-testid="settings-content"
 				>
-					{error && (
-						<p
-							role="alert"
-							dir={textDirection(error)}
-							className="m-4 rounded-sm border border-danger/40 px-3 py-2 text-xs text-danger"
-							data-testid="settings-error"
-						>
-							{error}
-						</p>
-					)}
 					{record === undefined ? (
-						<p className="px-6 py-5 text-xs text-muted-foreground/70">
-							{t.settings.dialog.loading}
-						</p>
+						<div className="flex flex-col gap-2 px-6 py-5">
+							{[0, 1, 2, 3].map((i) => (
+								<Skeleton key={i} className="h-7 w-full" />
+							))}
+							<span className="sr-only">{t.settings.dialog.loading}</span>
+						</div>
 					) : record === null ? (
 						<p className="px-6 py-5 text-xs text-muted-foreground/70">
 							{t.settings.dialog.loadFailed}

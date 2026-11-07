@@ -47,6 +47,7 @@ import { useT } from "@/components/i18n";
 import type { Messages } from "@/lib/i18n/messages";
 import { textDirection } from "@/lib/i18n/direction";
 import { localizeServerError } from "@/lib/i18n/server-errors";
+import { toast } from "sonner";
 
 /** One pi-ai provider with plain API-key auth (the Platform seam —
  *  derived from pi-ai's own env-key table; no drift possible). */
@@ -392,6 +393,7 @@ export function KeysSection({
 }) {
 	const t = useT();
 	const k = t.settings.keys;
+	const ts = t.settings.toasts;
 	const [statuses, setStatuses] = useState<AuthKeyStatus[] | null>(null);
 	const [providers, setProviders] = useState<ProviderKeyInfo[] | undefined>(undefined);
 	const [loading, setLoading] = useState(true);
@@ -456,7 +458,7 @@ export function KeysSection({
 		if (initialRow !== undefined) setOpenRow(initialRow);
 	}, [initialRow]);
 
-	async function saveKey(id: string, value: string): Promise<string | null> {
+	async function saveKey(id: string, value: string, label: string): Promise<string | null> {
 		const res = await fetch(`/api/keys/${id}`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
@@ -471,13 +473,15 @@ export function KeysSection({
 		// the setup dialog's stage advance, and any other keys reader hear
 		// that a key landed — deletions included (see deleteKey below).
 		notifySettingsSaved("keys");
+		toast.success(ts.keySaved(label));
 		return null;
 	}
 
-	async function deleteKey(id: string): Promise<void> {
-		await fetch(`/api/keys/${id}`, { method: "DELETE" }).catch(() => undefined);
+	async function deleteKey(id: string, label: string): Promise<void> {
+		const res = await fetch(`/api/keys/${id}`, { method: "DELETE" }).catch(() => undefined);
 		await reload();
 		notifySettingsSaved("keys");
+		if (res?.ok) toast.success(ts.keyDeleted(label));
 	}
 
 	/** Forget the custom endpoint (config + key server-side), same rhythm as
@@ -488,6 +492,7 @@ export function KeysSection({
 		setAddingCustom(false);
 		await reload();
 		notifySettingsSaved("keys");
+		toast.success(ts.disconnected(t.settings.customEndpoint.title));
 		return null;
 	}
 
@@ -498,7 +503,7 @@ export function KeysSection({
 	const { providerRows, toolRows, unknownRows, addable } = classifyKeys(statuses, providers);
 
 	async function saveNewProvider(p: ProviderKeyInfo, value: string) {
-		const err = await saveKey(p.envVar, value);
+		const err = await saveKey(p.envVar, value, p.label);
 		if (err) setAddError(err);
 		else {
 			setAdding(null);
@@ -518,12 +523,12 @@ export function KeysSection({
 						expanded={openRow === status.id}
 						onToggle={() => setOpenRow(openRow === status.id ? null : status.id)}
 						onSave={async (v) => {
-							const err = await saveKey(status.id, v);
+							const err = await saveKey(status.id, v, providerKeyLabel(status.id, providers, k.openCode) ?? status.info?.label ?? status.id);
 							if (!err) setOpenRow(null); // fold on success — rest state
 							return err;
 						}}
 						onCancel={() => setOpenRow(null)}
-						onDelete={() => deleteKey(status.id)}
+						onDelete={() => deleteKey(status.id, providerKeyLabel(status.id, providers, k.openCode) ?? status.info?.label ?? status.id)}
 						testid={`key-${status.id.toLowerCase()}`}
 					/>
 				))}
@@ -609,12 +614,12 @@ export function KeysSection({
 						expanded={openRow === status.id}
 						onToggle={() => setOpenRow(openRow === status.id ? null : status.id)}
 						onSave={async (v) => {
-							const err = await saveKey(status.id, v);
+							const err = await saveKey(status.id, v, status.info?.label ?? status.id);
 							if (!err) setOpenRow(null);
 							return err;
 						}}
 						onCancel={() => setOpenRow(null)}
-						onDelete={() => deleteKey(status.id)}
+						onDelete={() => deleteKey(status.id, status.info?.label ?? status.id)}
 						testid={`key-${status.id.toLowerCase()}`}
 					/>
 				))}
@@ -901,6 +906,7 @@ function CustomEndpointEditor({
 			setBusy(false);
 			return;
 		}
+		toast.success(t.settings.toasts.connected(ce.title));
 		await onSaved();
 		setBusy(false);
 	}

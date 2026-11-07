@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChatSettings, ModelCatalogEntry, ModelCatalogResponse, ModelsSettings, UserSettings } from "@/src/core";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
@@ -49,7 +50,6 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 	// means no session record is known yet, not permission to inherit Strong.
 	const [session, setSession] = useState<{ settings?: ChatSettings }>();
 	const [open, setOpen] = useState<"model" | "thinking" | null>(null);
-	const [error, setError] = useState<string | null>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	// The record read — BOTH mount and the cross-surface signal land
@@ -153,7 +153,6 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 	// model + thinkingLevel within the strong slot.
 	const save = useCallback(
 		async (next: ModelsSettings) => {
-			setError(null);
 			try {
 				const res = await fetch("/api/settings/models", {
 					method: "PUT",
@@ -162,7 +161,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				});
 				if (!res.ok) {
 					const body = (await res.json().catch(() => ({}))) as { error?: string };
-					setError(body.error ?? mp.settingsRejected(res.status));
+					toast.error(localizeServerError(body.error ?? mp.settingsRejected(res.status), t));
 					return;
 				}
 				// Server truth, never the request body (fix wave): a pick
@@ -175,10 +174,10 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				setOpen(null);
 				notifySettingsSaved("models");
 			} catch {
-				setError(mp.unreachable);
+				toast.error(mp.unreachable);
 			}
 		},
-		[mp],
+		[mp, t],
 	);
 
 	// The session write seam (chat mode): PUT the per-chat settings route
@@ -188,7 +187,6 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 	// one session's record, not the slots — no other surface reads it.
 	const saveChat = useCallback(
 		async (next: ChatSettings) => {
-			setError(null);
 			try {
 				const res = await fetch(`/api/chats/${chatId}/settings`, {
 					method: "PUT",
@@ -197,17 +195,17 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				});
 				if (!res.ok) {
 					const body = (await res.json().catch(() => ({}))) as { error?: string };
-					setError(body.error ?? mp.settingsRejected(res.status));
+					toast.error(localizeServerError(body.error ?? mp.settingsRejected(res.status), t));
 					return;
 				}
 				const stored = (await res.json().catch(() => null)) as { settings?: ChatSettings } | null;
 				setSession({ settings: stored?.settings ?? next });
 				setOpen(null);
 			} catch {
-				setError(mp.unreachable);
+				toast.error(mp.unreachable);
 			}
 		},
-		[chatId, mp],
+		[chatId, mp, t],
 	);
 
 	// One apply seam over both write paths: a pick names provider + id +
@@ -233,7 +231,6 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 	useEffect(() => {
 		const onOpenPicker = () => {
 			setOpen("model");
-			setError(null);
 			refresh(); // mid-session key changes widen the menu (cache fix)
 		};
 		window.addEventListener("lh:kbd-open-model-picker", onOpenPicker);
@@ -273,10 +270,8 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 	// swaps in when it lands.
 	const openMenu = (kind: "model" | "thinking") => {
 		setOpen((o) => (o === kind ? null : kind));
-		setError(null);
 		if (kind === "model") refresh();
 	};
-	const shownError = error ? localizeServerError(error, t) : null;
 
 	return (
 		<div ref={containerRef} className="relative flex items-center gap-1.5" data-testid="model-control">
@@ -343,7 +338,6 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 					preferredSide="up"
 					menuClass="flex w-[22rem] flex-col rounded-xl border bg-card p-2 text-xs shadow-xl"
 				>
-					{shownError && <div dir={textDirection(shownError)} className="mb-1.5 text-destructive">{shownError}</div>}
 					<ModelMenuList
 						models={catalog?.models}
 						effectiveId={effectiveId}
@@ -374,7 +368,6 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 						empty={catalog ? (effectiveId ? mp.noThinkingLevels(prettyModel(effectiveId)) : mp.pickModelFirst) : t.common.states.loading}
 						footer={mp.levelsFooter}
 					/>
-					{shownError && <div dir={textDirection(shownError)} className="mt-1 text-destructive">{shownError}</div>}
 				</MenuShell>
 			)}
 		</div>
