@@ -77,15 +77,18 @@ test("Providers is the first/default page; General is last and other pages keep 
  assert.doesNotMatch(html, />Model providers<\/button>/);
 });
 
-test("Providers has five ordered sections including External CLI; unknown variables stay masked/read-only at the end of Model API keys", async () => {
+test("Providers has six ordered sections including External CLI and Custom APIs; unknown variables stay masked/read-only at the end of Model API keys", async () => {
  globalThis.fetch = async (url) => {
+  // Custom APIs and OAuth subscriptions load their own lists beside the keys.
+  if (url === "/api/providers") return Response.json({ providers: [] });
+  if (url === "/api/subscriptions/providers") return Response.json({ providers: [] });
   if (url === "/api/claude-code") return Response.json({ state: "not-found", version: null, minimumVersion: "2.1.259" });
   assert.equal(url, "/api/keys");
   return Response.json({ providers: [{ id: "openai", envVar: "OPENAI_API_KEY", label: "OpenAI" }], keys: [{ id: "FUTURE_VAR", info: null, present: true, masked: "…abcd", source: "file", shadowedByEnv: false }] });
  };
  fixture(); await mount(<KeysSection />);
  const headings = [...document.querySelectorAll('[data-testid^="group-"] > p')].map((el) => el.textContent);
- assert.deepEqual(headings, ["Model API keys", "Subscriptions", "External CLI", "Dictation", "Search"]);
+ assert.deepEqual(headings, ["Model API keys", "Subscriptions", "External CLI", "Custom APIs", "Dictation", "Search"]);
  assert(byTest("claude-code-installation").closest('[data-testid="group-external-cli"]'));
  assert(byTest("key-deepgram_api_key").closest('[data-testid="group-dictation"]'));
  assert(byTest("key-tavily_api_key").closest('[data-testid="group-search"]'));

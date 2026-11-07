@@ -2,6 +2,8 @@
 
 import { ClipboardCheckIcon } from "lucide-react";
 import { parseProbeDoneInput, type ProbeDoneResult } from "@/src/core";
+import { useT } from "@/components/i18n";
+import { textDirection } from "@/lib/i18n/direction";
 
 /**
  * The probe conclusion card (docs/archive/probe-teach-split.md §2): renders the
@@ -22,6 +24,7 @@ import { parseProbeDoneInput, type ProbeDoneResult } from "@/src/core";
  * the UI wave; this card just guarantees the data is never invisible.
  */
 export function ProbeDoneCard({ part }: { part: { input?: unknown; output?: unknown; state?: unknown } }) {
+	const t = useT();
 	const output = part.output as ProbeDoneResult | undefined;
 	const state = typeof part.state === "string" ? part.state : "";
 
@@ -43,29 +46,32 @@ export function ProbeDoneCard({ part }: { part: { input?: unknown; output?: unkn
 		<div data-testid="probe-done-card" className="my-3 rounded-xl border bg-card/60 p-3">
 			<div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
 				<ClipboardCheckIcon className="size-3.5 text-primary" />
-				Probe concluded — your assessment
+				{t.cards.probeDone.title}
 			</div>
 			{output && !output.ok ? (
-				<p className="text-sm text-muted-foreground">The prober retried: {output.error}</p>
+				<p className="text-sm text-muted-foreground">
+					{t.cards.probeDone.retried}
+					<bdi>{String(output.error ?? "")}</bdi>
+				</p>
 			) : state === "output-error" ? (
 				<p className="text-sm text-muted-foreground">
-					The assessment was malformed — the prober retried with a corrected one.
+					{t.cards.probeDone.malformed}
 				</p>
 			) : strands ? (
 				<div className="space-y-2">
 					{strands.map((s, i) => (
 						<div key={i} className="rounded-lg bg-background/60 px-3 py-2">
-							<div className="text-sm font-medium">{s.strand}</div>
-							<div className="mt-0.5 text-sm text-muted-foreground">{s.assessment}</div>
+							<div dir={textDirection(s.strand)} className="lh-align-page text-sm font-medium">{s.strand}</div>
+							<div dir={textDirection(s.assessment)} className="mt-0.5 text-sm text-muted-foreground">{s.assessment}</div>
 						</div>
 					))}
 					{assessment?.summary && (
-						<p className="px-1 text-sm text-muted-foreground">{assessment.summary}</p>
+						<p dir={textDirection(assessment.summary)} className="px-1 text-sm text-muted-foreground">{assessment.summary}</p>
 					)}
 				</div>
 			) : (
-				<p className="text-sm text-muted-foreground">Writing the assessment…</p>
+				<p className="text-sm text-muted-foreground">{t.cards.probeDone.writing}</p>
 			)}
 		</div>
 	);
-}
+}

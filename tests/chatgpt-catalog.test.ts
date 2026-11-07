@@ -13,6 +13,7 @@ function reply(request: any, v: unknown) { ipc({ channel: "lh:chatgpt", id: requ
 before(() => {
  process.env.LH_DESKTOP_SERVER = "1"; process.env.LH_DESKTOP_API_SECRET = "d".repeat(64);
  Object.defineProperty(process, "connected", { configurable: true, value: true });
+ process.env.LH_DESKTOP_SERVER = "1";
  Object.defineProperty(process, "send", { configurable: true, value: (m: unknown, cb?: () => void) => { pending.push(m); cb?.(); return true; } });
 });
 after(() => {
@@ -20,6 +21,7 @@ after(() => {
  if (desktopSecret === undefined) delete process.env.LH_DESKTOP_API_SECRET; else process.env.LH_DESKTOP_API_SECRET = desktopSecret;
  if (send) Object.defineProperty(process, "send", send); else delete process.send;
  if (connected) Object.defineProperty(process, "connected", connected); else delete (process as { connected?: boolean }).connected;
+ delete process.env.LH_DESKTOP_SERVER;
 });
 test("overlapping catalog requests only install the newest generation", async () => {
  const old = refreshChatGPTModels([model as never]), latest = refreshChatGPTModels([model as never]);
@@ -49,4 +51,11 @@ test("account/full and catalog authority changes reject outstanding old leases w
  const newScope = chatGPTScope(model.id); assert.equal(newScope.accountId, "B");
  ipc({ channel: "lh:chatgpt", kind: "state", stamp: { epoch: 2, authorityRevision: 3, revision: 8 }, status: status("B"), invalidate: "none" });
  assert.equal(chatGPTModels().length, 0); await assert.rejects(chatGPTLease(newScope, false));
+});
+test("a server with its own IPC channel but no desktop marker never waits on the ChatGPT link", async () => {
+ delete process.env.LH_DESKTOP_SERVER;
+ const sent = pending.length;
+ try { await refreshChatGPTModels([model as never]); } finally { process.env.LH_DESKTOP_SERVER = "1"; }
+ assert.equal(pending.length, sent);
+ assert.deepEqual(chatGPTModels(), []);
 });

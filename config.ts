@@ -145,3 +145,25 @@ export const PROMPTS_OVERRIDE_DIR = path.join(DATA_ROOT, "prompts");
 export const AUTH_FILE = process.env.LH_AUTH_FILE
 	? path.resolve(process.env.LH_AUTH_FILE)
 	: path.join(ROOT, "auth.json");
+
+/**
+ * CUSTOM (MANUAL) PROVIDERS (custom-providers wave): the user-declared model
+ * endpoints — protocol, base URL, hand-entered model list. NON-SECRET, one
+ * versioned JSON file at the data seam; hand-edits hot-reload (the server
+ * re-reads on mtime change). The endpoint's credential is NOT here — it
+ * lives in CREDENTIALS_FILE.
+ */
+export const CUSTOM_PROVIDERS_FILE = path.join(DATA_ROOT, "providers.json");
+
+/**
+ * THE CREDENTIAL STORE (subscriptions wave): pi-ai's per-provider credential
+ * map ({providerId: api_key | oauth credential}) — OAuth subscription logins
+ * (Claude Pro/Max, GitHub Copilot, ChatGPT/Codex, Gemini CLI, Antigravity, …)
+ * and custom-provider keys. SECRET, mode 0600, atomic writes. Lives next to
+ * auth.json (the desktop shell's LH_AUTH_FILE already points at userData, so
+ * the sibling resolves there with no new env contract); LH_CREDENTIALS_FILE
+ * overrides. Secrets NEVER go in settings.json or providers.json.
+ */
+export const CREDENTIALS_FILE = process.env.LH_CREDENTIALS_FILE
+	? path.resolve(process.env.LH_CREDENTIALS_FILE)
+	: path.join(path.dirname(AUTH_FILE), "credentials.json");

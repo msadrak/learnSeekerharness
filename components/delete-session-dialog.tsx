@@ -4,16 +4,21 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBackdropDismiss } from "@/components/backdrop-dismiss";
 import type { ChatDeleteMode, ChatListItem } from "@/src/core";
+import { useT } from "@/components/i18n";
+import { en } from "@/lib/i18n/messages";
+import { textDirection } from "@/lib/i18n/direction";
 
 /** The graph-traces checkbox copy (owner, 2026-09-24 flow rework — was
  *  the delete-nodes option's body in the two-button design): the
  *  graph-touching consequence says so, shared-topic survival included.
- *  Exported pure for render pins: the copy is design, not implementation. */
+ *  Exported pure for render pins: the copy is design, not implementation.
+ *  title/body are the ENGLISH pins (the dictionary's source); the dialog
+ *  renders the active language's t.shell.deleteSession.traces*. */
 export const TRACES_COPY = {
 	testid: "delete-traces",
 	checkbox: "delete-traces-checkbox",
-	title: "Also remove its graph traces",
-	body: "This session’s topics, links, and events leave the graph too. Topics other sessions or imported notes also cover survive; topics only this session created are removed entirely.",
+	title: en.shell.deleteSession.tracesTitle,
+	body: en.shell.deleteSession.tracesBody,
 };
 
 /**
@@ -50,6 +55,7 @@ export function DeleteSessionDialog({
 	/** Success path — the sidebar owns navigation + list patching. */
 	onDeleted: (id: string, mode: ChatDeleteMode, graphRevision: number) => void;
 }) {
+	const t = useT();
 	const [traces, setTraces] = useState(false);
 	const [busy, setBusy] = useState(false);
 	const backdropDismiss = useBackdropDismiss(() => {
@@ -103,13 +109,13 @@ export function DeleteSessionDialog({
 			if (!res.ok) {
 				// 409 (turn/jobs running) and 503 (extraction winding down) are
 				// both retryable — keep the dialog open, show the server's line.
-				setFailure({ code: body.code ?? "error", error: body.error ?? `Delete failed (${res.status})` });
+				setFailure({ code: body.code ?? "error", error: body.error ?? t.shell.deleteSession.failedStatus(res.status) });
 				setBusy(false);
 				return;
 			}
 			onDeleted(chat.id, mode, body.graphRevision ?? 0);
 		} catch {
-			setFailure({ code: "network", error: "Delete failed — network error. Try again." });
+			setFailure({ code: "network", error: t.shell.deleteSession.failedNetwork });
 			setBusy(false);
 		}
 	};
@@ -155,29 +161,31 @@ export function DeleteSessionBody({
 	onClose: () => void;
 	onRun: () => void;
 }) {
+	const t = useT();
+	const s = t.shell.deleteSession;
+	const titleDir = textDirection(chat.title);
 	return (
 		<div
 			role="dialog"
 			aria-modal="true"
-			aria-label="Delete session"
+			aria-label={s.ariaLabel}
 			data-testid="delete-session-dialog"
 			onClick={(e) => e.stopPropagation()}
 			className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-xl border bg-card p-5 shadow-xl"
 		>
-			<h2 className="text-sm font-semibold text-destructive">Delete session?</h2>
+			<h2 className="text-sm font-semibold text-destructive">{s.title}</h2>
 			{/* The session name below the title in JetBrains Mono (owner,
 			    2026-09-24): no code-block chrome — the font already says
 			    code. Owner, 2026-10-13 polish: normal text-sm size (was
 			    sized-up text-lg), still white. Same shape as the node
 			    dialog. */}
 			<div className="mt-1.5">
-				<code data-testid="session-name-code" className="font-mono text-sm text-foreground">
+				<code data-testid="session-name-code" dir={titleDir} className="font-mono text-sm text-foreground">
 					{chat.title}
 				</code>
 			</div>
 			<p className="mt-2 text-sm text-muted-foreground">
-				This permanently removes the session — its messages, background jobs, and extraction records. Everything
-				it added to the graph stays unless you check below. This cannot be undone.
+				{s.description}
 			</p>
 			<label
 				data-testid={TRACES_COPY.testid}
@@ -192,8 +200,8 @@ export function DeleteSessionBody({
 					className="mt-0.5 size-4 shrink-0 accent-primary"
 				/>
 				<span className="min-w-0">
-					<span className="block text-sm text-foreground">{TRACES_COPY.title}</span>
-					<span className="mt-1 block text-xs text-muted-foreground">{TRACES_COPY.body}</span>
+					<span className="block text-sm text-foreground">{s.tracesTitle}</span>
+					<span className="mt-1 block text-xs text-muted-foreground">{s.tracesBody}</span>
 				</span>
 			</label>
 			{failure && (
@@ -202,15 +210,15 @@ export function DeleteSessionBody({
 					data-testid="delete-failure"
 					className="mt-3 rounded-sm border border-border/60 px-3 py-2 text-xs"
 				>
-					<span className="text-foreground">{failure.error}</span>
+					<span dir={textDirection(failure.error)} className="text-foreground">{failure.error}</span>
 					<button
 						type="button"
 						data-testid="delete-retry"
 						onClick={onRun}
 						disabled={busy}
-						className="ml-3 text-xs text-foreground underline-offset-2 hover:underline disabled:opacity-40"
+						className="ms-3 text-xs text-foreground underline-offset-2 hover:underline disabled:opacity-40"
 					>
-						Try again
+						{s.tryAgain}
 					</button>
 				</div>
 			)}
@@ -225,7 +233,7 @@ export function DeleteSessionBody({
 					disabled={busy}
 					className="rounded-sm px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
 				>
-					Cancel
+					{t.common.actions.cancel}
 				</button>
 				<button
 					type="button"
@@ -234,7 +242,7 @@ export function DeleteSessionBody({
 					disabled={busy}
 					className="rounded-sm border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-xs text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-40"
 				>
-					{busy ? "Deleting…" : "Delete"}
+					{busy ? s.deleting : t.common.actions.delete}
 				</button>
 			</div>
 		</div>

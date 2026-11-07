@@ -89,3 +89,8 @@ export * from "./coverage.ts";
 // ONE session→markdown formatter — the extractor's view and the user-facing
 // export share it. Pure, browser-safe.
 export * from "./session-markdown.ts";
+// custom-providers.ts + subscriptions.ts (custom-providers / subscriptions
+// waves): the hand-declared endpoint schema + validator, and the OAuth
+// login-session contract. Pure, browser-safe.
+export * from "./custom-providers.ts";
+export * from "./subscriptions.ts";

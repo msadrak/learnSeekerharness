@@ -387,6 +387,14 @@ export interface MdRenderingSettings {
 	italicColor?: string | null;
 }
 
+/** The UI languages the chrome ships in. */
+export const UI_LANGUAGES = ["en", "fa"] as const;
+export type UiLanguage = (typeof UI_LANGUAGES)[number];
+
+export function isUiLanguage(value: unknown): value is UiLanguage {
+	return typeof value === "string" && (UI_LANGUAGES as readonly string[]).includes(value);
+}
+
 /** Appearance settings — mode, colors, type, markdown emphasis. */
 export interface AppearanceSettings {
 	/** "dark" | "light" (default dark). */
@@ -402,6 +410,10 @@ export interface AppearanceSettings {
 	proseFontSize?: number;
 	/** Session names in CMU Serif (default true — today's look). */
 	sessionNameSerif?: boolean;
+	/** UI language: "en" | "fa" (default "en"). "fa" = Persian chrome,
+	 *  right-to-left layout, Jalali dates. Agent output language is NOT
+	 *  driven by this — the agents follow the learner. */
+	language?: UiLanguage;
 	mdRendering?: MdRenderingSettings;
 }
 
@@ -502,6 +514,7 @@ export interface FactorySettings {
 		fontFamily: string | null;
 		proseFontSize: number;
 		sessionNameSerif: boolean;
+		language: UiLanguage;
 		mdRendering: {
 			headingWeight: number;
 			boldColor: string | null;
@@ -522,6 +535,7 @@ export const FACTORY_SETTINGS: FactorySettings = {
 		fontFamily: null, // Source Sans 3
 		proseFontSize: 16,
 		sessionNameSerif: true,
+		language: "en",
 		mdRendering: { headingWeight: 900, boldColor: null, italicColor: null },
 	},
 	graph: { enabled: true, rendering: true, extractionChunkTokens: 4096 },
@@ -760,6 +774,7 @@ function sanitizeAppearance(raw: Record<string, unknown>): AppearanceSettings {
 	}
 	const sessionNameSerif = boolOrDrop(raw.sessionNameSerif);
 	if (sessionNameSerif !== undefined) out.sessionNameSerif = sessionNameSerif;
+	if (isUiLanguage(raw.language)) out.language = raw.language;
 	if (raw.mdRendering !== undefined) out.mdRendering = sanitizeMdRendering(raw.mdRendering);
 	return out;
 }

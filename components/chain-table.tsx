@@ -76,6 +76,8 @@ import { useServerEvent, useServerResync } from "./server-events";
 import { TopBar } from "@/components/top-bar";
 import { DeleteSourceDialog } from "@/components/delete-source-dialog";
 import { LatexGlyph } from "@/components/latex-glyph";
+import { useT } from "@/components/i18n";
+import { inputDirection, textDirection } from "@/lib/i18n/direction";
 
 /** The sortable columns (owner ruling: all three — consistency). */
 export type ChainSortCol = "name" | "props" | "created";
@@ -163,6 +165,8 @@ export function ChainTableBody({
 	selectMode?: boolean;
 	onSelect?: () => void;
 }) {
+	const t = useT();
+	const c = t.graph.chains;
 	const [creatingFolder, setCreatingFolder] = useState(false);
 	const tableRef = useRef<HTMLDivElement>(null);
 	const searchRef = useRef<HTMLInputElement>(null);
@@ -316,28 +320,29 @@ export function ChainTableBody({
 			    law: later in the DOM). */}
 			<TopBar>
 				<span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-					{chains.length} {chains.length === 1 ? "chain" : "chains"} · {nodes.length} {nodes.length === 1 ? "node" : "nodes"}
+					{c.counts(chains.length, nodes.length)}
 				</span>
 				{onOrganizationChange && <button type="button" aria-label="Add folder" data-testid="add-source-folder"
 					onClick={() => setCreatingFolder(true)} className="lh-no-drag rounded-lg p-2 text-muted-foreground hover:bg-accent"><FolderPlusIcon className="size-4" /></button>}
 				<div className="relative shrink-0">
-					<SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+					<SearchIcon className="absolute inset-s-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
 					<input
 						ref={searchRef}
 						value={query}
 						data-testid="chain-table-search"
 						onChange={(e) => onQuery(e.target.value)}
-						placeholder="Search nodes…"
-						aria-label="Search nodes"
+						placeholder={t.graph.chrome.searchPlaceholder}
+						aria-label={t.graph.chrome.searchNodes}
+						dir={inputDirection(query)}
 						spellCheck={false}
-						className="lh-no-drag h-8 w-56 rounded-lg border bg-background pl-8 pr-3 text-xs outline-none placeholder:text-muted-foreground focus:border-ring"
+						className="lh-no-drag h-8 w-56 rounded-lg border bg-background ps-8 pe-3 text-xs outline-none placeholder:text-muted-foreground focus:border-ring"
 					/>
 				</div>
 			<button
 					type="button"
 					data-testid="chain-table-close"
 					onClick={onClose}
-					aria-label="Close chains"
+					aria-label={c.close}
 					className="lh-no-drag flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-card/80 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 				>
 					<XIcon className="size-4" />
@@ -359,27 +364,27 @@ export function ChainTableBody({
 						data-testid="sort-name"
 						onClick={() => onSort("name")}
 						aria-sort={sort.col === "name" ? (sort.dir === 1 ? "ascending" : "descending") : "none"}
-						className="flex flex-1 items-center gap-1 text-left transition-colors hover:text-foreground"
+						className="flex flex-1 items-center gap-1 text-start transition-colors hover:text-foreground"
 					>
-						Name {dirIcon("name")}
+						{c.colName} {dirIcon("name")}
 					</button>
 					<button
 						type="button"
 						data-testid="sort-props"
 						onClick={() => onSort("props")}
 						aria-sort={sort.col === "props" ? (sort.dir === 1 ? "ascending" : "descending") : "none"}
-						className="flex w-14 shrink-0 items-center justify-end gap-1 text-right transition-colors hover:text-foreground"
+						className="flex w-14 shrink-0 items-center justify-end gap-1 text-end transition-colors hover:text-foreground"
 					>
-						Props {dirIcon("props")}
+						{c.colProps} {dirIcon("props")}
 					</button>
 					<button
 						type="button"
 						data-testid="sort-created"
 						onClick={() => onSort("created")}
 						aria-sort={sort.col === "created" ? (sort.dir === 1 ? "ascending" : "descending") : "none"}
-						className="flex w-20 shrink-0 items-center justify-end gap-1 text-right transition-colors hover:text-foreground"
+						className="flex w-20 shrink-0 items-center justify-end gap-1 text-end transition-colors hover:text-foreground"
 					>
-						Created {dirIcon("created")}
+						{c.colCreated} {dirIcon("created")}
 					</button>
 				</div>
 
@@ -392,7 +397,7 @@ export function ChainTableBody({
 				</div>}
 				{groups.length === 0 && (directory?.organization.folders.length ?? 0) === 0 && (
 					<div data-testid="chain-table-nomatch" className="px-4 pt-3 text-xs text-muted-foreground">
-						No matching chains.
+						{c.noMatch}
 					</div>
 				)}
 
@@ -424,7 +429,7 @@ export function ChainTableBody({
 							{open && group.chains.length > 0 && (
 								<div
 									data-testid={`cluster-thread-${group.key}`}
-									className="pointer-events-none absolute bottom-[8px] left-[37px] top-[23px] w-px bg-border/50"
+									className="pointer-events-none absolute bottom-[8px] inset-s-[37px] top-[23px] w-px bg-border/50"
 								/>
 							)}
 							{/* The cluster row: birth-session group header. */}
@@ -435,21 +440,21 @@ export function ChainTableBody({
 									indeterminate={selectMode ? selectedCount > 0 && selectedCount < group.nodeIds.length : false}
 									onToggle={(next) => { if (selectMode) onToggleNodes(group.nodeIds, next); else if (group.birth) onToggleSource(group.birth, next); }}
 									testid={`cluster-checkbox-${group.key}`}
-									label={selectMode ? `Select everything born in ${group.label ?? "unlabeled"}` : `Select source ${group.label ?? "unlabeled"}`}
+									label={selectMode ? c.selectCluster(group.label ?? c.unlabeled) : `Select source ${group.label ?? c.unlabeled}`}
 								/>
-								<Expander open={open} onClick={() => toggleCluster(group.key)} testid={`cluster-toggle-${group.key}`} label={`Expand cluster ${group.label ?? "unlabeled"}`} />
-								<button type="button" data-source-icon data-testid={`source-icon-${group.key}`} aria-expanded={open} aria-label={`Expand source ${group.label ?? "unlabeled"}`}
+								<Expander open={open} onClick={() => toggleCluster(group.key)} testid={`cluster-toggle-${group.key}`} label={c.expandCluster(group.label ?? c.unlabeled)} />
+								<button type="button" data-source-icon data-testid={`source-icon-${group.key}`} aria-expanded={open} aria-label={`Expand source ${group.label ?? c.unlabeled}`}
 									onClick={() => toggleCluster(group.key)} className={`flex h-5 w-3.5 shrink-0 items-center justify-center rounded ${empty ? "text-muted-foreground/60" : "text-muted-foreground"} transition-colors hover:bg-accent hover:text-foreground`}>
 									{open ? <BookOpenIcon className="size-3.5 shrink-0" /> : <BookIcon className="size-3.5 shrink-0" />}
 								</button>
 								{onOrganizationChange && group.birth && group.kind !== null
 									? <EditableSourceName name={group.label ?? ""} muted={empty} onSave={(name) => onOrganizationChange({ action: "rename-source", id: group.birth!, name })} />
-									: <span className={`min-w-0 flex-1 truncate text-sm font-medium${empty ? " text-muted-foreground/60" : ""}`}>{group.label ?? <span className="text-muted-foreground/60">unlabeled</span>}</span>}
-								{group.kind === "notes" && <span className="text-[11px] uppercase tracking-widest text-muted-foreground/60">notes</span>}
-								<span className="w-14 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+									: <span dir={group.label ? textDirection(group.label) : undefined} className={`min-w-0 flex-1 truncate lh-align-page text-sm font-medium${empty ? " text-muted-foreground/60" : ""}`}>{group.label ?? <span className="text-muted-foreground/60">{c.unlabeled}</span>}</span>}
+								{group.kind === "notes" && <span className="text-[11px] uppercase tracking-widest text-muted-foreground/60">{c.notes}</span>}
+								<span className="w-14 shrink-0 text-end text-xs tabular-nums text-muted-foreground">
 									{group.nodeIds.length}
 								</span>
-								<span className="w-20 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+								<span className="w-20 shrink-0 text-end text-xs tabular-nums text-muted-foreground">
 									{group.newestCreatedAt.slice(0, 10)}
 								</span>
 							</SourceDragRow>
@@ -472,23 +477,23 @@ export function ChainTableBody({
 												{chainOpen && memberIds.length > 0 && (
 													<div
 														data-testid={`chain-thread-${chain.id}`}
-														className="pointer-events-none absolute bottom-[8px] left-[73px] top-[22px] w-px bg-border/50"
+														className="pointer-events-none absolute bottom-[8px] inset-s-[73px] top-[22px] w-px bg-border/50"
 													/>
 												)}
 											<div
 												{...chainRow(["chain", group.key, chain.id], depth + 1, chainOpen)}
 												data-testid={`chain-row-${chain.id}`}
 												aria-label={formatChainLine(chain, Object.fromEntries([...byId.entries()].map(([id, n]) => [id, { name: n.name }])))}
-												className="flex items-center gap-1 py-1 pl-12 pr-3"
+												className="flex items-center gap-1 py-1 ps-12 pe-3"
 											>
 												{selectMode ? <RowCheckbox
 													checked={selectedInChain === memberIds.length && memberIds.length > 0}
 													indeterminate={selectedInChain > 0 && selectedInChain < memberIds.length}
 													onToggle={(next) => onToggleNodes(memberIds, next)}
 													testid={`chain-checkbox-${chain.id}`}
-													label={`Select chain ${nameOf(chain.conclusion)}`}
+													label={c.selectChain(nameOf(chain.conclusion))}
 												/> : <span aria-hidden="true" className="size-3.5 shrink-0" />}
-												<Expander open={chainOpen} onClick={() => onToggleChain(chain.id)} testid={`chain-toggle-${chain.id}`} label={`Expand chain ${nameOf(chain.conclusion)}`} />
+												<Expander open={chainOpen} onClick={() => onToggleChain(chain.id)} testid={`chain-toggle-${chain.id}`} label={c.expandChain(nameOf(chain.conclusion))} />
 												{/* The chain line: proposition names as faint-outlined
 												    chips. THE LOGIC IS THE PAYLOAD (owner rulings,
 												    2026-09-30): premises join with the LaTeX LAND (∧),
@@ -499,7 +504,7 @@ export function ChainTableBody({
 												    (white), not the old dim gray. A lonely chip reads
 												    as a standalone proposition (no glyphs at all);
 												    the row's aria-label keeps the plain-text form. */}
-												<span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-0.5 gap-y-1 text-[13px] leading-tight">
+												<span dir="ltr" className="flex min-w-0 flex-1 flex-wrap items-center gap-x-0.5 gap-y-1 text-[13px] leading-tight">
 													{memberIds.map((id, i) => {
 														const isConclusion = i === memberIds.length - 1;
 														return (
@@ -519,6 +524,7 @@ export function ChainTableBody({
 																))}
 																<span
 																	data-testid={`prop-chip-${id}`}
+																	dir={textDirection(nameOf(id))}
 																	className="rounded border border-border/70 bg-muted/30 px-1.5 py-0.5"
 																>
 																	{nameOf(id)}
@@ -527,10 +533,10 @@ export function ChainTableBody({
 														);
 													})}
 												</span>
-												<span className="w-14 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+												<span className="w-14 shrink-0 text-end text-xs tabular-nums text-muted-foreground">
 													{memberIds.length}
 												</span>
-												<span className="w-20 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+												<span className="w-20 shrink-0 text-end text-xs tabular-nums text-muted-foreground">
 													{dateOf(chain.conclusion)}
 												</span>
 											</div>
@@ -549,15 +555,15 @@ export function ChainTableBody({
 															key={id}
 															{...chainRow(["prop", group.key, chain.id, id], depth + 2)}
 															data-testid={`prop-row-${id}`}
-															className="flex items-start gap-2 py-1 pl-21 pr-3"
+															className="flex items-start gap-2 py-1 ps-21 pe-3"
 														>
 															{selectMode ? <RowCheckbox
 																checked={selection.has(id)}
 																onToggle={(next) => onToggleNodes([id], next)}
 																testid={`prop-checkbox-${id}`}
-																label={`Select node ${node.name}`}
+																label={c.selectNode(node.name)}
 															/> : <span aria-hidden="true" className="size-3.5 shrink-0" />}
-															<span className="min-w-0 flex-1 text-xs leading-relaxed text-muted-foreground">
+															<span dir={textDirection(node.statement)} className="min-w-0 flex-1 text-xs leading-relaxed text-muted-foreground lh-align-page">
 																{node.statement}
 															</span>
 															<span className="w-14 shrink-0" />
@@ -584,7 +590,7 @@ export function ChainTableBody({
 						className="pointer-events-auto flex items-center gap-3 rounded-full border bg-card py-2 pl-4 pr-2 shadow-lg"
 					>
 						<span data-testid="chain-selected-summary" className="text-xs font-medium">
-							{selectMode ? <>{selection.size} {selection.size === 1 ? "node" : "nodes"} → {derived.length} {derived.length === 1 ? "chain" : "chains"}</>
+							{selectMode ? c.selectedSummary(selection.size, derived.length)
 								: <>{selectedSources.size} {selectedSources.size === 1 ? "source" : "sources"}{fullySelectedFolders.size > 0 && ` · ${fullySelectedFolders.size} ${fullySelectedFolders.size === 1 ? "folder" : "folders"}`}</>}
 						</span>
 						<button
@@ -593,18 +599,18 @@ export function ChainTableBody({
 							onClick={onClear}
 							className="rounded-full px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 						>
-							Clear
+							{c.clear}
 						</button>
 						{selectMode ? (
 							<button
 								type="button"
 								data-testid="chain-practice-done"
 								onClick={onSelect}
-								aria-label={`Done picking — ${selection.size} ${selection.size === 1 ? "proposition" : "propositions"} selected`}
+								aria-label={c.donePicking(selection.size)}
 								className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/80"
 							>
 								<DumbbellIcon aria-hidden="true" className="size-3.5" />
-								Done
+								{c.done}
 							</button>
 						) : (
 							<>
@@ -621,7 +627,7 @@ export function ChainTableBody({
 								className="flex items-center gap-1.5 rounded-full border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
 							>
 								<Trash2Icon aria-hidden="true" className="size-3.5" />
-								Delete
+								{t.common.actions.delete}
 							</button>
 							</>
 						)}
@@ -644,7 +650,7 @@ function Expander({ open, onClick, testid, label }: { open: boolean; onClick: ()
 			aria-expanded={open}
 			className="flex h-5 w-3.5 shrink-0 items-center justify-center rounded text-muted-foreground/70 transition-colors hover:bg-accent hover:text-foreground"
 		>
-			<ChevronRightIcon className={`size-3.5 transition-transform ${open ? "rotate-90" : ""}`} />
+			<ChevronRightIcon className={`size-3.5 transition-transform ${open ? "rotate-90" : "rtl:-scale-x-100"}`} />
 		</button>
 	);
 }

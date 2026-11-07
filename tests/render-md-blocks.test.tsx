@@ -85,7 +85,7 @@ describe("md-blocks — tables", () => {
 		// The corner is CONTAINED in the table (top-1 right-1, not the old
 		// -top-3 that straddled the top outline — the 24px button at a 12px
 		// offset sat half over the border; owner report, 2026-09-19).
-		assert.match(html, /absolute top-1 right-1 z-10/, "the corner sits inside the table's top-right");
+		assert.match(html, /absolute top-1 inset-e-1 z-10/, "the corner sits inside the table's top-right");
 		// Table text runs at the session prose size — no text-sm pin (the
 		// cells' own text-sm is overridden to inherit via globals.css).
 		assert.ok(!/border-collapse text-sm/.test(html), "the table itself pins no smaller text size");
@@ -223,7 +223,7 @@ describe("md-blocks — key-idea callouts (GitHub alerts, owner round 2026-10-07
 		const html = render("> [!IMPORTANT]\n> First the truth.\n>\n> Then the payoff.");
 		assert.match(html, /First the truth\./);
 		assert.match(html, /Then the payoff\./);
-		assert.ok((html.match(/<p>/g) ?? []).length >= 2, "both paragraphs render inside the box");
+		assert.ok((html.match(/<p[\s>]/g) ?? []).length >= 2, "both paragraphs render inside the box");
 	});
 
 	it("plain blockquotes pass through untouched — no box for ordinary quotes", () => {
@@ -249,7 +249,7 @@ describe("md-blocks — the restored plain blockquote (owner round, 2026-10-07)"
 		const html = renderToStaticMarkup(
 			<MessageResponse mode="static">{"Before.\n\n> An ordinary quote.\n\nAfter."}</MessageResponse>,
 		);
-		assert.ok(html.includes("border-l-4"), "the left border is back");
+		assert.ok(html.includes("border-s-4"), "the start-side border is back");
 		assert.ok(html.includes("text-muted-foreground italic"), "muted italic — the quote register");
 		assert.ok(!html.includes("md-callout"), "a plain quote is not a callout box");
 	});
@@ -259,9 +259,9 @@ describe("ThinkingBlock — the document band + ⌘T sync (owner rounds, 2026-10
 	it("the row is the document band — round four geometry (owner, 2026-10-07)", () => {
 		const html = renderToStaticMarkup(<ThinkingBlock text="banded" defaultOpen />);
 		assert.ok(html.includes("bg-card"), "the card-color band");
-		assert.ok(html.includes("border-l-[calc(3ch-14px)]"), "narrow rail — 14px gap inside the 3ch inset");
-		assert.ok(html.includes("py-1") && html.includes("pl-[14px]"), "4px band padding");
-		assert.ok(html.includes("pr-4"), "the text wraps early — air at the band's right edge");
+		assert.ok(html.includes("border-s-[calc(3ch-14px)]"), "narrow rail — 14px gap inside the 3ch inset");
+		assert.ok(html.includes("py-1") && html.includes("ps-[14px]"), "4px band padding");
+		assert.ok(html.includes("pe-4"), "the text wraps early — air at the band's end edge");
 		assert.ok(html.includes("w-full"), "full width — no chat side");
 		assert.match(html, /aria-expanded="true"/);
 		assert.ok(html.includes("banded"), "text visible on arrival");
@@ -270,7 +270,7 @@ describe("ThinkingBlock — the document band + ⌘T sync (owner rounds, 2026-10
 	it("in-card rows take no band — the accent step read too light (owner round five)", () => {
 		const html = renderToStaticMarkup(<ThinkingBlock text="in card" inCard />);
 		assert.ok(!html.includes("bg-accent") && !html.includes("bg-card"), "transparent on the card");
-		assert.ok(html.includes("border-l-[calc(3ch-14px)]"), "rail only, same geometry");
+		assert.ok(html.includes("border-s-[calc(3ch-14px)]"), "rail only, same geometry");
 	});
 
 	it("⌘T sets every row — explicit sets stomp individual state, late mounts honor the last set", () => {

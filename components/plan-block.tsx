@@ -16,6 +16,8 @@ import { fitGraphView, fitZoomFor, zoomedGraphView, type Viewport } from "@/comp
 import type { PlanBlockData, PlanNodeStatus, PlanTree } from "@/src/core";
 import { derivedNodeStatus, derivePlanStatuses } from "@/src/core";
 import { Hint } from "@/components/ui/hint";
+import { useT } from "@/components/i18n";
+import { textDirection } from "@/lib/i18n/direction";
 
 /**
  * PLAN BLOCKS — the plan lives in the chat (wave 4): persisted
@@ -509,6 +511,7 @@ export function PlanDiagram({
 	 *  flank's width and the band's height rather than run width-first. */
 	fill?: boolean;
 }) {
+	const t = useT();
 	const layout = useMemo(() => blockLayout(nodes, edges), [nodes, edges]);
 	// Pad only the full-extent render — the plan window's override viewBox is
 	// a deliberate viewport crop, and the popup keeps its own fit margins.
@@ -539,8 +542,11 @@ export function PlanDiagram({
 						? { width: `${vbW}px` }
 						: {}),
 			}}
+			// A diagram, not a layout: never mirrored in RTL — each node title
+			// carries its own text direction instead.
+			direction="ltr"
 			role="img"
-			aria-label="Plan diagram"
+			aria-label={t.cards.plan.diagram}
 		>
 			<defs>
 				<marker
@@ -614,6 +620,7 @@ export function PlanDiagram({
 				const status = statusOf(n.id);
 				const glow = n.id === glowId && !monochrome;
 				const lines = wrapTitle(n.title);
+				const titleDir = textDirection(n.title);
 				// The box hugs its wrapped content; text centers in it —
 				// horizontally too now (text-first sizing round, 2026-10-07).
 				const h = layout.nodeH.get(n.id) ?? NODE_H;
@@ -654,6 +661,7 @@ export function PlanDiagram({
 								x={w / 2}
 								y={y0 + i * LINE_H}
 								textAnchor="middle"
+								direction={titleDir}
 								className={monochrome ? MONO_TEXT : TEXT[status]}
 							>
 								{line}
@@ -677,16 +685,17 @@ export function PlanDiagram({
  */
 export function PlanBlock({ data, onOpen }: { data: PlanBlockData; onOpen: () => void }) {
 	const markerId = useId().replace(/[^a-zA-Z0-9-]/g, "");
+	const t = useT();
 	const statusMap = useMemo(() => new Map(data.nodes.map((n) => [n.id, n.status] as const)), [data]);
 	const statusOf = (id: string): PlanNodeStatus => statusMap.get(id) ?? "upcoming";
 	return (
-		<Hint label="Open the full plan" side="bottom">
+		<Hint label={t.cards.plan.openFull} side="bottom">
 <button
 			type="button"
 			data-testid="plan-block-full"
-			aria-label="Open the full plan"
+			aria-label={t.cards.plan.openFull}
 			onClick={onOpen}
-			className="block w-full text-left"
+			className="block w-full text-start"
 		>
 			{/* pad keeps centered strokes + the glow halo inside the frame; the
 		    cap keeps node text at or below chat prose size while still filling
@@ -749,6 +758,7 @@ const POPUP_PAD = GLOW_REACH;
  * through while the focus owns the session area.
  */
 export function PlanPopup({ messages, onClose }: { messages: readonly PopupMessage[]; onClose: () => void }) {
+	const t = useT();
 	const tree = useMemo(() => latestTree(messages), [messages]);
 	const statuses = useMemo(
 		() => (tree ? derivePlanStatuses(tree, messages as Parameters<typeof derivePlanStatuses>[1]) : null),
@@ -887,21 +897,21 @@ export function PlanPopup({ messages, onClose }: { messages: readonly PopupMessa
 			className="absolute inset-0 z-40 flex flex-col bg-background/80 p-4 backdrop-blur-sm"
 			role="dialog"
 			aria-modal="true"
-			aria-label="The full plan"
+			aria-label={t.cards.plan.fullPlan}
 			onClick={(e) => {
 				if (e.target === e.currentTarget) onClose();
 			}}
 		>
 			<div className="mb-2 flex items-center gap-2">
-				<span className="text-sm font-medium">The plan</span>
-				<span className="text-xs text-muted-foreground">live — statuses derive from your check outcomes</span>
-				<Hint label="Close" binding="escape" side="left">
+				<span className="text-sm font-medium">{t.cards.plan.title}</span>
+				<span className="text-xs text-muted-foreground">{t.cards.plan.liveNote}</span>
+				<Hint label={t.common.actions.close} binding="escape" side="left">
 <button
 					type="button"
 					onClick={onClose}
-					aria-label="Close"
+					aria-label={t.common.actions.close}
 					data-testid="plan-popup-close"
-					className="ml-auto rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+					className="ms-auto rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 				>
 					<XIcon className="size-4" />
 				</button>
@@ -947,22 +957,22 @@ export function PlanPopup({ messages, onClose }: { messages: readonly PopupMessa
 							/>
 						</div>
 						<div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between p-2">
-							<span className="text-xs text-muted-foreground/60">Drag to pan · scroll to zoom</span>
+							<span className="text-xs text-muted-foreground/60">{t.cards.plan.panZoomHint}</span>
 							<div className="flex gap-1">
-								<Hint label="Zoom out" side="bottom">
+								<Hint label={t.cards.plan.zoomOut} side="bottom">
 <button
 									type="button"
-									aria-label="Zoom out"
+									aria-label={t.cards.plan.zoomOut}
 									onClick={() => stepZoom(1 / 1.25)}
 									className="pointer-events-auto flex size-7 items-center justify-center rounded-md border border-border/70 bg-card/80 text-muted-foreground backdrop-blur transition-colors hover:bg-accent hover:text-foreground"
 								>
 									<MinusIcon className="size-3.5" />
 								</button>
 </Hint>
-								<Hint label="Fit plan to screen" side="bottom">
+								<Hint label={t.cards.plan.fit} side="bottom">
 <button
 									type="button"
-									aria-label="Fit plan to screen"
+									aria-label={t.cards.plan.fit}
 									onClick={fitView}
 									data-testid="plan-popup-fit"
 									className="pointer-events-auto flex size-7 items-center justify-center rounded-md border border-border/70 bg-card/80 text-muted-foreground backdrop-blur transition-colors hover:bg-accent hover:text-foreground"
@@ -970,10 +980,10 @@ export function PlanPopup({ messages, onClose }: { messages: readonly PopupMessa
 									<MaximizeIcon className="size-3.5" />
 								</button>
 </Hint>
-								<Hint label="Zoom in" side="bottom">
+								<Hint label={t.cards.plan.zoomIn} side="bottom">
 <button
 									type="button"
-									aria-label="Zoom in"
+									aria-label={t.cards.plan.zoomIn}
 									onClick={() => stepZoom(1.25)}
 									className="pointer-events-auto flex size-7 items-center justify-center rounded-md border border-border/70 bg-card/80 text-muted-foreground backdrop-blur transition-colors hover:bg-accent hover:text-foreground"
 								>
@@ -985,7 +995,7 @@ export function PlanPopup({ messages, onClose }: { messages: readonly PopupMessa
 					</>
 				) : (
 					<div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-						No plan in this session yet.
+						{t.cards.plan.empty}
 					</div>
 				)}
 			</div>

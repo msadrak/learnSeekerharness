@@ -330,7 +330,7 @@ describe("render smoke tests", () => {
 		assert.ok(!yourRow.slice(0, 400).includes("bg-card") && !yourRow.slice(0, 400).includes("bg-accent"), "no band inside the card");
 		// THE RAIL GROUPS (owner correction): the label sits INSIDE the rail —
 		// ownership readable from the rail alone, collapsed or expanded.
-		const railAt = html.indexOf("border-l-[calc(3ch-14px)]");
+		const railAt = html.indexOf("border-s-[calc(3ch-14px)]");
 		const trigAt = html.indexOf("your-thinking-trigger");
 		assert.ok(railAt !== -1 && railAt < trigAt, "the rail opens before the label (same quote)");
 		assert.ok(!html.includes("brightness isn&#x27;t distance"), "the text is hidden until expanded");

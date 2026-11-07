@@ -35,6 +35,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * cannot acquire a later endpoint's key. No file configuration source exists. */
 export function installCustomProviderSource(readAuth = customAuthState): void {
 	let fingerprint: string | undefined;
+	// The registered credential source can rebuild the collection; a fresh
+	// collection has no custom route yet, so the fingerprint is per target.
+	let target: object | undefined;
 	configureProviderSource({
 		isCustom: (id) => id === CUSTOM_PROVIDER.id,
 		sync(models) {
@@ -45,6 +48,7 @@ export function installCustomProviderSource(readAuth = customAuthState): void {
 			const key = auth.key;
 			const ready = customProviderUsable(cp) && auth.readable && customBindingMatches(cp, auth.binding) && (cp.authMode === "keyless" || customKeyAuthorized(cp, auth));
 			const next = JSON.stringify([cp, auth]); // Private in-memory fingerprint, never a public revision.
+			if (models !== target) { fingerprint = undefined; target = models; }
 			if (next === fingerprint) return;
 			if (ready) models.setProvider(buildOpenAiCompatibleProvider({ ...cp, baseUrl: cp.baseUrl, models: cp.models ?? [], apiKey: key }));
 			else models.deleteProvider(CUSTOM_PROVIDER.id);

@@ -15,11 +15,9 @@
 import { DEFAULT_THINKING_ORDER } from "@/src/core";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 
-/** Display labels for the levels (shared by every trigger that shows
- *  one). Lowercase, always (owner refinement round, 2026-09-24): the
- *  level strings ARE the display form — the settings menus render them
- *  raw, so the composer pill and setup dialog must match, never Title
- *  Case. */
+/** English display labels for the levels (the level ids themselves,
+ *  lowercase). UI text reads `t.common.thinkingLevels`; this map remains
+ *  the canonical level list for consumers that need its keys. */
 export const THINKING_LABEL: Record<string, string> = {
 	off: "off",
 	minimal: "minimal",

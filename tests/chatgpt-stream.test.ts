@@ -26,6 +26,7 @@ before(async () => {
 	assert(model);
 	process.env.OPENAI_API_KEY = "sk-scratch-must-never-be-used";
 	Object.defineProperty(process, "connected", { configurable: true, value: true });
+	process.env.LH_DESKTOP_SERVER = "1";
 	Object.defineProperty(process, "send", { configurable: true, value: (message: any, callback?: () => void) => {
 		queueMicrotask(() => {
 			ipc({ channel: "lh:chatgpt", id: message.id, op: message.op,
@@ -47,6 +48,7 @@ after(() => {
 	globalThis.fetch = realFetch;
 	if (originalSend) Object.defineProperty(process, "send", originalSend); else delete process.send;
 	if (originalConnected) Object.defineProperty(process, "connected", originalConnected); else delete (process as { connected?: boolean }).connected;
+	delete process.env.LH_DESKTOP_SERVER;
 	if (originalKey === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = originalKey;
 });
 const usage = { input_tokens: 10, output_tokens: 4, total_tokens: 14, input_tokens_details: { cached_tokens: 0 }, output_tokens_details: { reasoning_tokens: 0 } };

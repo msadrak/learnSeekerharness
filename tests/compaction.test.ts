@@ -8,6 +8,7 @@ import {
 	buildCompactionPrompt,
 	compactionCutIndex,
 	estimateTokens,
+	hasProbeDone,
 	keptIndexFor,
 	newCompactionMarker,
 	newUserMessage,
@@ -18,7 +19,8 @@ import {
 	type LhMessage,
 	type LhMarkerMessage,
 } from "../src/core/index.ts";
-import type { AssistantMessage, ToolResultMessage } from "@earendil-works/pi-ai";
+import type { AssistantMessage, Model, ToolResultMessage } from "@earendil-works/pi-ai";
+import { transformMessages } from "@earendil-works/pi-ai/api/transform-messages";
 import { projectView } from "../src/core/view.ts";
 
 /**
@@ -312,6 +314,31 @@ describe("toLlmMessages honors the cut", () => {
 		const flat = JSON.stringify(out);
 		assert.ok(flat.includes("FRESH"));
 		assert.ok(!flat.includes("OLD"), "the superseded marker dropped with its span");
+	});
+});
+
+describe("a failed assistant message's tool calls (cut stream, 2026-10-31 incident)", () => {
+	const failed = (stopReason: "error" | "aborted"): LhMessage =>
+		({ ...(assistantWithCall("a2", "call_cut") as object), stopReason }) as never;
+
+	for (const stopReason of ["error", "aborted"] as const) {
+		it(`stopReason "${stopReason}": the provider wire carries neither the call nor an orphan result for it`, () => {
+			const record = [newUserMessage("go"), assistantWithCall("a1", "call_ok"), resultFor("call_ok", "4"), failed(stopReason), newUserMessage("?")];
+			const model = { api: "anthropic-messages", provider: "anthropic", id: "m", input: ["text"] } as unknown as Model<"anthropic-messages">;
+			const wire = transformMessages(toLlmMessages(record as never), model);
+			const callIds = new Set(wire.flatMap((m) => (m.role === "assistant" ? m.content.filter((b) => b.type === "toolCall").map((b) => b.id) : [])));
+			const resultIds = wire.flatMap((m) => (m.role === "toolResult" ? [m.toolCallId] : []));
+			assert.deepEqual(resultIds, ["call_ok"], "every result answers a replayed call");
+			assert.ok(!callIds.has("call_cut"));
+		});
+	}
+
+	it("a probe_done call inside a failed message does not conclude the probe", () => {
+		const probeDone = (stopReason: string): LhMessage =>
+			({ id: "p", role: "assistant", content: [{ type: "toolCall", id: "call_pd", name: "probe_done", arguments: {} }], stopReason, timestamp: 1 }) as never;
+		const done = { ...(resultFor("call_pd", "ok") as object), toolName: "probe_done" } as never;
+		assert.equal(hasProbeDone([probeDone("error"), done]), false);
+		assert.equal(hasProbeDone([probeDone("toolUse"), done]), true);
 	});
 });
 

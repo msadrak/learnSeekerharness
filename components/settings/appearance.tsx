@@ -21,6 +21,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { FACTORY_SETTINGS, type AppearanceSettings } from "@/src/core";
+import { languageDirection } from "@/lib/i18n/direction";
 
 /** The resolved, fully-concrete appearance view (delta + factory merged). */
 export function resolveAppearance(delta: AppearanceSettings | undefined) {
@@ -31,6 +32,7 @@ export function resolveAppearance(delta: AppearanceSettings | undefined) {
 		fontFamily: delta?.fontFamily ?? f.fontFamily,
 		proseFontSize: delta?.proseFontSize ?? f.proseFontSize,
 		sessionNameSerif: delta?.sessionNameSerif ?? f.sessionNameSerif,
+		language: delta?.language ?? f.language,
 		mdRendering: {
 			headingWeight: delta?.mdRendering?.headingWeight ?? f.mdRendering.headingWeight,
 			boldColor: delta?.mdRendering?.boldColor ?? f.mdRendering.boldColor,
@@ -78,7 +80,9 @@ export function appearanceVars(a: ReturnType<typeof resolveAppearance>): Record<
 	const vars: Record<string, string> = {};
 	if (a.background !== null) Object.assign(vars, derivedPalette(a.background));
 	if (a.fontFamily !== null) {
-		vars["--font-prose"] = `"${a.fontFamily}", var(--font-sans3), ui-sans-serif, system-ui, sans-serif`;
+		// Vazirmatn before the next/font var: its CLS fallback is Arial,
+		// which would swallow Persian glyphs (see globals.css font stacks).
+		vars["--font-prose"] = `"${a.fontFamily}", "Source Sans 3", var(--font-vazirmatn), var(--font-sans3), ui-sans-serif, system-ui, sans-serif`;
 	}
 	// The ONE documented reading-size variable (typography round 4): prose,
 	// inputs, and session titles all read it, so one setProperty moves them.
@@ -123,8 +127,17 @@ export function useAppearance() {
 	return useContext(AppearanceContext);
 }
 
-export function AppearanceProvider({ children }: { children: React.ReactNode }) {
-	const [delta, setDelta] = useState<AppearanceSettings | undefined>(undefined);
+export function AppearanceProvider({
+	children,
+	initialAppearance,
+}: {
+	children: React.ReactNode;
+	/** The record's appearance section, read server-side by the root
+	 *  layout — the first frame renders in the right language/direction. */
+	initialAppearance?: AppearanceSettings;
+}) {
+	const [delta, setDelta] = useState<AppearanceSettings | undefined>(initialAppearance);
+	const language = resolveAppearance(delta).language;
 	const appliedRef = useRef<string>("");
 
 	// The vars apply on every change — stringified as the change signal.
@@ -150,6 +163,14 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
 			appliedNamesRef.current.add(name);
 		}
 	}, [key, vars]);
+
+	// The UI language lives on <html> (lang + dir): the layout renders the
+	// server-read value; a live switch moves both here.
+	useEffect(() => {
+		const root = document.documentElement;
+		root.lang = language;
+		root.dir = languageDirection(language);
+	}, [language]);
 
 	// One fetch per app load: the record (sanitized server-side) carries the
 	// delta; resolution happens here against the compiled factory.

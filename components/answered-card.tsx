@@ -6,6 +6,9 @@ import { GlyphMark } from "@/components/ui/glyph-mark";
 import { ThinkingBlock } from "@/components/thinking-block";
 import { PathText } from "@/components/file-path-chip";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n";
+import { textDirection } from "@/lib/i18n/direction";
+import { BidiText } from "@/components/bidi-text";
 import { ToolContentResponse } from "@/components/ai-elements/message";
 import type { QuestionAnswerData } from "@/src/core";
 import { answerForPresentation, parseAskInput, parseQuizInput } from "@/src/core";
@@ -22,11 +25,12 @@ import { answerForPresentation, parseAskInput, parseQuizInput } from "@/src/core
  */
 export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionAnswerData; input?: unknown }) {
 	const answer = answerForPresentation(savedAnswer, input);
+	const t = useT();
 	const [whyOpen, setWhyOpen] = useState(false); // the tucked explanation (predictions, owner 2026-10-03)
 	if (answer.dismissed) {
 		return (
 			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
-				<span className="font-medium">{answer.questionText}</span> — skipped
+				<span dir={textDirection(answer.questionText)} className="font-medium">{answer.questionText}</span> — {t.cards.answered.skipped}
 			</div>
 		);
 	}
@@ -53,7 +57,7 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 		    ThinkingBlock, instead of an inset inside the answer. Same muted
 		    rail as before; the label is now plain "Your thinking". */}
 		{answer.readingThinking && (
-			<ThinkingBlock testId="reading-thinking-block" label="YOUR THINKING" text={answer.readingThinking} defaultOpen />
+			<ThinkingBlock testId="reading-thinking-block" label={t.chat.thinking.yourThinking} text={answer.readingThinking} defaultOpen />
 		)}
 		{/* [&>*:last-child]:mb-0 (owner round, 2026-10-07): on ask cards the
 		    thinking row is the last child — its my-3 stacked with the card's
@@ -68,23 +72,23 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 			    cards label Probe/Recall — the phase boundary visible in the
 			    transcript. No `tool` on old records: kind labels as before. */}
 				{answer.tool === "probe"
-					? "Probe"
+					? t.cards.kinds.probe
 					: answer.tool === "recall"
-						? "Recall"
+						? t.cards.kinds.recall
 						: isQuiz
 								? answer.questionType === "predict"
-									? "Prediction"
-									: "Check"
+									? t.cards.kinds.prediction
+									: t.cards.kinds.check
 									: isExplain
-										? "Explain"
-											: "Question"}
+										? t.cards.kinds.explain
+											: t.cards.kinds.question}
 				{isQuiz &&
 					(answer.dontKnow ? (
-						<span className="rounded bg-muted px-1.5 py-0.5">didn't know</span>
+						<span className="rounded bg-muted px-1.5 py-0.5">{t.cards.answered.didntKnow}</span>
 					) : answer.correct ? (
-						<span className="rounded bg-green-500/15 px-1.5 py-0.5 text-green-500">correct</span>
+						<span className="rounded bg-green-500/15 px-1.5 py-0.5 text-green-500">{t.cards.answered.correct}</span>
 					) : (
-						<span className="rounded bg-red-500/15 px-1.5 py-0.5 text-red-500">incorrect</span>
+						<span className="rounded bg-red-500/15 px-1.5 py-0.5 text-red-500">{t.cards.answered.incorrect}</span>
 					))}
 			</div>
 			<div className="mb-3 font-medium">
@@ -154,13 +158,17 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 							data-testid="answered-other"
 							className="flex items-center gap-2 rounded-lg border border-primary bg-accent px-3 py-1.5"
 						>
-							<span>“<PathText text={answer.other} />”</span>
+							<span dir={textDirection(answer.other)}><BidiText text={t.cards.answered.quote(answer.other)} /></span>
 						</div>
 					)}
 				</div>
 			)}
 
-			{answer.text && <div className="lh-prose mt-2 whitespace-pre-wrap">“<PathText text={answer.text} />”</div>}
+			{answer.text && (
+				<div dir={textDirection(answer.text)} className="lh-prose mt-2 whitespace-pre-wrap">
+					<BidiText text={t.cards.answered.quote(answer.text)} />
+				</div>
+			)}
 
 			{/* The confidence record (owner round 6): the slider's rail, disc
 			    removed — the missing handle itself says "this is a record, not a
@@ -172,13 +180,13 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 			{isQuiz && answer.confidence != null && (
 				<div className="mt-3 flex items-center gap-3" data-testid="answered-confidence">
 					<ConfidenceRail value={answer.confidence} className="min-w-0 flex-1" />
-					<span className="w-9 shrink-0 text-right font-mono text-sm tabular-nums text-muted-foreground">
+					<span className="w-9 shrink-0 text-end font-mono text-sm tabular-nums text-muted-foreground">
 						{answer.confidence}%
 					</span>
 				</div>
 			)}
 			{answer.dontKnow && isQuiz && (
-				<div className="mt-2 text-sm text-muted-foreground">Answered “I don't know”.</div>
+				<div className="mt-2 text-sm text-muted-foreground">{t.cards.answered.answeredDontKnow}</div>
 			)}
 
 			{(answer.thinking ?? answer.note) && (
@@ -188,7 +196,7 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 				    the accent lift read too light); rail only, heights identical. */
 				<ThinkingBlock
 					testId="your-thinking"
-					label="YOUR THINKING"
+					label={t.chat.thinking.yourThinking}
 					text={answer.thinking ?? answer.note ?? ""}
 					inCard
 				/>
@@ -208,11 +216,11 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 						onClick={() => setWhyOpen((v) => !v)}
 						className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
 					>
-						{whyOpen ? "Hide why" : "Why"}
+						{whyOpen ? t.cards.answered.hideWhy : t.cards.answered.why}
 					</button>
 					{whyOpen && (
 						<div className="mt-1.5 rounded-lg bg-muted py-2 text-sm text-foreground/50">
-							<span className="font-medium text-muted-foreground">Why: </span>
+							<span className="font-medium text-muted-foreground">{t.cards.answered.whyLabel}</span>
 							{/* Keep the first paragraph beside the label, not every paragraph:
 							   later paragraphs must retain their recovered document structure. */}
 							<ToolContentResponse className="inline [&>p:first-child]:inline [&>p:first-child]:m-0">{answer.explanation}</ToolContentResponse>
@@ -226,7 +234,7 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 			    the model's next reply IS the grading. */}
 			{isExplain && answer.committed && (
 				<div className="mt-3 rounded-lg bg-muted py-2 text-sm text-muted-foreground">
-					<span className="font-medium text-foreground">The answer: </span>
+					<span className="font-medium text-foreground">{t.cards.answered.theAnswer}</span>
 					<ToolContentResponse className="inline [&>p:first-child]:inline [&>p:first-child]:m-0">{answer.committed}</ToolContentResponse>
 				</div>
 			)}

@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
 import { blurAfterPointerClick } from "@/components/focus-hygiene";
 import { cn } from "@/lib/utils";
-import { PathText } from "@/components/file-path-chip";
+import { useT } from "@/components/i18n";
+import { textDirection } from "@/lib/i18n/direction";
+import { BidiText } from "@/components/bidi-text";
 
 /** The unified user-thinking row (owner round, 2026-10-05): ONE visual
  *  language for every surface where the learner's own thinking renders —
@@ -67,7 +69,7 @@ function subscribeUserThinking(fn: (open: boolean) => void): () => void {
 }
 
 export function ThinkingBlock({
-	label = "YOUR THINKING",
+	label,
 	text,
 	testId,
 	dataCommit,
@@ -84,6 +86,7 @@ export function ThinkingBlock({
 	/** On the card's own background: no band (the accent read too light). */
 	inCard?: boolean;
 }) {
+	const t = useT();
 	const [open, setOpen] = useState(() => resolveUserThinkingOpen(defaultOpen));
 	// ⌘T: an explicit global set overrides every row (once set, rows re-sync).
 	const syncedRef = useRef(false);
@@ -110,7 +113,7 @@ export function ThinkingBlock({
 				// chevron law); the rail narrows (14px gap), padding 4px, pr-4
 				// keeps the text off the band's right edge. In-card rows take
 				// NO band — the accent lift read too light; rail only.
-				"lh-card-enter my-2 w-full border-l-[calc(3ch-14px)] border-muted-foreground/30 py-1 pl-[14px] pr-4 font-ui text-xs",
+				"lh-card-enter my-2 w-full border-s-[calc(3ch-14px)] border-muted-foreground/30 py-1 ps-[14px] pe-4 font-ui text-xs",
 				inCard ? "" : "bg-card",
 			)}
 		>
@@ -124,11 +127,11 @@ export function ThinkingBlock({
 				aria-expanded={open}
 				className="flex w-full items-center gap-2 font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
 			>
-				{label}
+				{label ?? t.chat.thinking.yourThinking}
 				<ChevronDownIcon className={cn("size-4 shrink-0 transition-transform", open ? "rotate-180" : "rotate-0")} />
 			</button>
 			{open && (
-				<span className="lh-prose mt-1.5 block whitespace-pre-wrap text-[15px] italic text-foreground/50"><PathText text={text} /></span>
+				<span dir={textDirection(text)} className="lh-prose mt-1.5 block whitespace-pre-wrap text-[15px] italic text-foreground/50"><BidiText text={text} /></span>
 			)}
 		</div>
 	);

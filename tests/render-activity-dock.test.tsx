@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { ActivitySection, formatElapsed, toBlobs, type ActivityFeed, type FeedExtraction } from "../components/activity-dock.tsx";
 import { formatTokens, formatUsd } from "../components/usage-format.ts";
+import { en } from "../lib/i18n/messages/index.ts";
 import { jobCost } from "../src/server/pricing.ts";
 
 // The section's pure layer: folds, formatting, and blob order — then the SSR
@@ -39,7 +40,7 @@ describe("activity dock pure layer", () => {
 			jobs: [job({ id: "new", createdAt: new Date(NOW - 10_000).toISOString() })],
 			extractions: [{ id: "cx", chatId: "cx", title: "Old lesson", phase: "auditing", startedAt: NOW - 100_000 }],
 		};
-		const blobs = toBlobs(feed);
+		const blobs = toBlobs(feed, en);
 		assert.equal(blobs.length, 2);
 		const first = blobs[0]!;
 		assert.equal(first.id, "cx"); // extraction started first
@@ -53,7 +54,7 @@ describe("activity dock pure layer", () => {
 			{ id: "src_a#1", chatId: "src_a", part: { i: 1, n: 2 }, title: "notes.md · 1/2", phase: "extracting", startedAt: NOW - 1000 },
 			{ id: "src_a#2", chatId: "src_a", part: { i: 2, n: 2 }, title: "notes.md · 2/2", phase: "queued", startedAt: NOW - 500 },
 		] as FeedExtraction[];
-		const blobs = toBlobs({ jobs: [], extractions: rows });
+		const blobs = toBlobs({ jobs: [], extractions: rows }, en);
 		assert.equal(blobs.length, 2, "one blob per chunk job");
 		assert.deepEqual(blobs.map((b) => b.id), ["src_a#1", "src_a#2"], "unique row ids — no duplicate React keys");
 		assert.ok(blobs.every((b) => b.chatId === "src_a"), "abort/link identity stays source-scoped");
@@ -71,12 +72,12 @@ describe("activity dock pure layer", () => {
 				steps: 2,
 			},
 		});
-		const blob = toBlobs({ jobs: [priced], extractions: [] })[0]!;
+		const blob = toBlobs({ jobs: [priced], extractions: [] }, en)[0]!;
 		// Pi-normalized fresh input is priced directly, never reduced by reads.
 		assert.equal(blob.cost, 0.00215);
-		const missingProjection = toBlobs({ jobs: [{ ...priced, costUsd: undefined }], extractions: [] })[0]!;
+		const missingProjection = toBlobs({ jobs: [{ ...priced, costUsd: undefined }], extractions: [] }, en)[0]!;
 		assert.equal(missingProjection.cost, null, "the browser must not invent a fallback price");
-		const absent = toBlobs({ jobs: [job()], extractions: [] })[0]!;
+		const absent = toBlobs({ jobs: [job()], extractions: [] }, en)[0]!;
 		assert.equal(absent.cost, null);
 	});
 
@@ -87,7 +88,7 @@ describe("activity dock pure layer", () => {
 			// the runner composes the envelope's error verbatim (invariant tail)
 			error: "No OpenRouter key is set — add one in Settings → Keys",
 		});
-		const blob = toBlobs({ jobs: [refused], extractions: [] })[0]!;
+		const blob = toBlobs({ jobs: [refused], extractions: [] }, en)[0]!;
 		assert.equal(blob.activity, "needs a provider key");
 	});
 
@@ -97,11 +98,11 @@ describe("activity dock pure layer", () => {
 			activity: "failed",
 			error: "No model configured — set up your models first (missing: vision)",
 		});
-		const blob = toBlobs({ jobs: [refused], extractions: [] })[0]!;
+		const blob = toBlobs({ jobs: [refused], extractions: [] }, en)[0]!;
 		assert.equal(blob.activity, "needs model setup");
 		// A real failure keeps the runner's honest wording.
 		const crashed = job({ status: "error", activity: "failed", error: "FAILED: headless crashed" });
-		const real = toBlobs({ jobs: [crashed], extractions: [] })[0]!;
+		const real = toBlobs({ jobs: [crashed], extractions: [] }, en)[0]!;
 		assert.equal(real.activity, "failed");
 	});
 
@@ -121,18 +122,18 @@ describe("activity dock pure layer", () => {
 			// live-catalog join riding the feed — the dock never resolves it.
 			contextLimit: 131_072,
 		});
-		const blob = toBlobs({ jobs: [withLast], extractions: [] })[0]!;
+		const blob = toBlobs({ jobs: [withLast], extractions: [] }, en)[0]!;
 		assert.equal(blob.context?.used, 92_000);
 		assert.equal(blob.context?.limit, 131_072);
 		// No lastStep yet (capture pending) → "—", even though usage exists.
-		const stripped = toBlobs({ jobs: [job({ usage: { ...base } })], extractions: [] })[0]!;
+		const stripped = toBlobs({ jobs: [job({ usage: { ...base } })], extractions: [] }, en)[0]!;
 		assert.equal(stripped.context, null);
 		// Model missing from the live catalog (historical session,
 		// package update) → the feed carries null → no context line.
 		const uncatalogued = toBlobs({
 			jobs: [job({ usage: { ...base, model: "nope/unknown", lastStep: step(5, 5), } })],
 			extractions: [],
-		})[0]!;
+		}, en)[0]!;
 		assert.equal(uncatalogued.context, null);
 		// The numerator is the same cache-inclusive fold the session meter
 		// uses (context-meter audit, owner 2026-09-23): provider "input"
@@ -155,7 +156,7 @@ describe("activity dock pure layer", () => {
 				}),
 			],
 			extractions: [],
-		})[0]!;
+		}, en)[0]!;
 		assert.equal(cached.context?.used, 160_500);
 		assert.equal(cached.context?.limit, 200_000);
 	});
@@ -164,15 +165,15 @@ describe("activity dock pure layer", () => {
 		const blob = toBlobs({
 			jobs: [],
 			extractions: [{ id: "cx", chatId: "cx", title: "T", phase: "extracting", startedAt: NOW }],
-		})[0]!;
+		}, en)[0]!;
 		assert.equal(blob.cost, null);
 		assert.equal(blob.context, null);
 	});
 
 	it("formatElapsed ticks compactly", () => {
-		assert.equal(formatElapsed(45_000), "45s");
-		assert.equal(formatElapsed(184_000), "3m 04s");
-		assert.equal(formatElapsed(4_320_000), "1h 12m");
+		assert.equal(formatElapsed(45_000, en), "45s");
+		assert.equal(formatElapsed(184_000, en), "3m 04s");
+		assert.equal(formatElapsed(4_320_000, en), "1h 12m");
 	});
 
 	it("formatUsd keeps four decimals under $1, two above", () => {

@@ -62,6 +62,15 @@ it("POST includes captured files and relative identities, preserving provider de
 	};
 	assert.deepEqual(await postNotesImport([file]), [refused]);
 });
+for (const kind of ["network", "non-JSON", "non-2xx", "malformed"] as const) it(`${kind} response rejects rather than false success`, async () => {
+	globalThis.fetch = async () => {
+		if (kind === "network") throw new Error("synthetic offline");
+		if (kind === "non-JSON") return new Response("not JSON");
+		if (kind === "non-2xx") return Response.json({ error: "synthetic refused" }, { status: 503 });
+		return Response.json({ results: [] });
+	};
+	await assert.rejects(postNotesImport([files[0]!]));
+});
 
 for (const outcome of ["completed", "failed", "partial", "aborted", "busy"] as const) it(`${outcome} preserves escaped raw failure details without result/retry controls`, async () => {
 	const file = new File(["notes"], "<script>notes.md");

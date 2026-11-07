@@ -55,6 +55,7 @@ import { select } from "d3-selection";
 import { zoom, zoomIdentity, type ZoomBehavior, type ZoomTransform } from "d3-zoom";
 import type { Simulation, SimulationLinkDatum } from "d3-force";
 import { clusterHue, type Pt } from "./cluster-geometry.ts";
+import { textDirection } from "@/lib/i18n/direction";
 import {
 	CHARGE_STRENGTH,
 	CLUSTER_PULL_STRENGTH,
@@ -552,6 +553,8 @@ function drawNameLines(
 	context.fillStyle = color;
 	context.textAlign = "center";
 	context.textBaseline = "top";
+	// Persian names shape/order right-to-left; the geometry stays centered.
+	context.direction = textDirection(lines.join(""));
 	const firstTop = y + world.nodeR + world.labelGap;
 	for (let i = 0; i < lines.length; i++) {
 		context.fillText(lines[i]!, x, firstTop + i * world.labelSize * LABEL_LINE_HEIGHT);
@@ -1727,6 +1730,7 @@ export class GraphCanvasRenderer {
 				if (!rm.lines) continue;
 				ctx.fillStyle = `hsla(${rm.hue}, 55%, 78%, 0.85)`;
 				const firstOffset = (-(rm.lines.length - 1) / 2) * lineH;
+				ctx.direction = textDirection(rm.lines.join(""));
 				for (let i = 0; i < rm.lines.length; i++) {
 					ctx.fillText(rm.lines[i]!, rm.cx, rm.cy + firstOffset + i * lineH);
 				}

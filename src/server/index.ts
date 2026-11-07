@@ -55,3 +55,8 @@ export { claudeCodeInstallationResponse } from "./claude-code.ts";
 // No import side effects; the boot sync lives in stores.ts.
 export * from "./custom-provider.ts";
 export { customProviderGet, customProviderMutation } from "./custom-provider-http.ts";
+// Custom (manual) providers + subscription (OAuth plan) logins — the
+// custom-providers / subscriptions waves. Importing providers.ts installs
+// the credential store + custom providers into piModels().
+export * from "./providers.ts";
+export * from "./subscriptions.ts";

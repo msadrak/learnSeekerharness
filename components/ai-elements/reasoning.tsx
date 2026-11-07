@@ -24,8 +24,9 @@ import {
 import { Streamdown } from "streamdown";
 
 import { transformMathDelimiters } from "@/src/core";
-import { streamdownPlugins, streamdownRemend } from "./message";
+import { streamdownPlugins, streamdownRehypePlugins, streamdownRemend } from "./message";
 import { mdComponents } from "@/components/md-blocks";
+import { useT } from "@/components/i18n";
 import { Shimmer } from "./shimmer";
 
 interface ReasoningContextValue {
@@ -134,21 +135,25 @@ export type ReasoningTriggerProps = ComponentProps<
    for a few seconds"), bookkeeping for information we knowingly lose. The
    label pairs with the user's collapsed "Your thinking" rows — one
    language; motion (spinner + shimmer) stays the working signal. */
-const defaultGetThinkingMessage = (isStreaming: boolean) => {
+const defaultGetThinkingMessage = (
+  isStreaming: boolean,
+  labels: { thinking: string; agentsThinking: string }
+) => {
   if (isStreaming) {
-    return <Shimmer duration={1}>Thinking...</Shimmer>;
+    return <Shimmer duration={1}>{labels.thinking}</Shimmer>;
   }
-  return <p>AGENT’S THINKING</p>;
+  return <p>{labels.agentsThinking}</p>;
 };
 
 export const ReasoningTrigger = memo(
   ({
     className,
     children,
-    getThinkingMessage = defaultGetThinkingMessage,
+    getThinkingMessage,
     ...props
   }: ReasoningTriggerProps) => {
     const { isStreaming, isOpen } = useReasoning();
+    const t = useT();
 
     return (
       <CollapsibleTrigger
@@ -175,8 +180,10 @@ export const ReasoningTrigger = memo(
                 the component default (h-3) — IDENTICAL to the placeholder
                 spinner (owner, 2026-10-02): the handoff between the two
                 states must be visually seamless, one size everywhere. */}
-            {isStreaming && <BrailleSpinner label="Thinking" />}
-            {getThinkingMessage(isStreaming)}
+            {isStreaming && <BrailleSpinner label={t.chat.reasoning.spinner} />}
+            {getThinkingMessage
+              ? getThinkingMessage(isStreaming)
+              : defaultGetThinkingMessage(isStreaming, t.chat.reasoning)}
             <ChevronDownIcon
               className={cn(
                 "size-4 transition-transform",
@@ -200,20 +207,29 @@ export type ReasoningContentProps = ComponentProps<
 // remark-breaks) — reasoning renders the same contract as message text.
 
 export const ReasoningContent = memo(
-  ({ className, children, ...props }: ReasoningContentProps) => (
-    <CollapsibleContent
-      className={cn(
-        "mt-4 text-sm",
-        "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-muted-foreground outline-none data-[state=closed]:animate-out data-[state=open]:animate-in",
-        className
-      )}
-      {...props}
-    >
-      <Streamdown components={mdComponents} plugins={streamdownPlugins} remend={streamdownRemend}>
-        {transformMathDelimiters(children)}
-      </Streamdown>
-    </CollapsibleContent>
-  )
+  ({ className, children, ...props }: ReasoningContentProps) => {
+    const t = useT();
+    return (
+      <CollapsibleContent
+        className={cn(
+          "mt-4 text-sm",
+          "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-muted-foreground outline-none data-[state=closed]:animate-out data-[state=open]:animate-in",
+          className
+        )}
+        {...props}
+      >
+        <Streamdown
+          components={mdComponents}
+          plugins={streamdownPlugins}
+          remend={streamdownRemend}
+          rehypePlugins={streamdownRehypePlugins}
+          translations={t.common.markdown}
+        >
+          {transformMathDelimiters(children)}
+        </Streamdown>
+      </CollapsibleContent>
+    );
+  }
 );
 
 Reasoning.displayName = "Reasoning";

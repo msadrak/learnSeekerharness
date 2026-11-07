@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type ChangeEvent } from "react";
 import { WaypointsIcon } from "lucide-react";
 import { Hint } from "@/components/ui/hint";
+import { textDirection } from "@/lib/i18n/direction";
 import { createNotesImportQueue, EMPTY_IMPORT_QUEUE, notesPath } from "./notes-import-queue";
 
 export { MAX_IMPORT_BYTES } from "@/lib/notes-import-limits.ts";
@@ -110,9 +111,9 @@ export function NotesImportControl({ importing, onImportFiles }: { importing: bo
 				</button>
 			</Hint>
 			{open && (
-				<div role="menu" aria-label="Extract files into the graph" aria-describedby={hintId} className="absolute right-0 top-full z-50 mt-1 w-52 rounded-lg border bg-card p-1 shadow-lg">
+				<div role="menu" aria-label="Extract files into the graph" aria-describedby={hintId} className="absolute inset-e-0 top-full z-50 mt-1 w-52 rounded-lg border bg-card p-1 shadow-lg">
 					<div role="none"><p id={hintId} className="px-2 py-1.5 text-xs leading-relaxed text-muted-foreground">For lessons, attach material to a session instead.</p></div>
-					{choices.map(([label, input]) => <button key={label} type="button" role="menuitem" className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-accent"
+					{choices.map(([label, input]) => <button key={label} type="button" role="menuitem" className="block w-full rounded px-2 py-1 text-start text-xs hover:bg-accent"
 						onClick={() => { setOpen(false); input.current?.click(); }}>{label}</button>)}
 				</div>
 			)}
@@ -121,8 +122,10 @@ export function NotesImportControl({ importing, onImportFiles }: { importing: bo
 }
 
 export function NotesImportErrors({ errors }: { errors: readonly string[] }) {
-	return <>{errors.map((error, i) => <p key={i} role="alert" className="max-w-full whitespace-pre-wrap break-words text-xs text-red-400">{error}</p>)}</>;
+	return <>{errors.map((error, i) => (
+		<p key={i} role="alert" dir={textDirection(error)} className="max-w-full whitespace-pre-wrap break-words text-xs text-red-400">{error}</p>
+	))}</>;
 }
 export function NotesImportNotices({ notices }: { notices: readonly string[] }) {
-	return <>{notices.map((notice, i) => <p key={i} role="status" className="max-w-full whitespace-pre-wrap break-words text-xs text-muted-foreground">{notice}</p>)}</>;
+	return <>{notices.map((notice, i) => <p key={i} role="status" dir={textDirection(notice)} className="max-w-full whitespace-pre-wrap break-words text-xs text-muted-foreground">{notice}</p>)}</>;
 }

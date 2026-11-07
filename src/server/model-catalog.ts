@@ -38,7 +38,7 @@ function connectionModel(provider: string, id: string): Model<Api> | undefined {
 function connectionProviderIds(): string[] { return [...piModels().getProviders().map((p) => p.id), "chatgpt", ...NATIVE_SUBSCRIPTIONS.map((p) => p.logicalId)]; }
 import { settingsStore } from "../store/settings.ts";
 import { effectiveSettings } from "./stores.ts";
-import { keyValue } from "./keys.ts";
+import { presenceContext, providerKeyPresent } from "./keys.ts";
 import type { ChatSettings } from "../core/contracts/chat.ts";
 import type {
 	CatalogDefaults,
@@ -143,25 +143,34 @@ export function catalogSlots(): SlotPins {
 }
 
 /** The providers surface (model slots wave, 2026-09-20): one row per
- *  plain-key model provider (core/auth-keys.ts's pi-ai-derived table),
- *  with keyPresent read env-wins through the keys seam, fresh per call —
- *  saving a key immediately federates the provider into the picker. */
+ *  plain-key model provider (core/auth-keys.ts's pi-ai-derived table) plus
+ *  every OAuth-subscription and user-declared custom provider, with
+ *  keyPresent = "would authenticate at request time" (keys.ts
+ *  providerKeyPresent: env-wins key, stored subscription login, or a
+ *  custom endpoint), fresh per call — saving a key or finishing a login
+ *  immediately federates the provider into the picker. OAuth/custom rows
+ *  carry no envVar. */
 export function catalogProviders(): CatalogProvider[] {
-	piModels();
-	return AUTH_PROVIDER_KEYS.map((p) => ({
-		id: p.id,
-		envVar: p.envVar,
-		keyPresent: keyValue(p.envVar) !== undefined,
-	})).concat([
-		{ id: "chatgpt", envVar: "", keyPresent: chatGPTConnected() },
-		{ id: CLAUDE_CODE_PROVIDER, envVar: "", keyPresent: claudeCodeAvailable() },
-		...NATIVE_SUBSCRIPTIONS.map((p) => ({ id: p.logicalId, envVar: "", keyPresent: nativeSubscriptionConnected(p.providerId) })),
-		// The custom endpoint: a row only when usable (base URL set). keyPresent
-		// reflects usability, not key presence (keyless local servers are allowed).
-		...(customProviderUsable(effectiveSettings().customProvider)
-			? [{ id: CUSTOM_PROVIDER.id, envVar: CUSTOM_PROVIDER.envVar, keyPresent: customProviderAvailable() }]
-			: []),
-	]).sort((a, b) => a.id.localeCompare(b.id));
+	const ctx = presenceContext();
+	const rows = new Map<string, CatalogProvider>();
+	for (const p of AUTH_PROVIDER_KEYS) {
+		rows.set(p.id, { id: p.id, envVar: p.envVar, keyPresent: providerKeyPresent(p.id, ctx) });
+	}
+	for (const provider of piModels().getProviders()) {
+		if (rows.has(provider.id) || !(provider.auth.oauth || ctx.custom.has(provider.id))) continue;
+		rows.set(provider.id, { id: provider.id, envVar: "", keyPresent: providerKeyPresent(provider.id, ctx) });
+	}
+	rows.set("chatgpt", { id: "chatgpt", envVar: "", keyPresent: chatGPTConnected() });
+	rows.set(CLAUDE_CODE_PROVIDER, { id: CLAUDE_CODE_PROVIDER, envVar: "", keyPresent: claudeCodeAvailable() });
+	for (const p of NATIVE_SUBSCRIPTIONS) rows.set(p.logicalId, { id: p.logicalId, envVar: "", keyPresent: nativeSubscriptionConnected(p.providerId) });
+	// The custom endpoint: a row only when usable (base URL set). keyPresent
+	// reflects usability, not key presence (keyless local servers are allowed).
+	if (customProviderUsable(effectiveSettings().customProvider)) {
+		rows.set(CUSTOM_PROVIDER.id, { id: CUSTOM_PROVIDER.id, envVar: CUSTOM_PROVIDER.envVar, keyPresent: customProviderAvailable() });
+	} else if (!ctx.custom.has(CUSTOM_PROVIDER.id)) {
+		rows.delete(CUSTOM_PROVIDER.id);
+	}
+	return [...rows.values()].sort((a, b) => a.id.localeCompare(b.id));
 }
 
 /** The providers whose key is present — the picker federates exactly

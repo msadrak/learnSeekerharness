@@ -24,6 +24,8 @@ import type { ModelCatalogEntry } from "@/src/core";
 import { CLAUDE_CODE_PROVIDER, CUSTOM_PROVIDER, fuzzyScore, subscriptionLabel } from "@/src/core";
 import { formatTokens } from "@/components/usage-format";
 import { SearchMenuList } from "./search-menu-list";
+import { useT } from "@/components/i18n";
+import { textDirection } from "@/lib/i18n/direction";
 
 function priceLabel(cost: ModelCatalogEntry["cost"]): string {
 	if (!cost) return "Unpriced";
@@ -60,38 +62,39 @@ export function ModelMenuList({
 	 *  Image-capable ones float to the top. */
 	vision?: boolean;
 }) {
+	const m = useT().settings.menus;
 	// Vision slot: built-ins must report image input; custom-endpoint models
 	// stay selectable (the endpoint may not report a modality). Image-capable
 	// ones float to the top of the list.
 	const visionItems = vision
-		? models?.filter((m) => m.input.includes("image") || m.provider === CUSTOM_PROVIDER.id)
+		? models?.filter((entry) => entry.input.includes("image") || entry.provider === CUSTOM_PROVIDER.id)
 		: models;
 	return (
 		<>
 			<SearchMenuList
 				items={visionItems}
-				itemKey={(m) => `${m.provider}/${m.id}`}
-				searchTerms={(m) => [m.provider, m.id, m.name]}
+				itemKey={(entry) => `${entry.provider}/${entry.id}`}
+				searchTerms={(entry) => [entry.provider, entry.id, entry.name]}
 				compare={(a, b) => a.id.localeCompare(b.id)}
-				prioritize={vision ? (m) => m.input.includes("image") : undefined}
-				isSelected={(m) => m.id === effectiveId && m.provider === (effectiveProvider ?? m.provider)}
+				prioritize={vision ? (entry) => entry.input.includes("image") : undefined}
+				isSelected={(entry) => entry.id === effectiveId && entry.provider === (effectiveProvider ?? entry.provider)}
 				onPick={onPick}
 				searchTestid="model-search"
 				listTestid="model-list"
-				optionTestid={(m) => `model-option-${m.id.replace(/[^a-z0-9-]/gi, "_")}`}
-				placeholder="Search models…"
-				loading="Loading models…"
-				empty="No models match."
-				renderItem={(m) => <>
+				optionTestid={(entry) => `model-option-${entry.id.replace(/[^a-z0-9-]/gi, "_")}`}
+				placeholder={m.searchModels}
+				loading={m.loadingModels}
+				empty={m.noModels}
+				renderItem={(entry) => <>
 					<span className="flex items-center justify-between gap-2">
-						<span className="truncate text-card-foreground">{m.name}</span>
-						<span className="shrink-0 tabular-nums text-muted-foreground" title={m.provider === CLAUDE_CODE_PROVIDER ? "Billing is determined by your Claude Code configuration; LearnHarness does not estimate it." : subscriptionLabel(`${m.provider}:${m.id}`) ? "Subscription connection" : m.cost ? "USD per 1M tokens in/out" : "Price unavailable"}>
-							{m.provider === CLAUDE_CODE_PROVIDER ? "CLI billing" : subscriptionLabel(`${m.provider}:${m.id}`) ?? priceLabel(m.cost)}
+						<span dir={textDirection(entry.name)} className="truncate text-card-foreground lh-align-page">{entry.name}</span>
+						<span className="shrink-0 tabular-nums text-muted-foreground" title={entry.provider === CLAUDE_CODE_PROVIDER ? "Billing is determined by your Claude Code configuration; LearnHarness does not estimate it." : subscriptionLabel(`${entry.provider}:${entry.id}`) ? "Subscription connection" : entry.cost ? m.priceTitle : "Price unavailable"}>
+							{entry.provider === CLAUDE_CODE_PROVIDER ? "CLI billing" : subscriptionLabel(`${entry.provider}:${entry.id}`) ?? <span dir="ltr">{priceLabel(entry.cost)}</span>}
 						</span>
 					</span>
 					<span className="flex items-center justify-between gap-2 text-muted-foreground">
-						<span className="truncate">{subscriptionLabel(`${m.provider}:${m.id}`) ? `${subscriptionLabel(`${m.provider}:${m.id}`)} (subscription)` : m.provider} · {m.id}</span>
-						<span className="shrink-0 tabular-nums">{m.contextWindow === null ? "—" : formatTokens(m.contextWindow)}</span>
+						<span className="truncate" dir="ltr">{subscriptionLabel(`${entry.provider}:${entry.id}`) ? `${subscriptionLabel(`${entry.provider}:${entry.id}`)} (subscription)` : entry.provider} · {entry.id}</span>
+						<span className="shrink-0 tabular-nums">{entry.contextWindow === null ? "—" : formatTokens(entry.contextWindow)}</span>
 					</span>
 				</>}
 			/>
@@ -118,10 +121,12 @@ export function ThinkingMenuList({
 	empty?: string;
 	footer?: string;
 }) {
+	const t = useT();
+	const m = t.settings.menus;
 	return (
 		<>
 			{levels.length === 0 ? (
-				<div className="px-2 py-3 text-center text-muted-foreground">{empty ?? "No thinking levels."}</div>
+				<div className="px-2 py-3 text-center text-muted-foreground">{empty ?? m.noThinking}</div>
 			) : (
 				levels.map((level) => (
 					<button
@@ -129,11 +134,11 @@ export function ThinkingMenuList({
 						type="button"
 						data-testid={`thinking-option-${level}`}
 						onClick={() => onPick(level)}
-						className={`flex items-center justify-between rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-muted ${
+						className={`flex items-center justify-between rounded-lg px-2 py-1.5 text-start transition-colors hover:bg-muted ${
 							level === effectiveLevel ? "bg-muted/60 text-card-foreground" : "text-card-foreground"
 						}`}
 					>
-						<span>{level}</span>
+						<span>{t.common.thinkingLevels[level] ?? level}</span>
 						{level === effectiveLevel && <span aria-hidden>✓</span>}
 					</button>
 				))
@@ -157,6 +162,7 @@ export function ProviderMenuList({
 	providers: { id: string; envVar: string; label: string }[];
 	onPick: (provider: { id: string; envVar: string; label: string }) => void;
 }) {
+	const m = useT().settings.menus;
 	const [query, setQuery] = useState("");
 	const [menuIdx, setMenuIdx] = useState<number | null>(null);
 	const searchRef = useRef<HTMLInputElement>(null);
@@ -206,11 +212,11 @@ export function ProviderMenuList({
 						}
 					}
 				}}
-				placeholder="Search providers…"
+				placeholder={m.searchProviders}
 				className="lh-input mb-1.5 w-full rounded-lg border bg-background px-2 py-1.5 text-foreground outline-none focus:ring-1 focus:ring-ring"
 			/>
 			{results.length === 0 && (
-				<div className="px-2 py-3 text-center text-muted-foreground">No providers match.</div>
+				<div className="px-2 py-3 text-center text-muted-foreground">{m.noProviders}</div>
 			)}
 			<ul ref={listRef} data-testid="provider-list" className="flex max-h-72 flex-col overflow-y-auto px-1">
 				{results.map((p, i) => (
@@ -220,12 +226,12 @@ export function ProviderMenuList({
 							data-testid={`provider-option-${p.id.replace(/[^a-z0-9-]/gi, "_")}`}
 							data-idx={i}
 							onClick={() => onPick(p)}
-							className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left outline-none transition-colors hover:bg-muted ${
+							className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-start outline-none transition-colors hover:bg-muted ${
 								i === menuIdx ? "bg-accent/40 ring-1 ring-inset ring-border" : ""
 							}`}
 						>
-							<span className="truncate text-card-foreground">{p.label}</span>
-							<span className="shrink-0 font-mono text-[11px] text-muted-foreground">{p.envVar}</span>
+							<span dir={textDirection(p.label)} className="truncate text-card-foreground lh-align-page">{p.label}</span>
+							<span dir="ltr" className="shrink-0 font-mono text-[11px] text-muted-foreground">{p.envVar}</span>
 						</button>
 					</li>
 				))}
@@ -287,6 +293,7 @@ export function FontMenuList({
 	/** Quiet footer note under the list. */
 	footer?: string;
 }) {
+	const m = useT().settings.menus;
 	const [query, setQuery] = useState("");
 	const [menuIdx, setMenuIdx] = useState<number | null>(null);
 	const searchRef = useRef<HTMLInputElement>(null);
@@ -336,10 +343,10 @@ export function FontMenuList({
 						}
 					}
 				}}
-				placeholder="Search fonts…"
+				placeholder={m.searchFonts}
 				className="lh-input mb-1.5 w-full rounded-lg border bg-background px-2 py-1.5 text-foreground outline-none focus:ring-1 focus:ring-ring"
 			/>
-			{!families && <div className="px-2 py-3 text-center text-muted-foreground">Loading fonts…</div>}
+			{!families && <div className="px-2 py-3 text-center text-muted-foreground">{m.loadingFonts}</div>}
 			<ul ref={listRef} data-testid="font-list" className="flex max-h-72 flex-col overflow-y-auto px-1">
 				{families &&
 					results.map((family, i) => {
@@ -352,12 +359,12 @@ export function FontMenuList({
 									data-testid={isDefault ? "font-option-default" : `font-option-${family.replace(/[^a-z0-9-]/gi, "_")}`}
 									data-idx={i}
 									onClick={() => onPick(family)}
-									className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left outline-none transition-colors hover:bg-muted ${
+									className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-start outline-none transition-colors hover:bg-muted ${
 										i === menuIdx ? "bg-accent/40 ring-1 ring-inset ring-border" : ""
 									}${effective && i !== menuIdx ? " bg-muted/60" : ""}`}
 								>
-									<span className="truncate text-card-foreground">{family ?? "Source Sans 3"}</span>
-									<span className="shrink-0 text-muted-foreground">{isDefault ? "default" : effective && <span aria-hidden>✓</span>}</span>
+									<span dir={textDirection(family ?? "Source Sans 3")} className="truncate text-card-foreground lh-align-page">{family ?? "Source Sans 3"}</span>
+									<span className="shrink-0 text-muted-foreground">{isDefault ? m.fontDefault : effective && <span aria-hidden>✓</span>}</span>
 								</button>
 							</li>
 						);
@@ -369,12 +376,12 @@ export function FontMenuList({
 							data-testid="font-option-custom"
 							data-idx={0}
 							onClick={() => onPick(customFamily)}
-							className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left outline-none transition-colors hover:bg-muted ${
+							className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-start outline-none transition-colors hover:bg-muted ${
 								menuIdx === 0 ? "bg-accent/40 ring-1 ring-inset ring-border" : ""
 							}`}
 						>
-							<span className="truncate text-card-foreground">Use “{customFamily}”</span>
-							<span className="shrink-0 text-muted-foreground">custom</span>
+							<span className="truncate text-card-foreground">{m.useFamilyBefore}<bdi>{customFamily}</bdi>{m.useFamilyAfter}</span>
+							<span className="shrink-0 text-muted-foreground">{m.custom}</span>
 						</button>
 					</li>
 				)}

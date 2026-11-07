@@ -34,6 +34,7 @@ function revoke(full = false) {
 before(() => {
  process.env.LH_DESKTOP_SERVER = "1"; process.env.LH_DESKTOP_API_SECRET = "d".repeat(64);
  Object.defineProperty(process, "connected", { configurable: true, value: true });
+ process.env.LH_DESKTOP_SERVER = "1";
  Object.defineProperty(process, "send", { configurable: true, value: (m: any, callback?: () => void) => {
   if (m.op === "lease") {
    leases.push(m.background);
@@ -67,6 +68,7 @@ after(() => {
  fs.rmSync(scratch, { recursive: true, force: true });
  if (originalSend) Object.defineProperty(process, "send", originalSend); else delete process.send;
  if (originalConnected) Object.defineProperty(process, "connected", originalConnected); else delete (process as { connected?: boolean }).connected;
+ delete process.env.LH_DESKTOP_SERVER;
 });
 const automatic = (id = "auto") => ({ id, role: "custom" as const, customType: "subagent-steer" as const, content: "Automatic result", details: { jobId: "dummy-job" }, display: true, timestamp: 2 });
 async function nativeRun(where: typeof cut, staged: boolean, withLearner = true, commitThrows = false, lateAutomatic = false, withTool = false) {

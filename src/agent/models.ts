@@ -5,14 +5,17 @@ import {
 	type Api,
 	type CacheRetention,
 	type Model,
+	type CredentialStore,
 	type Models,
 	type MutableModels,
+	type Provider,
 	type StreamFunction,
 } from "@earendil-works/pi-ai";
 import { builtinProviders } from "@earendil-works/pi-ai/providers/all";
 import { lazyApi, lazyStream } from "@earendil-works/pi-ai/api/lazy";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import { type ModelRole } from "../../config.ts";
+import { antigravityProvider, geminiCliProvider } from "./google-cloudcode/index.ts";
 import { DEFAULT_THINKING_ORDER } from "../core/settings.ts";
 import packageMetadata from "../../package.json" with { type: "json" };
 import { chatGPTModel } from "./chatgpt-bridge.ts";
@@ -53,15 +56,60 @@ export interface PiEngine {
 
 export type { ThinkingLevel };
 
-let collection: ReturnType<typeof createModels> | undefined;
-interface ProviderSource {
+let collection: MutableModels | undefined;
+
+/** The Google Cloud Code subscription providers (Gemini CLI login,
+ *  Antigravity login) registered next to pi-ai's builtins. */
+const CLOUDCODE_PROVIDER_IDS = ["google-gemini-cli", "google-antigravity"] as const;
+
+/** The server composition's hand-off to the agent layer (the layering law:
+ *  agent never imports store/server). Carries the file-backed credential
+ *  store (OAuth subscription logins + custom-provider keys) and the
+ *  user-declared custom providers, with a cheap change stamp so hand-edits
+ *  to the providers file hot-reload without a restart. */
+export interface ProviderSource {
+	credentials: CredentialStore;
+	/** Cheap (stat-level) change detector; providers() re-runs when it moves. */
+	stamp(): string;
+	providers(): Provider[];
+}
+const SOURCE_KEY = Symbol.for("lh.providerSource");
+let appliedStamp: string | undefined;
+let appliedIds: string[] = [];
+
+/** Install the process-wide source. The collection is rebuilt so its
+ *  credential store is the source's (idempotent: same source = no-op). */
+export function registerProviderSource(source: ProviderSource): void {
+	const g = globalThis as Record<symbol, ProviderSource | undefined>;
+	if (g[SOURCE_KEY] === source) return;
+	g[SOURCE_KEY] = source;
+	collection = undefined;
+}
+
+/** Re-apply the source's providers when its stamp moved: drop the ones we
+ *  added last time, add the current ones (a removed custom provider
+ *  disappears; an edited one is replaced). */
+function syncSourceProviders(target: MutableModels, source: ProviderSource): void {
+	const stamp = source.stamp();
+	if (stamp === appliedStamp) return;
+	for (const id of appliedIds) target.deleteProvider(id);
+	const providers = source.providers();
+	for (const provider of providers) target.setProvider(provider);
+	appliedIds = providers.map((p) => p.id);
+	appliedStamp = stamp;
+}
+
+/** Upstream's injected custom-endpoint source (settings-backed single
+ *  OpenAI-compatible provider). Coexists with the file-backed
+ *  ProviderSource above. */
+interface CustomEndpointSource {
 	sync(models: MutableModels): void;
 	isCustom(id: string): boolean;
 }
-let providerSource: ProviderSource | undefined;
+let providerSource: CustomEndpointSource | undefined;
 
 /** Configuration IO is injected by the server; the agent never imports stores. */
-export function configureProviderSource(source: ProviderSource): void {
+export function configureProviderSource(source: CustomEndpointSource): void {
 	// Server module re-evaluation can replace the source while this collection
 	// survives. Retire only the previous source's routes, not built-ins.
 	if (collection && providerSource) {
@@ -75,14 +123,17 @@ export function configureProviderSource(source: ProviderSource): void {
 /** The process-wide pi-ai Models collection — EVERY builtin provider's
  *  catalog (model slots wave, 2026-09-20): engines and the picker resolve
  *  against all of pi-ai's per-provider catalogs, so a settings slot can pin
- *  any native model id. Auth is resolved per request by pi-ai itself from
- *  the environment (the keys seam reflects file-saved keys into env), and
- *  a provider with no key simply fails its stream with "not configured" —
- *  honest, late, and unreachable through the picker, which gates on
- *  keyPresent. */
-export function piModels() {
+ *  any native model id. Auth is resolved per request by pi-ai itself: stored
+ *  credentials (subscription OAuth, custom-provider keys) first, then the
+ *  environment (the keys seam reflects file-saved keys into env), and a
+ *  provider with no credential simply fails its stream with "not
+ *  configured" — honest, late, and unreachable through the picker, which
+ *  gates on keyPresent. User-declared custom providers ride in via the
+ *  registered ProviderSource and hot-reload when it changes. */
+export function piModels(): MutableModels {
+	const source = (globalThis as Record<symbol, ProviderSource | undefined>)[SOURCE_KEY];
 	if (!collection) {
-		collection = createModels({ identity: APP_IDENTITY });
+		collection = createModels({ identity: APP_IDENTITY, credentials: source?.credentials });
 		for (const provider of builtinProviders()) {
 			// Keep the native Bedrock implementation reachable by standalone tracing.
 			// Pi's default Node-only loader hides this import from bundlers. Only
@@ -92,9 +143,25 @@ export function piModels() {
 				: provider);
 		}
 		collection.setProvider(createClaudeCodeProvider(streamClaudeCode));
+		collection.setProvider(geminiCliProvider());
+		collection.setProvider(antigravityProvider());
+		appliedStamp = undefined;
+		appliedIds = [];
 	}
+	if (source) syncSourceProviders(collection, source);
 	providerSource?.sync(collection);
 	return collection;
+}
+
+/** Provider ids a user-declared custom provider may NOT take: every
+ *  builtin catalog provider, the Google Cloud Code subscription pair, and
+ *  the app's ChatGPT desktop pseudo-provider. Model pins are keyed by
+ *  provider id, so a custom provider must never shadow a real one. */
+export function reservedProviderIds(): Set<string> {
+	const ids = new Set(builtinProviders().map((p) => p.id));
+	for (const id of CLOUDCODE_PROVIDER_IDS) ids.add(id);
+	ids.add("chatgpt");
+	return ids;
 }
 
 /** OpenRouter API key (BYOK); tests never read this — they inject engines. */

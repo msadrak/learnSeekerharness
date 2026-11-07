@@ -30,10 +30,13 @@ import {
 } from "react";
 import remarkBreaks from "remark-breaks";
 import {
+  defaultRehypePlugins,
   Streamdown,
   type PluginConfig,
 } from "streamdown";
 import { mdComponents } from "@/components/md-blocks";
+import { useT } from "@/components/i18n";
+import { rehypeBidi } from "@/lib/i18n/direction";
 import { repairMathForDisplay, transformMathDelimiters } from "@/src/core";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
@@ -44,7 +47,7 @@ export const Message = ({ className, from, ...props }: MessageProps) => (
   <div
     className={cn(
       "group flex w-full max-w-[95%] flex-col gap-2",
-      from === "user" ? "is-user ml-auto justify-end" : "is-assistant",
+      from === "user" ? "is-user ms-auto justify-end" : "is-assistant",
       className
     )}
     {...props}
@@ -61,7 +64,7 @@ export const MessageContent = ({
   <div
     className={cn(
       "is-user:dark flex w-fit min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm",
-      "group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-foreground",
+      "group-[.is-user]:ms-auto group-[.is-user]:rounded-lg group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-foreground",
       "group-[.is-assistant]:text-foreground",
       className
     )}
@@ -249,7 +252,7 @@ export const MessageBranchSelector = ({
   return (
     <ButtonGroup
       className={cn(
-        "[&>*:not(:first-child)]:rounded-l-md [&>*:not(:last-child)]:rounded-r-md",
+        "[&>*:not(:first-child)]:rounded-s-md [&>*:not(:last-child)]:rounded-e-md",
         className
       )}
       orientation="horizontal"
@@ -265,10 +268,11 @@ export const MessageBranchPrevious = ({
   ...props
 }: MessageBranchPreviousProps) => {
   const { goToPrevious, totalBranches } = useMessageBranch();
+  const t = useT();
 
   return (
     <Button
-      aria-label="Previous branch"
+      aria-label={t.chat.message.previousBranch}
       disabled={totalBranches <= 1}
       onClick={goToPrevious}
       size="icon-sm"
@@ -276,7 +280,7 @@ export const MessageBranchPrevious = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <ChevronLeftIcon size={14} />}
+      {children ?? <ChevronLeftIcon size={14} className="rtl:-scale-x-100" />}
     </Button>
   );
 };
@@ -288,10 +292,11 @@ export const MessageBranchNext = ({
   ...props
 }: MessageBranchNextProps) => {
   const { goToNext, totalBranches } = useMessageBranch();
+  const t = useT();
 
   return (
     <Button
-      aria-label="Next branch"
+      aria-label={t.chat.message.nextBranch}
       disabled={totalBranches <= 1}
       onClick={goToNext}
       size="icon-sm"
@@ -299,7 +304,7 @@ export const MessageBranchNext = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <ChevronRightIcon size={14} />}
+      {children ?? <ChevronRightIcon size={14} className="rtl:-scale-x-100" />}
     </Button>
   );
 };
@@ -311,6 +316,7 @@ export const MessageBranchPage = ({
   ...props
 }: MessageBranchPageProps) => {
   const { currentBranch, totalBranches } = useMessageBranch();
+  const t = useT();
 
   return (
     <ButtonGroupText
@@ -320,7 +326,7 @@ export const MessageBranchPage = ({
       )}
       {...props}
     >
-      {currentBranch + 1} of {totalBranches}
+      {t.chat.message.branchPage(currentBranch + 1, totalBranches)}
     </ButtonGroupText>
   );
 };
@@ -361,8 +367,18 @@ export const streamdownPlugins = {
 // separate sanitization/hardening and all other Markdown repairs stay enabled.
 export const streamdownRemend = { htmlTags: false };
 
+// Bidi (Persian locale wave): streamdown's defaults (raw → sanitize →
+// harden) stay first — a bare `rehypePlugins` prop REPLACES them — then
+// rehypeBidi stamps dir per block (any Persian letter → rtl; math/code
+// never vote). The math plugin's rehype-katex appends after these.
+export const streamdownRehypePlugins = [
+  ...Object.values(defaultRehypePlugins),
+  rehypeBidi,
+];
+
 export const MessageResponse = memo(
   ({ className, children, ...props }: MessageResponseProps) => {
+    const t = useT();
     // Legacy backslash delimiters are converted in a single linear scan;
     // native dollar math passes through to Streamdown unchanged. Incomplete
     // legacy spans are left for a later render when their closer arrives.
@@ -382,6 +398,8 @@ export const MessageResponse = memo(
         components={mdComponents}
         plugins={streamdownPlugins}
         remend={streamdownRemend}
+        rehypePlugins={streamdownRehypePlugins}
+        translations={t.common.markdown}
         {...props}
       >
         {content}

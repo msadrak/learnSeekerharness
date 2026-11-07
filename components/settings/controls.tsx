@@ -11,6 +11,7 @@
 
 import { useState, type ComponentPropsWithRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { textDirection } from "@/lib/i18n/direction";
 
 /** A section block: pronounced mono heading + content. */
 export function SettingsSection({
@@ -73,8 +74,10 @@ export function SettingsRow({
 	return (
 		<div data-testid={testid} className={cn("flex items-center justify-between gap-4 py-1", dimmed && "opacity-40")}>
 			<span className="min-w-0">
-				<span className="block font-prose text-(length:--lh-prose-size)">{label}</span>
-				{hint && <span className="block text-xs text-muted-foreground/70">{hint}</span>}
+				{/* Labels/hints may carry non-dictionary text (prompt paths, the
+				    server's search reason) — each gets its own direction. */}
+				<span dir={textDirection(label)} className="block font-prose text-(length:--lh-prose-size) lh-align-page">{label}</span>
+				{hint && <span dir={typeof hint === "string" ? textDirection(hint) : undefined} className="block text-xs text-muted-foreground/70 lh-align-page">{hint}</span>}
 			</span>
 			{children}
 		</div>
@@ -100,7 +103,7 @@ export function SettingsMenuTrigger({
 			className,
 		)}
 	>
-		<span className="min-w-0 flex-1 truncate">{value}</span>
+		<span dir={textDirection(value)} className="min-w-0 flex-1 truncate lh-align-page">{value}</span>
 		<span aria-hidden className="text-muted-foreground">▾</span>
 	</button>;
 }
@@ -149,8 +152,8 @@ export function Toggle({
 				// only the knob's face changes (the invert affordance).
 				<span
 					className={cn(
-						"absolute left-0 top-0.5 flex size-3 items-center justify-center rounded-full transition-transform",
-						checked ? "translate-x-4 text-foreground" : "translate-x-0.5 text-muted-foreground",
+						"absolute inset-s-0 top-0.5 flex size-3 items-center justify-center rounded-full transition-transform",
+						checked ? "translate-x-4 rtl:-translate-x-4 text-foreground" : "translate-x-0.5 rtl:-translate-x-0.5 text-muted-foreground",
 					)}
 				>
 					{discIcon}
@@ -158,10 +161,10 @@ export function Toggle({
 			) : (
 				<span
 					className={cn(
-						"absolute left-0 top-0.5 size-3 rounded-full transition-transform",
+						"absolute inset-s-0 top-0.5 size-3 rounded-full transition-transform",
 						// 2px inset from each inner edge, both states (owner round: the on
 						// disc used to touch the pill's right edge).
-						checked ? "translate-x-4 bg-foreground" : "translate-x-0.5 bg-muted-foreground",
+						checked ? "translate-x-4 rtl:-translate-x-4 bg-foreground" : "translate-x-0.5 rtl:-translate-x-0.5 bg-muted-foreground",
 					)}
 				/>
 			)}
@@ -231,6 +234,7 @@ export function CommitInput({
 	return (
 		<input
 			type={type}
+			dir="ltr"
 			value={editing ? draft : value}
 			placeholder={placeholder}
 			aria-label={ariaLabel}

@@ -3,8 +3,10 @@
 import { ChevronRight } from "lucide-react";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import { toolActivityLabel } from "@/src/core";
+import { QUESTION_TOOLS } from "@/src/core";
 import type { ArtifactPartProps } from "@/src/core";
+import { useT } from "@/components/i18n";
+import { textDirection } from "@/lib/i18n/direction";
 
 /**
  * The LIVE tool-input card (owner, streaming round 2026-10-01): what a
@@ -28,6 +30,7 @@ interface StreamingToolPart {
 }
 
 export function LiveToolCard({ part }: ArtifactPartProps) {
+	const t = useT();
 	const p = part as StreamingToolPart;
 	const tool = p.type.replace(/^tool-/, "");
 	const inp = (p.input ?? {}) as Record<string, unknown>;
@@ -39,6 +42,12 @@ export function LiveToolCard({ part }: ArtifactPartProps) {
 	else if (typeof inp.session === "string" && inp.session) arg = inp.session;
 
 	const hasInput = p.input != null && Object.keys(inp).length > 0;
+	// The activity label, translated here keyed by tool name (the same
+	// table as src/core toolActivityLabel, which stays English).
+	const activities: Record<string, string> = t.cards.tools.activity;
+	const activity = (QUESTION_TOOLS as readonly string[]).includes(tool)
+		? t.cards.tools.writingQuestion
+		: (activities[tool] ?? t.common.states.working);
 
 	return (
 		<details
@@ -47,15 +56,19 @@ export function LiveToolCard({ part }: ArtifactPartProps) {
 			className="group my-1 w-full max-w-2xl select-none"
 		>
 			<summary className="flex cursor-pointer list-none items-center gap-2 text-xs text-muted-foreground [&::-webkit-details-marker]:hidden">
-				<BrailleSpinner label={`${toolActivityLabel(tool)} — live`} />
+				<BrailleSpinner label={t.cards.tools.live(activity)} />
 				<Shimmer duration={1} className="text-xs">
-					{toolActivityLabel(tool)}
+					{activity}
 				</Shimmer>
-				{arg && <span className="truncate">{arg}</span>}
-				<ChevronRight className="size-3 shrink-0 opacity-50 transition-transform group-open:rotate-90" />
+				{arg && <span dir={textDirection(arg)} className="truncate">{arg}</span>}
+				{/* The mirror wraps the rotation: closed points to the inline end,
+				    open points down in both directions. */}
+				<span className="flex shrink-0 rtl:-scale-x-100">
+					<ChevronRight className="size-3 opacity-50 transition-transform group-open:rotate-90" />
+				</span>
 			</summary>
 			<div className="mt-2 rounded-xl border bg-card p-3 text-xs">
-				<div className="mb-1 font-medium uppercase tracking-wide text-muted-foreground">Input (streaming)</div>
+				<div className="mb-1 font-medium uppercase tracking-wide text-muted-foreground">{t.cards.tools.inputStreaming}</div>
 				<pre className="max-h-32 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] leading-relaxed">
 					{hasInput ? JSON.stringify(p.input, null, 2) : "…"}
 				</pre>

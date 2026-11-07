@@ -9,6 +9,8 @@ import { PathInput } from "@/components/path-input";
 import { MalformedQuestion } from "@/components/malformed-question";
 import { ToolContentResponse } from "@/components/ai-elements/message";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n";
+import { inputDirection, textDirection } from "@/lib/i18n/direction";
 import {
 	buildAnswer,
 	repairMathForDisplay,
@@ -114,6 +116,7 @@ export function QuestionDock({
 	dictationClaim = true,
 	compactionRunning = false,
 }: QuestionDockProps) {
+	const t = useT();
 	// The probe-phase names (owner, 2026-10-09) canonicalize onto their
 	// teach twins for every dock concern — parse dispatch, labels, kinds:
 	// the probe quiz ("probe") is quiz-shaped, the probe free-recall
@@ -123,7 +126,7 @@ export function QuestionDock({
 	// The chip's display name carries the tool's OWN name (owner
 	// 2026-10-09): probe-phase questions label Probe/Recall in the
 	// composer; teach tools keep the standing labels.
-	const toolLabel = toolName === "probe" ? "Probe" : toolName === "recall" ? "Recall" : undefined;
+	const toolLabel = toolName === "probe" ? t.cards.kinds.probe : toolName === "recall" ? t.cards.kinds.recall : undefined;
 	// Parse, don't cast (src/core/tool-parts.ts): the model authored this
 	// input, and only the schema the tool declared vouches for its shape.
 	// The dock mounts on input-available parts (already validated at the
@@ -133,7 +136,11 @@ export function QuestionDock({
 	const parsed =
 		canonical === "quiz" ? parseQuizInput(input) : canonical === "explain" ? parseExplainInput(input) : parseAskInput(input);
 	if (!parsed) {
-		return <MalformedQuestion />;
+		return (
+			<div data-testid="malformed-question" className="rounded-xl border border-dashed bg-card/60 p-3 text-sm text-muted-foreground">
+				{t.cards.questionDock.malformed}
+			</div>
+		);
 	}
 	return (
 		<>
@@ -147,7 +154,7 @@ export function QuestionDock({
 					label={
 						(canonical === "quiz" || canonical === "explain") &&
 						normalizeQuizType((parsed as { type?: unknown }).type) === "predict"
-							? "Prediction"
+							? t.cards.kinds.prediction
 							: undefined
 					}
 				/>
@@ -208,23 +215,25 @@ export function QuestionDockBar({
 	 *  label Probe/Recall — the phase boundary visible in the composer. */
 	toolLabel?: string;
 }) {
+	const t = useT();
+	const teaser = teaserText(question);
 	if (variant === "reveal") {
 		return (
 			<button
 				type="button"
 				data-testid="teach-check-reveal"
 				onClick={onExpand}
-				className="dock-variant flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/40"
+				className="dock-variant flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-accent/40"
 			>
 				<span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
 					<PlayIcon className="size-3.5" />
 				</span>
 				<span className="min-w-0 flex-1">
-					<span className="block text-sm font-medium">Check your understanding</span>
-					<span className="block truncate text-xs text-muted-foreground">{teaserText(question)}</span>
+					<span className="block text-sm font-medium">{t.cards.questionDock.checkUnderstanding}</span>
+					<span dir={textDirection(teaser)} className="lh-align-page block truncate text-xs text-muted-foreground">{teaser}</span>
 				</span>
 				<span className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary">
-					Open <ChevronRightIcon className="size-3.5" />
+					{t.common.actions.open} <ChevronRightIcon className="size-3.5 rtl:-scale-x-100" />
 				</span>
 			</button>
 		);
@@ -234,16 +243,16 @@ export function QuestionDockBar({
 			type="button"
 			data-testid="question-dock-bar"
 			onClick={onExpand}
-			className="dock-variant flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm transition-colors hover:bg-accent/40"
+			className="dock-variant flex w-full items-center gap-2.5 px-4 py-2.5 text-start text-sm transition-colors hover:bg-accent/40"
 		>
 			<span className="shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">
 				{label ??
 							toolLabel ??
-							(toolName === "quiz" ? "Check" : toolName === "explain" ? "Explain" : "Question")}
+							(toolName === "quiz" ? t.cards.kinds.check : toolName === "explain" ? t.cards.kinds.explain : t.cards.kinds.question)}
 			</span>
-			<span className="min-w-0 flex-1 truncate text-muted-foreground">{teaserText(question)}</span>
+			<span dir={textDirection(teaser)} className="min-w-0 flex-1 truncate text-muted-foreground">{teaser}</span>
 			<span className="flex shrink-0 items-center gap-1 text-xs font-medium">
-				Answer <ArrowDownIcon className="size-3.5" />
+				{t.cards.questionDock.answer} <ArrowDownIcon className="size-3.5" />
 			</span>
 		</button>
 	);
@@ -263,6 +272,7 @@ function QuestionDockForm({
 	dictationClaim = true,
 	compactionRunning = false,
 }: Omit<QuestionDockProps, "expanded" | "onExpand" | "reveal">) {
+	const t = useT();
 	const kind = toolQuestionKind(toolName);
 
 	// Canonical QuestionData, built once per question. Quiz options are
@@ -565,17 +575,17 @@ function QuestionDockForm({
 			<div data-dock-scroll-area="" data-session-find-root="" className="max-h-[var(--dock-max-h,55dvh)] overflow-y-auto px-4 pt-3">
 				<div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
 					{toolName === "probe"
-						? "Probe"
+						? t.cards.kinds.probe
 						: toolName === "recall"
-							? "Recall"
+							? t.cards.kinds.recall
 							: kind === "quiz"
 								? qd.questionType === "predict"
-									? "Prediction"
-									: "Check"
+									? t.cards.kinds.prediction
+									: t.cards.kinds.check
 									: kind === "explain"
-										? "Explain"
-											: "Question"}
-					{qd.mode === "multi-select" && " · select all that apply"}
+										? t.cards.kinds.explain
+											: t.cards.kinds.question}
+					{qd.mode === "multi-select" && t.cards.questionDock.selectAll}
 				</div>
 				<div className="mb-3 font-medium">
 					<ToolContentResponse>{qd.question}</ToolContentResponse>
@@ -599,7 +609,7 @@ function QuestionDockForm({
 									data-kbdrow={i}
 									onClick={() => toggle(i)}
 									className={cn(
-										"flex items-start gap-3 rounded-lg border px-3 py-2 text-left text-sm outline-none transition-colors",
+										"flex items-start gap-3 rounded-lg border px-3 py-2 text-start text-sm outline-none transition-colors",
 										isSel ? "border-primary bg-accent" : "hover:bg-accent/50",
 										i === kbdIdx && !isSel && "ring-1 ring-border bg-accent/40",
 									)}
@@ -647,7 +657,7 @@ function QuestionDockForm({
 								className={cn(
 									// Option-row layout + radio circle (owner); the dashed
 									// outline stays — this is the deliberate non-answer.
-									"flex items-start gap-3 rounded-lg border border-dashed px-3 py-2 text-left text-sm outline-none transition-colors",
+									"flex items-start gap-3 rounded-lg border border-dashed px-3 py-2 text-start text-sm outline-none transition-colors",
 									sel.dontKnow ? "border-primary text-foreground" : "text-muted-foreground",
 									kbdIdx === optionCount && !sel.dontKnow && "ring-1 ring-border bg-accent/40",
 								)}
@@ -662,7 +672,7 @@ function QuestionDockForm({
 								>
 									{sel.dontKnow && <span className="size-1.5 rounded-full bg-current" />}
 								</span>
-								<span>I don't know</span>
+								<span>{t.cards.questionDock.dontKnow}</span>
 							</button>
 						)}
 
@@ -674,7 +684,7 @@ function QuestionDockForm({
 								data-kbdrow={optionCount}
 								onClick={selectOther}
 								className={cn(
-									"flex items-start gap-3 rounded-lg border px-3 py-2 text-left text-sm outline-none transition-colors",
+									"flex items-start gap-3 rounded-lg border px-3 py-2 text-start text-sm outline-none transition-colors",
 									sel.otherSelected ? "border-primary bg-accent" : "border-dashed hover:bg-accent/50",
 									kbdIdx === optionCount && !sel.otherSelected && "ring-1 ring-border bg-accent/40",
 								)}
@@ -698,6 +708,7 @@ function QuestionDockForm({
 									ref={otherInputRef}
 									singleLine
 									value={other}
+									dir={inputDirection(other)}
 									onValueChange={(value) => {
 										setOther(value);
 										// Typing selects the row — displacing in
@@ -729,7 +740,7 @@ function QuestionDockForm({
 												submit();
 											}
 									}}
-									placeholder="Type your own answer…"
+									placeholder={t.cards.questionDock.otherPlaceholder}
 									className="lh-input w-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
 									onClick={(e) => e.stopPropagation()}
 								/>
@@ -761,9 +772,13 @@ function QuestionDockForm({
 								sel.dontKnow ? "text-muted-foreground/50" : "text-muted-foreground",
 							)}
 						>
-							Confidence
+							{t.cards.questionDock.confidence}
 						</span>
+						{/* dir="ltr": the slider is a physical 0→100 scale — its painted
+						    rail fills left→right and the global ←/→ keys step it, so it
+						    does not mirror in RTL (the label and read-out around it do). */}
 						<div
+							dir="ltr"
 							className={cn("relative h-4 min-w-0 flex-1", sel.dontKnow && "opacity-40")}
 							data-testid="confidence-track"
 						>
@@ -790,9 +805,9 @@ function QuestionDockForm({
 								step={1}
 								value={CONFIDENCE_STOPS[confIdx]}
 								disabled={sel.dontKnow}
-								aria-label="Confidence — the probability your selected answer is correct"
-								aria-valuetext={`${CONFIDENCE_STOPS[confIdx]} percent`}
-								title="The probability your selected answer is correct — 50% is a coin flip. Adjust with ←/→."
+								aria-label={t.cards.questionDock.confidenceAria}
+								aria-valuetext={t.cards.questionDock.confidenceValueText(CONFIDENCE_STOPS[confIdx]!)}
+								title={t.cards.questionDock.confidenceTitle}
 								data-testid="confidence-slider"
 								onChange={(e) => {
 									// Snap to the nearest stop; the rendered VALUE is the stop's own
@@ -820,7 +835,7 @@ function QuestionDockForm({
 						<span
 							data-testid="confidence-value"
 							className={cn(
-								"w-9 shrink-0 text-right font-mono text-sm tabular-nums",
+								"w-9 shrink-0 text-end font-mono text-sm tabular-nums",
 								sel.dontKnow && "text-muted-foreground/50",
 							)}
 						>
@@ -847,11 +862,12 @@ function QuestionDockForm({
 					className="rounded-[10px] border border-border/70 bg-background/60 transition-colors focus-within:border-primary/50"
 				>
 					<div className="px-2.5 pt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-						{qd.mode === "text" ? "Your answer" : "YOUR THINKING"}
+						{qd.mode === "text" ? t.cards.questionDock.yourAnswer : t.cards.composer.yourThinking}
 					</div>
 					{qd.mode === "text" ? (
 						<PathInput
 							value={text}
+							dir={inputDirection(text)}
 							onValueChange={(value) => {
 								answerTextRef.current = value;
 								setText(value);
@@ -873,13 +889,14 @@ function QuestionDockForm({
 									submit();
 								}
 							}}
-							placeholder="Type your answer…"
+							placeholder={t.cards.questionDock.answerPlaceholder}
 							className="field-sizing-content lh-input max-h-48 min-h-10 w-full resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground"
 						/>
 					) : (
 						<PathInput
 							ref={thinkingRef}
 							value={thinking}
+							dir={inputDirection(thinking)}
 							onValueChange={(value) => {
 								thinkingTextRef.current = value;
 								setThinking(value);
@@ -902,7 +919,7 @@ function QuestionDockForm({
 									submit();
 								}
 							}}
-							placeholder="Why this answer? Whatever comes to mind."
+							placeholder={t.cards.questionDock.thinkingPlaceholder}
 							className={cn(
 								"field-sizing-content lh-input max-h-48 w-full resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground/70",
 								// Phase-scaled prominence: teaching invites depth,
@@ -912,15 +929,15 @@ function QuestionDockForm({
 						/>
 					)}
 					<div className="flex items-center justify-between gap-2 p-1">
-						<span aria-hidden className="pl-1.5 text-xs text-muted-foreground">
-								{compactionRunning ? "compacting session…" : "↵ submits · ⇧↵ newline"}
+						<span aria-hidden className="ps-1.5 text-xs text-muted-foreground">
+								{compactionRunning ? t.cards.composer.compacting : t.cards.composer.hint}
 						</span>
 						<Button
 							type="submit"
 							disabled={!canSubmit || compactionRunning}
-							className="ml-auto h-9 rounded-[6px] px-3.5 text-sm font-medium"
+							className="ms-auto h-9 rounded-[6px] px-3.5 text-sm font-medium"
 						>
-							Submit answer
+							{t.cards.questionDock.submit}
 						</Button>
 					</div>
 				</div>

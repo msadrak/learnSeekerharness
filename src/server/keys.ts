@@ -58,6 +58,9 @@ import { customProviderAvailable, installCustomProviderSource } from "./custom-p
 import { claudeCodeAvailable } from "./claude-code-config.ts";
 import { CLAUDE_CODE_PROVIDER } from "../agent/claude-code/constants.ts";
 import { CUSTOM_AUTH_BINDING } from "../core/custom-provider-auth.ts";
+import { piModels } from "../agent/models.ts";
+import { credentialStore } from "../store/credentials.ts";
+import { customProviderIds } from "./providers.ts";
 
 // Shared HMR-stable provenance lets external CLIs exclude file-only injections
 // without importing this store-backed module into the agent layer.
@@ -190,20 +193,45 @@ export function keyValue(id: string): string | undefined {
 	return process.env[id] ?? authStore.authVars()[id];
 }
 
-/** The key-presence truth for one model provider (provider-key interlude,
- * 2026-09-25): would this provider's key be present at request time?
- * Reads through keyValue — the SAME env-first lookup pi-ai performs
- * natively at every request — so an env-shadowed key counts as present
- * (gate by what would run). Providers absent from AUTH_PROVIDER_KEYS take
- * no key at all: nothing to gate, present by definition. */
-export function providerKeyPresent(provider: string): boolean {
+/** The non-key connection facts a presence check needs — read ONCE per
+ *  batch (the catalog checks ~40 providers per call). */
+export interface PresenceContext {
+	/** Providers with a stored OAuth subscription login. */
+	oauth: ReadonlySet<string>;
+	/** User-declared custom providers (key optional — present by existing). */
+	custom: ReadonlySet<string>;
+}
+
+export function presenceContext(): PresenceContext {
+	return {
+		oauth: new Set(credentialStore.listSync().filter((c) => c.type === "oauth").map((c) => c.providerId)),
+		custom: customProviderIds(),
+	};
+}
+
+/** The connection truth for one model provider (provider-key interlude,
+ * 2026-09-25; subscriptions + custom providers added): would this provider
+ * authenticate at request time? Connected when ANY of: the ChatGPT desktop
+ * link, a stored OAuth subscription login, a custom endpoint (key
+ * optional), or the plain key read through keyValue — the SAME env-first
+ * lookup pi-ai performs natively at every request — so an env-shadowed key
+ * counts as present (gate by what would run). A provider offering an OAuth
+ * login (Copilot, Gemini CLI, Antigravity …) is connected only by that
+ * stored login — its optional env token never counts, since the catalog
+ * check is sync and cannot prove it. Any other provider outside
+ * AUTH_PROVIDER_KEYS authenticates ambiently (AWS, ADC): nothing to gate,
+ * present by definition. */
+export function providerKeyPresent(provider: string, ctx: PresenceContext = presenceContext()): boolean {
 	if (provider === CUSTOM_PROVIDER.id) return customProviderAvailable();
 	// Explicit opt-in + installation only, never authentication readiness.
 	// Consulted at admission, not inside already-running agent loops.
 	if (provider === CLAUDE_CODE_PROVIDER) return claudeCodeAvailable();
+	if (ctx.oauth.has(provider) || ctx.custom.has(provider)) return true;
+	// ChatGPT desktop link + native subscription logins.
 	if (isSubscriptionProvider(provider)) return subscriptionConnected(provider);
 	const info = AUTH_PROVIDER_KEYS.find((p) => p.id === provider);
-	return info ? keyValue(info.envVar) !== undefined : true;
+	if (info) return keyValue(info.envVar) !== undefined;
+	return !piModels().getProvider(provider)?.auth.oauth;
 }
 
 /**

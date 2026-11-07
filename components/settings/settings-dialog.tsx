@@ -52,17 +52,19 @@ import { AppearanceSection, GraphSection } from "./appearance-section.tsx";
 import { KeyboardSection } from "./keyboard-section.tsx";
 import { ChatGPTUIProvider } from "./chatgpt-connection.tsx";
 import { NativeSubscriptionUIProvider } from "./subscription-connections.tsx";
+import { useT } from "@/components/i18n";
+import { textDirection } from "@/lib/i18n/direction";
 
 /** Owner (2026-09-20): hints earn their place — mechanics-explaining
  *  prose is out; only the keyboard note stays (storage location is a
  *  real question users ask). */
 const SECTIONS = [
-	{ id: "keys", label: "Providers" },
-	{ id: "agent", label: "Agent" },
-	{ id: "appearance", label: "Appearance" },
-	{ id: "graph", label: "Graph" },
-	{ id: "keyboard", label: "Keyboard", hint: "Stored on this device" },
-	{ id: "general", label: "General" },
+	{ id: "keys" },
+	{ id: "agent" },
+	{ id: "appearance" },
+	{ id: "graph" },
+	{ id: "keyboard" },
+	{ id: "general" },
 ] as const;
 type SectionId = (typeof SECTIONS)[number]["id"];
 
@@ -142,6 +144,7 @@ export function SettingsDialogBody({
 	 *  retargets follow it exactly like initialSection below. */
 	initialRow?: string | null;
 }) {
+	const t = useT();
 	const { onAppearanceChange } = useAppearance();
 	const [record, setRecord] = useState<UserSettings | null | undefined>(
 		undefined,
@@ -267,25 +270,25 @@ export function SettingsDialogBody({
 		<div
 			role="dialog"
 			aria-modal="true"
-			aria-label="Settings"
+			aria-label={t.settings.dialog.title}
 			data-testid="settings-dialog"
 			className="settings-dialog-pop flex h-[620px] max-h-[85vh] w-[920px] max-w-[90vw] flex-col overflow-hidden rounded-md border border-border bg-card shadow-xl"
 			onClick={(e) => e.stopPropagation()}
 		>
 			{/* Header — the app's quiet CMU title language. */}
 			<header className="flex h-15 shrink-0 items-center gap-3 border-b border-border px-5">
-				<h2 className="font-title text-2xl tracking-tight">Settings</h2>
+				<h2 className="font-title text-2xl tracking-tight">{t.settings.dialog.title}</h2>
 				<Hint
 						// Esc closes the dialog (its own listener) — surface it.
-						label="Close"
+						label={t.common.actions.close}
 						binding="escape"
 						side="left"
 					>
 						<button
 					type="button"
-					aria-label="Close settings"
+					aria-label={t.settings.dialog.close}
 					data-testid="settings-close"
-					className="ml-auto size-7 rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+					className="ms-auto size-7 rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 					onClick={onClose}
 				>
 					<svg
@@ -305,9 +308,9 @@ export function SettingsDialogBody({
 				{/* Left nav — text-only, the session-list mono language,
 					    active = bg-accent. */}
 				<nav
-					aria-label="Settings sections"
+					aria-label={t.settings.dialog.sections}
 					data-testid="settings-nav"
-					className="flex w-44 shrink-0 flex-col gap-1 border-r border-border p-2"
+					className="flex w-44 shrink-0 flex-col gap-1 border-e border-border p-2"
 				>
 					{SECTIONS.map((s) => (
 						<button
@@ -315,14 +318,14 @@ export function SettingsDialogBody({
 							type="button"
 							data-testid={`settings-nav-${s.id}`}
 							aria-current={active === s.id}
-							className={`rounded-sm px-3 py-1.5 text-left font-ui text-sm transition-colors ${
+							className={`rounded-sm px-3 py-1.5 text-start font-ui text-sm transition-colors ${
 								active === s.id
 									? "bg-accent text-foreground"
 									: "text-muted-foreground hover:bg-accent hover:text-foreground"
 							}`}
 							onClick={() => setActive(s.id)}
 						>
-							{s.label}
+							{t.settings.dialog.nav[s.id]}
 						</button>
 					))}
 				</nav>
@@ -341,6 +344,7 @@ export function SettingsDialogBody({
 					{error && (
 						<p
 							role="alert"
+							dir={textDirection(error)}
 							className="m-4 rounded-sm border border-red-500/40 px-3 py-2 text-xs text-red-500"
 							data-testid="settings-error"
 						>
@@ -349,17 +353,17 @@ export function SettingsDialogBody({
 					)}
 					{record === undefined ? (
 						<p className="px-6 py-5 text-xs text-muted-foreground/70">
-							Loading settings…
+							{t.settings.dialog.loading}
 						</p>
 					) : record === null ? (
 						<p className="px-6 py-5 text-xs text-muted-foreground/70">
-							Settings could not be loaded — refresh to retry.
+							{t.settings.dialog.loadFailed}
 						</p>
 					) : (
 						<div>
 							{active === "general" && (
 								<SettingsSection
-									title="General"
+									title={t.settings.dialog.nav.general}
 									testid="section-general"
 								>
 									<UpdateSettings
@@ -371,13 +375,13 @@ export function SettingsDialogBody({
 								</SettingsSection>
 							)}
 							{active === "keys" && (
-								<SettingsSection title="Providers" testid="section-keys">
+								<SettingsSection title={t.settings.dialog.nav.keys} testid="section-keys">
 									<KeysSection initialRow={initialRow ?? undefined} />
 								</SettingsSection>
 							)}
 							{active === "agent" && (
 								<SettingsSection
-									title="Agent"
+									title={t.settings.dialog.nav.agent}
 									testid="section-agent"
 								>
 									<AgentSection
@@ -400,7 +404,7 @@ export function SettingsDialogBody({
 							)}
 							{active === "appearance" && (
 								<SettingsSection
-									title="Appearance"
+									title={t.settings.dialog.nav.appearance}
 									testid="section-appearance"
 								>
 									<AppearanceSection
@@ -413,7 +417,7 @@ export function SettingsDialogBody({
 							)}
 							{active === "graph" && (
 								<SettingsSection
-									title="Graph"
+									title={t.settings.dialog.nav.graph}
 									testid="section-graph"
 								>
 									<GraphSection
@@ -426,8 +430,8 @@ export function SettingsDialogBody({
 							)}
 							{active === "keyboard" && (
 								<SettingsSection
-									title="Keyboard"
-									hint="Stored on this device"
+									title={t.settings.dialog.nav.keyboard}
+									hint={t.settings.dialog.keyboardHint}
 									testid="section-keyboard"
 								>
 									<KeyboardSection />

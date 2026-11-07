@@ -27,7 +27,7 @@ import type {
 	ModelSlot,
 	RoleModelOverride,
 } from "../core/settings.ts";
-import { BACKGROUND_MODEL_ROLES, CACHE_RETENTIONS, COMPACTION_THRESHOLD_FLOOR, CUSTOM_MODEL_PIN_FLOOR, EXTRACTION_CHUNK_TOKENS_FLOOR, MODEL_SLOTS } from "../core/settings.ts";
+import { BACKGROUND_MODEL_ROLES, CACHE_RETENTIONS, COMPACTION_THRESHOLD_FLOOR, CUSTOM_MODEL_PIN_FLOOR, EXTRACTION_CHUNK_TOKENS_FLOOR, isUiLanguage, MODEL_SLOTS, UI_LANGUAGES } from "../core/settings.ts";
 import { WRITABLE_TOOL_KEYS } from "../core/pending.ts";
 import { isSearchEngineId, SEARCH_ENGINES } from "../core/search.ts";
 import { isDictationLanguage } from "../core/dictation.ts";
@@ -232,7 +232,7 @@ function parseHexOrNull(value: unknown, field: string): { color?: string | null;
 }
 
 /** appearance: { mode?, background?, fontFamily?, proseFontSize?,
- *  sessionNameSerif?, mdRendering? } */
+ *  sessionNameSerif?, language?, mdRendering? } */
 export function parseAppearanceSettingsBody(body: unknown): SettingsBodyResult<AppearanceSettings> {
 	const raw = asRecord(body);
 	if (!raw) return { ok: false, error: "Invalid JSON body" };
@@ -270,6 +270,12 @@ export function parseAppearanceSettingsBody(body: unknown): SettingsBodyResult<A
 			return { ok: false, error: "sessionNameSerif must be a boolean" };
 		}
 		settings.sessionNameSerif = raw.sessionNameSerif;
+	}
+	if (raw.language !== undefined) {
+		if (!isUiLanguage(raw.language)) {
+			return { ok: false, error: `language must be one of: ${UI_LANGUAGES.join(", ")}` };
+		}
+		settings.language = raw.language;
 	}
 	if (raw.mdRendering !== undefined) {
 		const md = asRecord(raw.mdRendering);

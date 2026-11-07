@@ -37,10 +37,15 @@ import {
 import { SettingsGroup } from "./controls.tsx";
 import { SubscriptionConnections } from "./subscription-connections.tsx";
 import { ClaudeCodeInstallationStatus } from "./claude-code-status.tsx";
+import { CustomProvidersGroup } from "./custom-providers.tsx";
+import { SubscriptionsList } from "./subscriptions.tsx";
 import { ProviderMenuList } from "./model-menu.tsx";
 import { MenuShell } from "@/components/menu-shell";
 import { notifySettingsSaved } from "@/components/settings-signal";
 import { DictationLanguageSetting } from "@/components/dictation-language";
+import { useT } from "@/components/i18n";
+import type { Messages } from "@/lib/i18n/messages";
+import { textDirection } from "@/lib/i18n/direction";
 
 /** One pi-ai provider with plain API-key auth (the Platform seam —
  *  derived from pi-ai's own env-key table; no drift possible). */
@@ -149,8 +154,8 @@ export function providerKeyLabel(id: string, providers: readonly ProviderKeyInfo
 
 /** The minimal status line, e.g. "…ab12 · 64 chars" (" · env" marks an
  *  environment-owned value — the row itself is read-only then). Pure. */
-export function keyStatusLine(status: AuthKeyStatus): string {
-	if (!status.present || !status.masked) return "not set";
+export function keyStatusLine(status: AuthKeyStatus, k: Messages["settings"]["keys"]): string {
+	if (!status.present || !status.masked) return k.notSet;
 	const tail = status.masked.replace(/ \((\d+) chars\)$/, "");
 	const chars = status.masked.match(/\((\d+) chars\)$/)?.[1] ?? "?";
 	return `${tail} · ${chars}${status.source === "env" ? " · env" : ""}`;
@@ -183,6 +188,8 @@ function KeyTableRow({
 	onCancel: () => void;
 	testid: string;
 }) {
+	const t = useT();
+	const k = t.settings.keys;
 	const envOwned = status.source === "env";
 	const [value, setValue] = useState("");
 	const [error, setError] = useState<string | null>(null);
@@ -206,16 +213,17 @@ function KeyTableRow({
 		return (
 			<div data-testid={testid}>
 				<div className="flex items-center gap-2 rounded-sm px-1 py-1.5" data-testid={`${testid}-editor`}>
-					<span className="shrink-0 font-ui text-xs text-foreground">{label}</span>
+					<span dir={textDirection(label)} className="shrink-0 font-ui text-xs text-foreground">{label}</span>
 					<input
 						type="text"
+						dir="ltr"
 						value={value}
 						onChange={(e) => setValue(e.target.value)}
 						onKeyDown={(e) => {
 							if (e.key === "Enter") void save();
 						}}
-						placeholder="Paste key…"
-						aria-label={`${label} key`}
+						placeholder={k.pastePlaceholder}
+						aria-label={k.keyAria(label)}
 						data-testid={`${testid}-input`}
 						disabled={busy}
 						autoFocus
@@ -228,7 +236,7 @@ function KeyTableRow({
 						data-testid={`${testid}-save`}
 						className="shrink-0 text-xs text-foreground underline-offset-2 hover:underline disabled:text-muted-foreground/40 disabled:no-underline"
 					>
-						Save
+						{t.common.actions.save}
 					</button>
 					<button
 						type="button"
@@ -237,7 +245,7 @@ function KeyTableRow({
 						data-testid={`${testid}-cancel`}
 						className="shrink-0 text-xs text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
 					>
-						Cancel
+						{t.common.actions.cancel}
 					</button>
 					{status.present && status.source === "file" && onDelete && (
 						<button
@@ -247,12 +255,12 @@ function KeyTableRow({
 							data-testid={`${testid}-delete`}
 							className="shrink-0 text-xs text-muted-foreground/70 underline-offset-2 hover:text-red-500 hover:underline"
 						>
-							Delete
+							{t.common.actions.delete}
 						</button>
 					)}
 				</div>
 				{error && (
-					<p role="alert" data-testid={`${testid}-error`} className="px-1 text-xs text-red-500">
+					<p role="alert" dir={textDirection(error)} data-testid={`${testid}-error`} className="px-1 text-xs text-red-500">
 						{error}
 					</p>
 				)}
@@ -267,11 +275,11 @@ function KeyTableRow({
 				aria-expanded={expanded}
 				data-testid={`${testid}-row`}
 				onClick={() => !envOwned && onToggle()}
-				className={`flex w-full items-center justify-between gap-3 rounded-sm px-1 py-1.5 text-left ${
+				className={`flex w-full items-center justify-between gap-3 rounded-sm px-1 py-1.5 text-start ${
 					envOwned ? "cursor-default" : "cursor-pointer transition-colors hover:bg-accent/50"
 				}`}
 			>
-				<span className="font-ui text-xs text-foreground">{label}</span>
+				<span dir={textDirection(label)} className="font-ui text-xs text-foreground">{label}</span>
 				<span className="flex items-center gap-2">
 					{docsUrl && (
 						<a
@@ -281,16 +289,16 @@ function KeyTableRow({
 							onClick={(e) => e.stopPropagation()}
 							className="text-[10px] text-muted-foreground/60 underline-offset-2 hover:text-foreground hover:underline"
 						>
-							key ↗
+							{k.docsLink}
 						</a>
 					)}
-					<span data-testid={`${testid}-status`} className="font-mono text-[11px] text-muted-foreground">
-						{keyStatusLine(status)}
+					<span data-testid={`${testid}-status`} dir="ltr" className="font-mono text-[11px] text-muted-foreground">
+						{keyStatusLine(status, k)}
 					</span>
 				</span>
 			</button>
 			{error && (
-				<p role="alert" data-testid={`${testid}-error`} className="pl-6 text-xs text-red-500">
+				<p role="alert" dir={textDirection(error)} data-testid={`${testid}-error`} className="ps-6 text-xs text-red-500">
 					{error}
 				</p>
 			)}
@@ -307,6 +315,7 @@ function AddProviderRow({
 	addable: ProviderKeyInfo[];
 	onPick: (p: ProviderKeyInfo) => void;
 }) {
+	const k = useT().settings.keys;
 	const [open, setOpen] = useState(false);
 	const anchorRef = useRef<HTMLDivElement>(null);
 
@@ -339,9 +348,9 @@ function AddProviderRow({
 				aria-expanded={open}
 				data-testid="add-provider"
 				onClick={() => setOpen((v) => !v)}
-				className="flex w-full items-center justify-between gap-3 rounded-sm px-1 py-1.5 text-left font-ui text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+				className="flex w-full items-center justify-between gap-3 rounded-sm px-1 py-1.5 text-start font-ui text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
 			>
-				<span>+ Add a provider</span>
+				<span>{k.addProvider}</span>
 				{addable.length > 0 && <span className="font-mono text-[11px]">{addable.length}</span>}
 			</button>
 			{open && (
@@ -375,6 +384,7 @@ export function KeysSection({
 }: {
 	initialRow?: string;
 }) {
+	const k = useT().settings.keys;
 	const [statuses, setStatuses] = useState<AuthKeyStatus[] | null>(null);
 	const [providers, setProviders] = useState<ProviderKeyInfo[] | undefined>(undefined);
 	const [loading, setLoading] = useState(true);
@@ -447,7 +457,7 @@ export function KeysSection({
 		});
 		if (!res.ok) {
 			const body = (await res.json().catch(() => ({}))) as { error?: string };
-			return body.error ?? `Save failed (${res.status})`;
+			return body.error ?? k.saveFailed(res.status);
 		}
 		await reload();
 		// The cross-surface keys signal (zero-keys wave): the zero-keys pill,
@@ -475,7 +485,7 @@ export function KeysSection({
 	}
 
 	if (loading || statuses === null) {
-		return <p className="px-6 py-5 text-xs text-muted-foreground/70">Loading keys…</p>;
+		return <p className="px-6 py-5 text-xs text-muted-foreground/70">{k.loading}</p>;
 	}
 
 	const { providerRows, toolRows, unknownRows, addable } = classifyKeys(statuses, providers);
@@ -491,7 +501,7 @@ export function KeysSection({
 
 	return (
 		<>
-			<SettingsGroup label="Model API keys" testid="group-provider-keys">
+			<SettingsGroup label={k.modelKeys} testid="group-provider-keys">
 				{providerRows.map((status) => (
 					<KeyTableRow
 						key={status.id}
@@ -559,27 +569,30 @@ export function KeysSection({
 				)}
 				{adding && (
 					<div className="flex items-center gap-2 rounded-sm px-1 py-1.5" data-testid={`key-${adding.id}-editor`}>
-						<span className="shrink-0 font-ui text-xs text-foreground">{adding.label}</span>
+						<span dir={textDirection(adding.label)} className="shrink-0 font-ui text-xs text-foreground">{adding.label}</span>
 						<AddProviderEditor provider={adding} onSave={(v) => void saveNewProvider(adding, v)} onCancel={() => setAdding(null)} error={addError} />
 					</div>
 				)}
 				{unknownRows.length > 0 && <div data-testid="group-unknown-keys">
 					{unknownRows.map((status) => <div key={status.id} data-testid={`unknown-${status.id}`} className="flex items-center justify-between gap-3 px-1 py-1.5 opacity-40">
-						<span className="font-mono text-xs text-foreground">{status.id}</span>
-						<span className="font-mono text-[11px] text-muted-foreground">{status.masked}</span>
+						<span dir="ltr" className="font-mono text-xs text-foreground">{status.id}</span>
+						<span className="font-mono text-[11px] text-muted-foreground" dir="ltr">{status.masked}</span>
 					</div>)}
 				</div>}
 			</SettingsGroup>
 
-			<SettingsGroup label="Subscriptions" testid="group-subscriptions">
+			<SettingsGroup label={k.subscriptions} testid="group-subscriptions">
 				<SubscriptionConnections />
+				<SubscriptionsList />
 			</SettingsGroup>
 
 			<SettingsGroup label="External CLI" testid="group-external-cli">
 				<ClaudeCodeInstallationStatus />
 			</SettingsGroup>
 
-			{(["Dictation", "Search"] as const).map((label) => <SettingsGroup key={label} label={label} testid={label === "Dictation" ? "group-dictation" : "group-search"}>
+			<CustomProvidersGroup />
+
+			{(["Dictation", "Search"] as const).map((label) => <SettingsGroup key={label} label={label === "Dictation" ? k.dictation : k.search} testid={label === "Dictation" ? "group-dictation" : "group-search"}>
 				{toolRows.filter((status) => label === "Dictation" ? status.id === "DEEPGRAM_API_KEY" : status.id !== "DEEPGRAM_API_KEY").map((status) => (
 					<KeyTableRow
 						key={status.id}
@@ -628,18 +641,20 @@ function AddProviderEditor({
 	onCancel: () => void;
 	error: string | null;
 }) {
+	const t = useT();
 	const [value, setValue] = useState("");
 	return (
 		<>
 			<input
 				type="text"
+				dir="ltr"
 				value={value}
 				onChange={(e) => setValue(e.target.value)}
 				onKeyDown={(e) => {
 					if (e.key === "Enter" && value.trim()) onSave(value);
 				}}
-				placeholder="Paste key…"
-				aria-label={`${provider.label} key`}
+				placeholder={t.settings.keys.pastePlaceholder}
+				aria-label={t.settings.keys.keyAria(provider.label)}
 				data-testid={`key-${provider.id}-input`}
 				autoFocus
 				className="h-7 min-w-0 flex-1 rounded-sm border border-border bg-background px-1.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-muted-foreground/50"
@@ -651,7 +666,7 @@ function AddProviderEditor({
 				data-testid={`key-${provider.id}-save`}
 				className="shrink-0 text-xs text-foreground underline-offset-2 hover:underline disabled:text-muted-foreground/40 disabled:no-underline"
 			>
-				Save
+				{t.common.actions.save}
 			</button>
 			<button
 				type="button"
@@ -659,10 +674,10 @@ function AddProviderEditor({
 				data-testid={`key-${provider.id}-cancel`}
 				className="shrink-0 text-xs text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
 			>
-				Cancel
+				{t.common.actions.cancel}
 			</button>
 			{error && (
-				<p role="alert" className="w-full pl-0 text-xs text-red-500" data-testid={`key-${provider.id}-error`}>
+				<p role="alert" dir={textDirection(error)} className="w-full ps-0 text-xs text-red-500" data-testid={`key-${provider.id}-error`}>
 					{error}
 				</p>
 			)}

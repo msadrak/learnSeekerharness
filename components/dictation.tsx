@@ -8,6 +8,8 @@ import { deepgramListenUrl, type DictationLanguage } from "@/src/core";
 import { useDictationLanguage } from "@/components/dictation-preference";
 import { setDictationActive } from "@/components/dictation-state";
 export { isDictationActive } from "@/components/dictation-state";
+import { useT, type Messages } from "@/components/i18n";
+import { textDirection } from "@/lib/i18n/direction";
 
 /**
  * Voice dictation — the cloud engine (STT wave 1, 2026-09-17).
@@ -109,6 +111,18 @@ export const DEEPGRAM_KEY_ID = "DEEPGRAM_API_KEY";
  * instead. Exported for pins; the errored idle button's click recognizes
  * it and deep-links Settings → Keys → the Deepgram row. */
 export const DICTATION_KEYLESS = "Dictation needs a Deepgram key";
+
+/** The hook's own error values are stable English (pins compare them);
+ *  the bar translates them at display. Raw platform messages pass through. */
+function localizeDictationError(error: string, d: Messages["chat"]["dictation"]): string {
+	if (error === DICTATION_KEYLESS) return d.keyless;
+	if (error === "Microphone permission denied") return d.micDenied;
+	if (error === "mic unavailable") return d.micUnavailable;
+	if (error === "Deepgram reconnect failed") return d.reconnectFailed;
+	const lost = /^Deepgram connection lost \((.*)\)$/.exec(error);
+	if (lost) return d.connectionLost(lost[1]!);
+	return error;
+}
 
 /** Mint a fresh short-lived token (the route holds the real key
  *  server-side). Module-level: the start path's warm cache and the
@@ -650,6 +664,11 @@ export function DictationBar({ dictation }: { dictation: Dictation }) {
 	 *  the error — the surface is clean when the user returns. Any other
 	 *  error keeps the old behavior (click = retry, which clears). */
 	const keyless = error === DICTATION_KEYLESS;
+	const t = useT();
+	const d = t.chat.dictation;
+	/** The error as shown: the hook's stable English values map to the
+	 *  active language; anything else (a raw platform message) shows as-is. */
+	const shownError = error === null ? null : localizeDictationError(error, d);
 	const [levels, setLevels] = useState<number[]>(() => new Array(METER_CELLS).fill(0));
 	/** Adaptive cell count (owner round 2): derived from the meter's
 	 *  measured width — narrow rows show fewer bars instead of
@@ -694,8 +713,11 @@ export function DictationBar({ dictation }: { dictation: Dictation }) {
 	if (!active) {
 		return (
 			<Hint
-				// The error line truncates in the button; its tooltip reveals it.
-				label={error ?? "Dictate"}
+				// Errored: the button span truncates the line — the tooltip is its
+				// full reveal (the keyless line KEEPS "Deepgram" — owner overrule:
+				// it's the Keys row label, the truth the user needs). Otherwise the
+				// quiet label + the live ⌘D binding.
+				label={shownError ?? d.dictate}
 				action={error ? undefined : "toggle-dictation"}
 				side="top"
 			>
@@ -709,12 +731,12 @@ export function DictationBar({ dictation }: { dictation: Dictation }) {
 							toggle();
 						}
 					}}
-					aria-label={error ? `Dictation failed: ${error}` : "Start dictation"}
+					aria-label={shownError ? d.failed(shownError) : d.start}
 					data-testid="dictation-toggle"
 					className="flex h-7 w-full items-center justify-center gap-1.5 rounded-md border border-border/50 bg-card/50 text-xs text-muted-foreground/70 shadow-lg backdrop-blur transition-colors hover:border-border hover:text-muted-foreground"
 				>
 					<MicIcon className="size-3.5" />
-					<span className="max-w-full truncate">{error ?? "Dictate"}</span>
+					<span dir={shownError ? textDirection(shownError) : undefined} className="max-w-full truncate">{shownError ?? d.dictate}</span>
 				</button>
 			</Hint>
 		);
@@ -722,17 +744,26 @@ export function DictationBar({ dictation }: { dictation: Dictation }) {
 
 	return (
 		<div className="flex w-full min-w-0 items-center gap-2" data-testid="dictation-bar">
-			<Hint label="Stop dictation (Esc)" side="top">
+			<Hint
+				// The owner flagged this copy good ("Stop dictation (Esc)") —
+				// kept verbatim; only the machinery moved to the styled tooltip.
+				label={d.stopHint}
+				side="top"
+			>
 				<button
 					type="button"
 					onClick={toggle}
 					disabled={phase === "stopping"}
-					aria-label="Stop dictation"
-					data-testid="dictation-toggle"
-					className="flex h-7 shrink-0 items-center gap-1.5 rounded-md bg-destructive/10 px-2 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
-				>
-					{phase === "stopping" ? <Loader2Icon className="size-3.5 animate-spin" /> : <MicIcon className="size-3.5" />}
-					Stop
+					aria-label={d.stop}
+				data-testid="dictation-toggle"
+				className="flex h-7 shrink-0 items-center gap-1.5 rounded-md bg-destructive/10 px-2 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
+			>
+				{phase === "stopping" ? (
+					<Loader2Icon className="size-3.5 animate-spin" />
+				) : (
+					<MicIcon className="size-3.5" />
+				)}
+					{t.common.actions.stop}
 				</button>
 			</Hint>
 			<span className="size-1.5 shrink-0 animate-pulse rounded-full bg-destructive" aria-hidden />

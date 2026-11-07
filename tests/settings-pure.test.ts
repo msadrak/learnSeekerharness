@@ -22,6 +22,7 @@ import { classifyKeys, keyStatusLine, type ProviderKeyInfo } from "../components
 import type { AgentSettings, AuthKeyStatus, ModelsSettings } from "../src/core";
 import { slotsConfigured } from "../src/core";
 import { setupStage } from "../components/setup-dialog.tsx";
+import { en } from "../lib/i18n/messages/index.ts";
 
 describe("resolveAppearance — delta over factory", () => {
 	it("absent everything = the factory view", () => {
@@ -92,7 +93,7 @@ describe("appearanceVars — the mapping the provider applies", () => {
 		);
 		assert.equal(vars["--background"], "#101820");
 		assert.equal(vars["--card"], "#182028", "raised +8 per channel: 10→18, 18→20, 20→28");
-		assert.equal(vars["--font-prose"], `"Georgia", var(--font-sans3), ui-sans-serif, system-ui, sans-serif`);
+		assert.ok(vars["--font-prose"]?.startsWith(`"Georgia",`), "the chosen reading font leads the stack");
 		assert.equal(vars["--lh-prose-size"], "18px");
 		assert.equal(vars["--font-title"], "var(--font-prose)", "serif off → titles follow the prose font");
 		assert.equal(vars["--lh-heading-weight"], "700");
@@ -276,20 +277,20 @@ describe("classifyKeys — the Keys section's two-group projection", () => {
 describe("keyStatusLine — the minimal at-a-glance state", () => {
 	it("present file key: tail + chars, no source suffix", () => {
 		assert.equal(
-			keyStatusLine({ id: "X", info: null, present: true, masked: "…ab12 (64 chars)", source: "file", shadowedByEnv: false }),
+			keyStatusLine({ id: "X", info: null, present: true, masked: "…ab12 (64 chars)", source: "file", shadowedByEnv: false }, en.settings.keys),
 			"…ab12 · 64",
 		);
 	});
 
 	it("env-owned key carries the 'env' marker (the row renders read-only)", () => {
 		assert.equal(
-			keyStatusLine({ id: "X", info: null, present: true, masked: "…ca10 (73 chars)", source: "env", shadowedByEnv: false }),
+			keyStatusLine({ id: "X", info: null, present: true, masked: "…ca10 (73 chars)", source: "env", shadowedByEnv: false }, en.settings.keys),
 			"…ca10 · 73 · env",
 		);
 	});
 
 	it("absent key reads 'not set'", () => {
-		assert.equal(keyStatusLine({ id: "X", info: null, present: false, masked: null, source: "none", shadowedByEnv: false }), "not set");
+		assert.equal(keyStatusLine({ id: "X", info: null, present: false, masked: null, source: "none", shadowedByEnv: false }, en.settings.keys), "not set");
 	});
 });
 
@@ -353,12 +354,12 @@ describe("sectionedSegments — actual per-agent prompt membership", () => {
 	};
 
 	it("the approved order: Teacher, Prober, Practice, Shared — Shared last", () => {
-		const ids = sectionedSegments(view).map((s) => s.id);
+		const ids = sectionedSegments(view, en.settings.agent).map((s) => s.id);
 		assert.deepEqual(ids, ["teacher", "prober", "practice", "shared"]);
 	});
 
 	it("shared chunks appear exactly ONCE across all sections (no duplication)", () => {
-		const all = sectionedSegments(view).flatMap((s) => s.segments.map((seg) => seg.path));
+		const all = sectionedSegments(view, en.settings.agent).flatMap((s) => s.segments.map((seg) => seg.path));
 		assert.equal(all.filter((p) => p === "system-prompt.md").length, 1);
 		assert.equal(all.filter((p) => p === "shared/10-personality.md").length, 1);
 		// every path unique — no chunk listed twice
@@ -366,7 +367,7 @@ describe("sectionedSegments — actual per-agent prompt membership", () => {
 	});
 
 	it("the Shared section holds the shared chunks in assembly order; the agents' sections hold their own", () => {
-		const [teacher, prober, practice, shared] = sectionedSegments(view);
+		const [teacher, prober, practice, shared] = sectionedSegments(view, en.settings.agent);
 		assert.ok(teacher && prober && practice && shared, "all four sections present");
 		assert.deepEqual(teacher.segments.map((s) => s.path), ["teacher/05-method.md", "teacher/10-planning.md"]);
 		assert.deepEqual(prober.segments.map((s) => s.path), ["prober/10-probe-doctrine.md"]);
@@ -379,17 +380,17 @@ describe("sectionedSegments — actual per-agent prompt membership", () => {
 	});
 
 	it("labels each shared fragment from actual membership, independently of override state", () => {
-		const shared = sectionedSegments(view).at(-1)!;
+		const shared = sectionedSegments(view, en.settings.agent).at(-1)!;
 		assert.equal(shared.segments[0]!.usageHint, "Used by Teacher and Prober");
 		assert.equal(shared.segments[2]!.usageHint, "Used by Teacher, Prober and Practice");
 		assert.equal(shared.segments[2]!.enabled, true, "in-use state is not replaced by usage");
 		// A synthetic new path/membership proves there is no duplicated allowlist.
 		const fragment = { path: "shared/99-new.md", sourceText: "new", overrideText: null, enabled: false, shared: true };
 		const changed = { teacher: [fragment], prober: [fragment], practice: [fragment] };
-		assert.equal(sectionedSegments(changed).at(-1)!.segments[0]!.usageHint, "Used by Teacher, Prober and Practice");
+		assert.equal(sectionedSegments(changed, en.settings.agent).at(-1)!.segments[0]!.usageHint, "Used by Teacher, Prober and Practice");
 		changed.practice = [];
-		assert.equal(sectionedSegments(changed).at(-1)!.segments[0]!.usageHint, "Used by Teacher and Prober");
-		assert.equal(sectionedSegments({ teacher: [], prober: [], practice: [fragment] }).at(-1)!.segments[0]!.usageHint, "Used by Practice");
+		assert.equal(sectionedSegments(changed, en.settings.agent).at(-1)!.segments[0]!.usageHint, "Used by Teacher and Prober");
+		assert.equal(sectionedSegments({ teacher: [], prober: [], practice: [fragment] }, en.settings.agent).at(-1)!.segments[0]!.usageHint, "Used by Practice");
 	});
 
 	it("the indicator copy is pinned — it states WHICH VERSION IS IN USE (refined 2026-09-26)", () => {

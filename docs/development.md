@@ -40,7 +40,71 @@ Provider-specific setup and limitations: [Claude Code](claude-code.md), [custom 
 
 ### Subscription connections in web/dev
 
-`npm run dev` and `npm start` support ChatGPT, GitHub Copilot, and Grok sign-in. `desktop:dev` uses those same dev-server connections; packaged desktop has a separate main-process credential owner/private transport. Subscription routes do not fall back to API-key billing.
+| Variable | Purpose |
+|---|---|
+| `OPENROUTER_API_KEY` | required — all LLM calls go through OpenRouter |
+| `GOOGLE_SEARCH_API_KEY` + `GOOGLE_CSE_ID` | researcher's `web_search` (Google Custom Search) |
+| `DEEPGRAM_API_KEY` | optional — dictation (STT token minting; audio streams browser→Deepgram, never through the server) |
+| `CHROME_PATH` | optional system Chrome fallback for demo verification; the app's own browser helper is primary (nothing is downloaded) |
+
+The packaged desktop app takes keys from `userData/auth.json` (BYOK, mode 0600, read/written directly by the server via `LH_AUTH_FILE`). PDFs render natively with pdfjs/Skia; SVGs use resvg.
+
+### Custom APIs and AI subscriptions
+
+**Custom (manual) APIs.** Settings → Providers → *Custom APIs* declares any model endpoint by hand — Ollama, LM Studio, vLLM, LiteLLM, a corporate gateway — as a protocol (`openai-completions`, `openai-responses`, `anthropic-messages`, `google-generative-ai`), a base URL, an optional key/bearer token, and a model list (id, name, context window, max tokens, reasoning, images). Definitions are one non-secret file, `data/providers.json` (`{"version":1,"providers":[…]}`, schema in `src/core/custom-providers.ts`); it can be hand-edited and is hot-reloaded. Keys are secrets and live in the credential store, never in `providers.json`. A custom provider's id cannot shadow a built-in one (model pins are keyed by provider id). The API is `GET/POST /api/providers`, `PUT/DELETE /api/providers/:id`.
+
+**AI subscriptions.** Settings → Providers → *Subscriptions* signs in with a paid plan instead of an API key: Claude Pro/Max, GitHub Copilot, ChatGPT/Codex (works in plain `npm run dev`; the desktop-only ChatGPT row above is unchanged), Gemini CLI and Antigravity (Google Cloud Code Assist, `src/agent/google-cloudcode/`), plus any other pi-ai provider with an OAuth method. pi-ai owns each login flow and token refresh; `src/server/subscriptions.ts` lists the providers (`GET /api/subscriptions/providers`) and relays its interaction (sign-in URL, device code, paste-the-redirect prompt) to the UI through a polled login session (`POST /api/subscriptions/:provider/login`, `GET|POST|DELETE /api/subscriptions/sessions/:sid`, `DELETE /api/subscriptions/:provider`). The login's callback server binds `127.0.0.1` on the machine running the server. Anthropic and Google may restrict third-party use of these logins — the UI says so before you connect.
+
+Both ride one secrets file, `credentials.json` (mode 0600, next to `auth.json`; `LH_CREDENTIALS_FILE` overrides): pi-ai's `{providerId: api_key | oauth}` credential map behind a serialized-write `CredentialStore` (`src/store/credentials.ts`). The server hands it, plus the custom providers, to the agent layer through `registerProviderSource` (`src/agent/models.ts`).
+
+## Architecture
+
+Five layers, dependency arrows pointing inward only, machine-enforced as four ESLint zones (shell → barrels only; core and agent never import below themselves). Two composition roots, one writer per store. The full spec — layers, systems, runtime flows, invariants, seams: [`docs/architecture.md`](docs/architecture.md).
+
+```mermaid
+flowchart TB
+    LEARNER["the learner"]
+
+    subgraph STAGE["STAGE — presentation shell (browser)"]
+        UI["session UI · question dock · plan panel · graph canvas · activity dock · sidebar"]
+    end
+
+    subgraph CLASSROOM["CLASSROOM — session engine (owns data/chats)"]
+        TURN["turn pipeline — handleChatRequest:<br/>liveness · steer claiming · write-ahead persist · stream"]
+        AGENTS["prober → teacher agents<br/>(stateless per-turn, built from the record)"]
+        CHATDATA[("chat records<br/>data/chats/*.json")]
+    end
+
+    subgraph WORKBENCH["WORKBENCH — background labor (owns data/jobs)"]
+        SUBS["researcher · demo-builder · visual-maker<br/>(pi agents driven to completion)"]
+        WAKE["wake pipeline — per-chat serialized steer delivery,<br/>server-side wake turns, crash recovery"]
+    end
+
+    subgraph LIBRARY["LIBRARY — world model (owns data/graph ledgers)"]
+        EXTRACT["extraction pipeline:<br/>extractor → auditor → merger<br/>(the SOLE graph writer, serial per source)"]
+        DERIVE["derivation — graphSnapshot · birth-session clusters<br/>(pure reads)"]
+        LEDG[("append-only ledgers<br/>data/graph/*.jsonl")]
+    end
+
+    subgraph ROOM["MACHINE ROOM — host"]
+        HOST["Electron main → standalone Next server ·<br/>config.ts · LH_DATA_DIR · BYOK keys"]
+    end
+
+    LEARNER -->|"text · graded answers"| UI
+    UI -->|"POST /api/chat + addToolOutput"| TURN
+    TURN -->|"quiz / ask stream to browser<br/>(client tools, no server execute)"| UI
+    TURN --> CHATDATA
+    TURN -->|"spawn(job) — fire-and-forget ack"| SUBS
+    SUBS -->|"result → steer message"| WAKE
+    WAKE -->|"exactly-once wake turn"| TURN
+    TURN -->|"trigger when uncovered tokens ≥ chunkTokens"| EXTRACT
+    EXTRACT -->|"reads transcript as evidence"| CHATDATA
+    EXTRACT --> LEDG
+    EXTRACT -->|"semantic top-K context injection (one-shot steer)"| TURN
+    LEDG --> DERIVE
+    UI -->|"GET /api/graph · PUT positions · POST import"| DERIVE
+    HOST -.->|"hosts the server side"| TURN
+```
 
 Web/dev writes `chatgpt-credentials.json`, `github-copilot-credentials.json`, and `xai-credentials.json` **beside `LH_AUTH_FILE`**, in the repo by default—not under `data/` or a global Pi profile. Git/build exclusions cover these files and their write temporaries. Refresh serialization is process-local: use one server per credential directory.
 

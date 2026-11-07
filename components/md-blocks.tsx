@@ -42,6 +42,7 @@ import { MermaidError } from "@/components/mermaid-error";
 import { blurAfterPointerClick } from "@/components/focus-hygiene";
 import { chartSize, useSessionMermaid } from "@/components/session-overlay";
 import { Hint } from "@/components/ui/hint";
+import { useT } from "@/components/i18n";
 
 // ─── The one affordance: the hover-reveal corner copy ────────────────────────
 
@@ -139,6 +140,7 @@ export function codeSource(children: ReactNode): string {
  *  still streaming (the trailing open fence), a quiet skeleton instead of a
  *  doomed parse. */
 function MermaidInline({ chart }: { chart: string }) {
+	const t = useT();
 	const [svg, setSvg] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [attempt, setAttempt] = useState(0);
@@ -191,7 +193,7 @@ function MermaidInline({ chart }: { chart: string }) {
 	return (
 		// data-streamdown="mermaid" keeps the house CSS hook (the svg
 		// max-width rule in globals.css) alive for this app-owned block.
-		<div data-testid="md-mermaid" data-streamdown="mermaid" className="group/md relative my-4">
+		<div data-testid="md-mermaid" data-streamdown="mermaid" dir="ltr" className="group/md relative my-4">
 			<div
 				ref={holderRef}
 				className="mx-auto flex w-full justify-center"
@@ -199,17 +201,17 @@ function MermaidInline({ chart }: { chart: string }) {
 				dangerouslySetInnerHTML={{ __html: svg ?? "" }}
 			/>
 			<div className="absolute top-0 right-0 flex items-start gap-0.5">
-				<CopyCorner getText={() => chart} label="Copy diagram source" />
+				<CopyCorner getText={() => chart} label={t.chat.markdown.copyDiagramSource} />
 				{overlay && (
 					<Hint
 					// Full-screen overlay copy (tooltip wave) — "session view" was
 					// internal direction-speak for the same thing.
-					label="Open full-screen"
+					label={t.chat.markdown.openFullScreen}
 					side="bottom"
 				>
 <button
 						type="button"
-						aria-label="Expand diagram"
+						aria-label={t.chat.markdown.expandDiagram}
 						data-testid="md-mermaid-expand"
 												className="flex size-6 items-center justify-center rounded-md text-muted-foreground/70 opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover/md:opacity-100"
 						onClick={(e) => {
@@ -234,6 +236,7 @@ function MermaidInline({ chart }: { chart: string }) {
  *  mounts. The container/look is CSS-melted in globals.css
  *  (data-streamdown="code-block"…). */
 export function MarkdownCode(props: ComponentProps<"code"> & ExtraProps) {
+	const t = useT();
 	const incomplete = useIsCodeFenceIncomplete();
 	const { children, className, node, ...rest } = props;
 
@@ -257,7 +260,7 @@ export function MarkdownCode(props: ComponentProps<"code"> & ExtraProps) {
 	const lineNumbers = !/\bnoLineNumbers\b/.test(meta);
 	return (
 		<div className="group/md relative" data-testid="md-code">
-			<CopyCorner className="absolute top-1.5 right-2 z-10" getText={() => source} label="Copy code" />
+			<CopyCorner className="absolute top-1.5 right-2 z-10" getText={() => source} label={t.common.markdown.copyCode} />
 			<CodeBlock
 				code={source}
 				language={language}
@@ -348,7 +351,7 @@ export function MarkdownBlockquote(props: ComponentProps<"blockquote"> & ExtraPr
 		return (
 			<blockquote
 				{...rest}
-				className="my-4 border-l-4 border-muted-foreground/30 pl-4 text-muted-foreground italic"
+				className="my-4 border-s-4 border-muted-foreground/30 ps-4 text-muted-foreground italic"
 				data-streamdown="blockquote"
 			>
 				{children}
@@ -359,6 +362,7 @@ export function MarkdownBlockquote(props: ComponentProps<"blockquote"> & ExtraPr
 		<div
 			data-testid="md-callout"
 			data-alert-kind={alert.kind}
+			dir={rest.dir}
 			className="my-4 w-fit max-w-full border border-white px-4 py-3 [&> :first-child]:mt-0 [&> :last-child]:mb-0"
 		>
 			{alert.children}
@@ -375,6 +379,7 @@ export function MarkdownBlockquote(props: ComponentProps<"blockquote"> & ExtraPr
  *  serializes the REAL DOM table (the library's own extractor → Markdown). */
 export function MarkdownTable(props: ComponentProps<"table"> & ExtraProps) {
 	const { children, node, ...rest } = props;
+	const t = useT();
 	const ref = useRef<HTMLTableElement>(null);
 	return (
 		<div className="group/md relative my-4" data-testid="md-table">
@@ -384,8 +389,8 @@ export function MarkdownTable(props: ComponentProps<"table"> & ExtraProps) {
 				// offset, so it straddled the top outline). 4px inset, z above the
 				// cells it hovers over; the scroll container stays under it (the
 				// corner is fixed to the wrapper, not the scrolling table).
-				className="absolute top-1 right-1 z-10"
-				label="Copy table"
+				className="absolute top-1 inset-e-1 z-10"
+				label={t.common.markdown.copyTable}
 				getText={() => (ref.current ? tableDataToMarkdown(extractTableDataFromElement(ref.current)) : "")}
 			/>
 			<div className="overflow-x-auto">
@@ -415,6 +420,7 @@ export function MarkdownTable(props: ComponentProps<"table"> & ExtraProps) {
  *  Every other span passes through untouched. */
 export function MathDisplay(props: ComponentProps<"span"> & ExtraProps) {
 	const { children, className, node, ...rest } = props;
+	const t = useT();
 	const ref = useRef<HTMLSpanElement>(null);
 	if (!className?.includes("katex-display")) {
 		return (
@@ -434,7 +440,7 @@ export function MathDisplay(props: ComponentProps<"span"> & ExtraProps) {
 		<span className="group/md relative block z-0" data-testid="md-math">
 			<CopyCorner
 				className="absolute top-0 right-0 z-10"
-				label="Copy equation source"
+				label={t.chat.markdown.copyEquationSource}
 				getText={() => ref.current?.querySelector("annotation")?.textContent ?? ""}
 			/>
 			<span ref={ref} className={className} {...rest}>

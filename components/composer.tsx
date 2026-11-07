@@ -5,6 +5,9 @@ import { ArrowRightIcon, CornerDownLeftIcon, SquareIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PathInput } from "@/components/path-input";
 import { AttachFilesButton } from "@/components/attach-files-button";
+import { Hint } from "@/components/ui/hint";
+import { useT } from "@/components/i18n";
+import { inputDirection } from "@/lib/i18n/direction";
 
 /**
  * The chat composer — content row ONLY (the persistent rounded shell lives in
@@ -110,7 +113,7 @@ export function Composer({
 	autoFocus,
 	inputRef,
 	onEscape,
-	placeholder = "Ask, answer, or steer the lesson…",
+	placeholder,
 	nextProblem = false,
 	onNext,
 }: {
@@ -139,6 +142,7 @@ export function Composer({
 	 *  empty-Enter share it. */
 	onNext?: () => void;
 }) {
+	const t = useT();
 	const act = () => {
 		const action = enterAction({ busy, canSend, nextProblem });
 		if (action === "stop") onStop();
@@ -180,7 +184,8 @@ export function Composer({
 						act();
 					}
 				}}
-				placeholder={placeholder}
+				placeholder={placeholder ?? t.chat.composer.placeholder}
+				dir={inputDirection(value)}
 				autoFocus={autoFocus}
 				className="field-sizing-content lh-input max-h-48 min-h-10 flex-1 resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground"
 			/>
@@ -203,16 +208,16 @@ export function Composer({
 					<button
 						type="submit"
 						data-testid="next-problem-button"
-						aria-label="Next problem"
+						aria-label={t.chat.composer.nextProblem}
 						className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-green-600 px-4 font-ui text-xs font-medium uppercase tracking-wide text-white transition-colors hover:bg-green-500"
 					>
-						Next problem
-						<ArrowRightIcon className="size-4" />
+						{t.chat.composer.nextProblem}
+						<ArrowRightIcon className="size-4 rtl:-scale-x-100" />
 					</button>
 				) : (
 					<button
 						type="submit"
-						aria-label={busy && !canSend ? "Stop" : "Send"}
+						aria-label={busy && !canSend ? t.common.actions.stop : t.common.actions.send}
 						disabled={!busy && !canSend}
 						className={cn(
 							"flex size-10 shrink-0 items-center justify-center rounded-[10px] transition-colors",

@@ -113,15 +113,25 @@
 
 @theme inline {
 	/* Fonts: chrome = JetBrains Mono, prose = Source Sans 3, titles = CMU
-	   Serif bold. The JetBrains/SourceSans variables attach in app/layout.tsx.
-	   (owner, typography round) The Tailwind defaults are ALIASED to the app
+	   Serif bold. The JetBrains/SourceSans/Vazirmatn variables attach in
+	   app/layout.tsx. Vazirmatn rides right after the Latin face in every
+	   stack (Persian locale wave, owner): the Latin faces keep drawing
+	   Latin, and Persian glyphs — which none of them carry — fall through
+	   to Vazirmatn. It must come BEFORE the var: next/font's variable is
+	   `"<Family>", "<Family> Fallback"`, and that CLS fallback face is
+	   `local(Arial)` with no unicode-range — Windows Arial has Persian
+	   glyphs, so Persian stopped at Arial (owner report). The family name
+	   leads literally for that reason; the var still supplies the metric
+	   fallback for Latin. It sits in the stack in both UI languages: a
+	   Persian reply can arrive in the English chrome. (owner, typography
+	   round) The Tailwind defaults are ALIASED to the app
 	   fonts: `font-mono`/`font-sans` utilities would otherwise fall to the
 	   SYSTEM stacks — a fourth font the app never chose — and streamdown's
 	   code-block chrome + mermaid-error + demo-card all use them. */
-	--font-ui: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
-	--font-prose: var(--font-sans3), ui-sans-serif, system-ui, sans-serif;
-	--font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
-	--font-sans: var(--font-sans3), ui-sans-serif, system-ui, sans-serif;
+	--font-ui: "JetBrains Mono", var(--font-vazirmatn), var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
+	--font-prose: "Source Sans 3", var(--font-vazirmatn), var(--font-sans3), ui-sans-serif, system-ui, sans-serif;
+	--font-mono: "JetBrains Mono", var(--font-vazirmatn), var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
+	--font-sans: "Source Sans 3", var(--font-vazirmatn), var(--font-sans3), ui-sans-serif, system-ui, sans-serif;
 	/* The modular type ladder — each size carries its own line-height.
 	   Component sizes must pull from this ladder. (owner, typography
 	   round 4: the 10px rung is merged into 11 — one pixel apart was a
@@ -220,7 +230,57 @@ body {
    the whole list right as a block. Unlayered CSS beats the utility
    layer; :where keeps specificity zero. */
 .lh-prose :where(ul, ol) {
-	padding-left: 1.5rem;
+	padding-inline-start: 1.5rem;
+}
+
+/* Persian prose (Persian locale wave): Arabic-script glyphs carry tall
+   ascenders/descenders and dots above/below — the Latin 1.5 leading
+   crowds them. Blocks the bidi rule (lib/i18n/direction.ts) marks RTL
+   get a roomier line; Latin blocks keep theirs. */
+.lh-prose [dir="rtl"] {
+	line-height: calc(var(--lh-prose-leading) + 0.25);
+}
+
+/* Math and code are LEFT-TO-RIGHT ISLANDS in any paragraph direction
+   (Persian locale wave, owner: "RTL and LTR text shouldn't get mixed
+   up"). isolate = the formula is one opaque unit to the surrounding
+   bidi run: it can't reorder neighboring Persian words, and Persian
+   punctuation beside it stays put. Display math stays centered. An
+   element with an explicit dir (a Persian node name shown in <code>)
+   keeps it — the attribute decides, the island stays isolated. */
+.katex,
+:where(code, pre, kbd, samp):not([dir]) {
+	direction: ltr;
+	unicode-bidi: isolate;
+}
+:where(code, pre, kbd, samp)[dir] {
+	unicode-bidi: isolate;
+}
+.katex-display {
+	direction: ltr;
+}
+
+/* Content-width blocks (callouts, hugging tables) sit on THEIR OWN
+   direction's side, not the page's: a Persian callout in an English
+   reply hugs the right edge, under the right-aligned Persian paragraphs
+   it belongs to — and vice versa. */
+.lh-prose :is([data-testid="md-callout"], table)[dir="rtl"] {
+	margin-left: auto;
+}
+.lh-prose :is([data-testid="md-callout"], table)[dir="ltr"] {
+	margin-right: auto;
+}
+
+/* One-line labels that carry their OWN text direction (a Latin session
+   title in the Persian sidebar, a Persian title in the English one) still
+   align with the page, not with themselves — a list reads as one column.
+   (text-align: match-parent is the spec answer, but in this Chromium it
+   left a Latin title left-aligned in the RTL sidebar — the page decides.) */
+:root[dir="rtl"] .lh-align-page {
+	text-align: right;
+}
+:root[dir="ltr"] .lh-align-page {
+	text-align: left;
 }
 
 /* Markdown headings render at the font's BLACK weight (owner ask,
@@ -376,7 +436,7 @@ body {
    its row (owner ask, 2026-09-19) — border-collapse merges it with the row
    rules and the outer border, no doubled lines anywhere. */
 [data-streamdown="table"] :where(th, td):not(:first-child) {
-	border-left: 1px solid var(--border);
+	border-inline-start: 1px solid var(--border);
 }
 [data-streamdown="table-header"] {
 	background: transparent;
@@ -564,7 +624,7 @@ body {
    session-name-serif toggle overrides this var at runtime, so the
    .font-title utility must read it through var(), not carry a baked copy. */
 @theme {
-	--font-title: "lh-cmu", serif;
+	--font-title: "lh-cmu", var(--font-vazirmatn), serif;
 }
 
 /* Card enter (owner round, 2026-10-05): the transcript cards' one-shot

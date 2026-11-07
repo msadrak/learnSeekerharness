@@ -11,7 +11,9 @@ import { Hint } from "@/components/ui/hint";
 import { notifySettingsSaved, useSettingsSaved } from "@/components/settings-signal";
 import { useModelCatalog } from "@/components/model-catalog";
 export { useModelCatalog } from "@/components/model-catalog";
-import { defaultOrderLevel, populateLevel, THINKING_LABEL } from "@/components/thinking-default";
+import { defaultOrderLevel, populateLevel } from "@/components/thinking-default";
+import { useT } from "@/components/i18n";
+import { textDirection } from "@/lib/i18n/direction";
 
 /** provider:id → known contextWindow over the cached catalog, mirroring
  * the server's catalogContextLimits join. CLI aliases have no global
@@ -38,6 +40,8 @@ export function catalogLimits(catalog: Pick<ModelCatalogResponse, "models">): Ma
  * no-factory-fallback language: the UI never presents a default model).
  */
 export function ModelControl({ chatId, onModelChange }: { chatId?: string; onModelChange?: (model: string | undefined) => void }) {
+	const t = useT();
+	const mp = t.shell.modelPicker;
 	const { catalog, refresh } = useModelCatalog();
 	const [models, setModels] = useState<ModelsSettings | undefined>();
 	// A successful read with no settings is a legacy session; undefined
@@ -121,9 +125,9 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 	useEffect(() => {
 		if (open === null) return;
 		const onPointerDown = (e: PointerEvent) => {
-			const t = e.target as Element;
-			if (t instanceof Element && t.closest("[data-lh-menu]")) return;
-			if (containerRef.current && !containerRef.current.contains(t)) {
+			const target = e.target as Element;
+			if (target instanceof Element && target.closest("[data-lh-menu]")) return;
+			if (containerRef.current && !containerRef.current.contains(target)) {
 				setOpen(null);
 			}
 		};
@@ -157,7 +161,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				});
 				if (!res.ok) {
 					const body = (await res.json().catch(() => ({}))) as { error?: string };
-					setError(body.error ?? `settings rejected (${res.status})`);
+					setError(body.error ?? mp.settingsRejected(res.status));
 					return;
 				}
 				// Server truth, never the request body (fix wave): a pick
@@ -170,10 +174,10 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				setOpen(null);
 				notifySettingsSaved("models");
 			} catch {
-				setError("Could not reach the server — try again.");
+				setError(mp.unreachable);
 			}
 		},
-		[],
+		[mp],
 	);
 
 	// The session write seam (chat mode): PUT the per-chat settings route
@@ -192,17 +196,17 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				});
 				if (!res.ok) {
 					const body = (await res.json().catch(() => ({}))) as { error?: string };
-					setError(body.error ?? `settings rejected (${res.status})`);
+					setError(body.error ?? mp.settingsRejected(res.status));
 					return;
 				}
 				const stored = (await res.json().catch(() => null)) as { settings?: ChatSettings } | null;
 				setSession({ settings: stored?.settings ?? next });
 				setOpen(null);
 			} catch {
-				setError("Could not reach the server — try again.");
+				setError(mp.unreachable);
 			}
 		},
-		[chatId],
+		[chatId, mp],
 	);
 
 	// One apply seam over both write paths: a pick names provider + id +
@@ -275,7 +279,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 	return (
 		<div ref={containerRef} className="relative flex items-center gap-1.5" data-testid="model-control">
 			<Hint
-				label={effectiveId ? `${effectiveProvider ? `${effectiveProvider}:` : ""}${effectiveId}` : "Model selector"}
+				label={effectiveId ? `${effectiveProvider ? `${effectiveProvider}:` : ""}${effectiveId}` : mp.modelSelector}
 				action="open-model-picker"
 				side="bottom"
 			>
@@ -290,7 +294,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				// graph no longer bleeds through these pills.
 				className="flex items-center gap-1.5 rounded-full border bg-card/85 px-2.5 py-1 shadow-lg backdrop-blur transition-colors hover:border-border hover:bg-muted"
 			>
-				<span className="text-card-foreground">{effectiveId ? prettyModel(effectiveId) : "—"}</span>
+				<span dir={effectiveId ? textDirection(effectiveId) : undefined} className="text-card-foreground">{effectiveId ? prettyModel(effectiveId) : "—"}</span>
 				<span aria-hidden className="text-xs text-muted-foreground">▾</span>
 			</button>
 			</Hint>
@@ -298,7 +302,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				// "Thinking" + its real shortcut via the registry (owner interlude
 				// 2026-09-25): ⇧⇥ cycles the level, so "Thinking (⇧⇥)" —
 				// rebind-live like every Hint suffix.
-				label="Thinking"
+				label={mp.thinking}
 				action="cycle-thinking"
 				side="bottom"
 			>
@@ -321,7 +325,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				{/* Just the level — the button reads like the model button reads
 				   the model name (owner, stats-control round 1). */}
 				<span className="text-card-foreground">
-					{effectiveLevel === undefined ? "—" : (THINKING_LABEL[effectiveLevel] ?? effectiveLevel)}
+					{effectiveLevel === undefined ? "—" : (t.common.thinkingLevels[effectiveLevel] ?? effectiveLevel)}
 				</span>
 				<span aria-hidden className="text-xs text-muted-foreground">▾</span>
 			</button>
@@ -337,7 +341,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 					preferredSide="up"
 					menuClass="flex w-[22rem] flex-col rounded-xl border bg-card p-2 text-xs shadow-xl"
 				>
-					{error && <div className="mb-1.5 text-destructive">{error}</div>}
+					{error && <div dir={textDirection(error)} className="mb-1.5 text-destructive">{error}</div>}
 					<ModelMenuList
 						models={catalog?.models}
 						effectiveId={effectiveId}
@@ -345,10 +349,10 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 						onPick={pickModel}
 						footer={
 							catalog && catalog.models.length === 0
-								? "No models — add a provider key in Keys"
+								? mp.noModels
 								: chatId
-									? "This session's model"
-									: "Strong tier — the default for new sessions"
+									? mp.sessionModelFooter
+									: mp.strongTierFooter
 						}
 					/>
 				</MenuShell>
@@ -365,10 +369,10 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 						levels={catalog ? levels : []}
 						effectiveLevel={effectiveLevel}
 						onPick={(level) => apply(effectiveProvider ?? "", effectiveId ?? "", level as ThinkingLevel)}
-						empty={catalog ? (effectiveId ? `${prettyModel(effectiveId)} has no thinking levels.` : "Pick a model first.") : "Loading…"}
-						footer="Levels this model actually supports"
+						empty={catalog ? (effectiveId ? mp.noThinkingLevels(prettyModel(effectiveId)) : mp.pickModelFirst) : t.common.states.loading}
+						footer={mp.levelsFooter}
 					/>
-					{error && <div className="mt-1 text-destructive">{error}</div>}
+					{error && <div dir={textDirection(error)} className="mt-1 text-destructive">{error}</div>}
 				</MenuShell>
 			)}
 		</div>

@@ -51,9 +51,7 @@ Future teaching sessions can read the graph instead of starting from scratch. Pr
 - **Windows (x64):** run the installer. It is currently unsigned; Windows may show an “unknown publisher” or SmartScreen warning.
 - **Linux (x64):** make the AppImage executable and open it, or install the Debian/Ubuntu `.deb`.
 
-Choose your models, then start a session with what you want to understand. You can use provider API keys, supported subscription connections in the desktop app, an installed [Claude Code CLI](docs/claude-code.md), or a [custom OpenAI-compatible endpoint](docs/custom-providers.md), including a local model server. Optional dictation and web search use separate service keys. Web research can use a Tavily, Brave, Exa, Firecrawl, or Ollama key in Settings → Providers → Search. Ollama search uses its hosted service, not a local model server.
-
-See [Getting started](docs/getting-started.md) for model setup, dictation, files, and notes imports, and [context, caching, and costs](docs/compaction-accounting.md) for advanced cache preferences.
+Add your provider API key and choose your models, then start a session with what you want to understand. LearnHarness supports 30+ provider options, including OpenAI, Anthropic, Google, DeepSeek, and OpenRouter. You can also add your own custom API endpoint (Ollama, LM Studio, vLLM, any compatible gateway) or sign in with an AI subscription (Claude Pro/Max, GitHub Copilot, ChatGPT, Gemini CLI, Antigravity) instead of an API key. Optional dictation and web search use separate service keys.
 
 All three platforms support in-app updates.
 

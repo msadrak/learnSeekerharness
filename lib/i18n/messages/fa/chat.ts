@@ -1,0 +1,130 @@
+import type { chat as en } from "../en/chat.ts";
+
+export const chat: typeof en = {
+	errors: {
+		generic: "خطایی رخ داد.",
+		emptyStream: "جریان پاسخ این نوبت خالی است.",
+		attachFailed: "اتصال به نوبت در حال اجرا ناموفق بود.",
+		turnRunning: "یک نوبت در حال اجراست — کمی بعد دوباره تلاش کنید.",
+		sendFailed: (status: number) => `ارسال ناموفق بود (${status}).`,
+		steerFailed: (status: number) => `هدایت ناموفق بود (${status}).`,
+		dismissalFailed: (status: number) => `رد کردن ناموفق بود (${status}).`,
+	},
+	header: {
+		titleInput: "عنوان جلسه",
+		renameThis: "تغییر نام این جلسه",
+		renameSession: "تغییر نام جلسه",
+		openPlan: "باز کردن برنامهٔ کامل",
+		plan: "برنامه",
+		practice: "تمرین",
+	},
+	emptySession: {
+		title: "جلسهٔ جدید",
+		description: "معلم با سنجش آنچه از پیش می‌دانید شروع می‌کند.",
+	},
+	emptyState: {
+		title: "هنوز پیامی نیست",
+		description: "برای دیدن پیام‌ها، گفت‌وگویی را شروع کنید",
+	},
+	transcript: {
+		you: "شما",
+		retrying: "تلاش دوباره…",
+		compactingSpinner: "فشرده‌سازی بافت گفت‌وگو",
+		compacting: "در حال فشرده‌سازی بافت گفت‌وگو…",
+		thinking: "در حال تفکر…",
+		errorPrefix: "مشکلی پیش آمد: ",
+		setupModels: "مدل‌هایتان را راه‌اندازی کنید",
+	},
+	composer: {
+		placeholder: "بپرسید، پاسخ دهید یا درس را هدایت کنید…",
+		nextPlaceholder: "هر چه می‌خواهید بپرسید، یا برای مسئلهٔ بعدی Enter را بزنید.",
+		nextProblem: "مسئلهٔ بعدی",
+		nodesSelected: (n: number) => `${n} گره انتخاب شد`,
+		pickNodes: "انتخاب گره‌ها",
+		clear: "پاک کردن",
+	},
+	compaction: {
+		contextCompacted: "بافت گفت‌وگو فشرده شد",
+		historyCompacted: "تاریخچه فشرده شد",
+		kTok: (k: number) => ` · ${k}k توکن`,
+	},
+	phase: {
+		chip: {
+			probe: "سنجش",
+			plan: "برنامه‌ریزی",
+			teach: "آموزش",
+		},
+		planNodes: (n: number) => `برنامه · ${n} گره`,
+	},
+	abort: {
+		turn: {
+			title: "این نوبت لغو شود؟",
+			line: "پاسخ ناتمام در متن جلسه می‌ماند.",
+			action: "لغو",
+		},
+		question: {
+			title: "از این پرسش صرف‌نظر شود؟",
+			line: "رد شد — معلم بدون آن ادامه می‌دهد.",
+			action: "رد کردن",
+		},
+		problem: {
+			title: "این مسئله کنار گذاشته شود؟",
+			line: "مسئله کنار گذاشته می‌شود — هیچ راه‌حلی نشان داده نمی‌شود.",
+			action: "کنار گذاشتن",
+		},
+		turnStopsToo: " نوبت در حال اجرا هم متوقف می‌شود.",
+	},
+	find: {
+		region: "جست‌وجو در جلسه",
+		input: "یافتن در جلسه",
+		placeholder: "یافتن در جلسه…",
+		previous: "مورد قبلی",
+		previousHint: "مورد قبلی (Shift+Enter)",
+		next: "مورد بعدی",
+		nextHint: "مورد بعدی (Enter)",
+		close: "بستن جست‌وجو",
+		closeHint: "بستن جست‌وجو (Esc)",
+	},
+	dictation: {
+		dictate: "دیکته",
+		start: "شروع دیکته",
+		failed: (error: string) => `دیکته ناموفق بود: ${error}`,
+		stop: "توقف دیکته",
+		stopHint: "توقف دیکته (Esc)",
+		keyless: "دیکته به کلید Deepgram نیاز دارد",
+		micDenied: "اجازهٔ دسترسی به میکروفون داده نشد",
+		micUnavailable: "میکروفون در دسترس نیست",
+		reconnectFailed: "اتصال دوباره به Deepgram ناموفق بود",
+		connectionLost: (code: string) => `اتصال Deepgram قطع شد (${code})`,
+	},
+	thinking: {
+		yourThinking: "تفکر شما",
+	},
+	readingThinking: {
+		heading: "تفکر هنگام خواندن",
+		placeholder: "هر چه هنگام خواندن به ذهنتان می‌رسد.",
+	},
+	reasoning: {
+		spinner: "در حال تفکر",
+		thinking: "در حال تفکر…",
+		agentsThinking: "تفکر عامل",
+	},
+	spinner: {
+		working: "در حال کار",
+	},
+	markdown: {
+		copyDiagramSource: "کپی منبع نمودار",
+		openFullScreen: "باز کردن در تمام‌صفحه",
+		expandDiagram: "بزرگ کردن نمودار",
+		copyEquationSource: "کپی منبع معادله",
+	},
+	mermaid: {
+		failed: "رسم نمودار ناموفق بود",
+		showSource: "نمایش منبع نمودار",
+	},
+	message: {
+		previousBranch: "شاخهٔ قبلی",
+		nextBranch: "شاخهٔ بعدی",
+		branchPage: (current: number, total: number) => `${current} از ${total}`,
+	},
+};

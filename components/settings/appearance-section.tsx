@@ -33,6 +33,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
 	EXTRACTION_CHUNK_TOKENS_FLOOR,
+	isUiLanguage,
 	resolveSettings,
 	type AppearanceSettings,
 	type GraphSettings,
@@ -42,6 +43,8 @@ import { Hint } from "@/components/ui/hint";
 import { useAppearance } from "./appearance.tsx";
 import { FontMenuList } from "./model-menu";
 import { CommitInput, SettingsMenuTrigger, SettingsRow, ThinSelect, Toggle } from "./controls.tsx";
+import { useT } from "@/components/i18n";
+import { textDirection } from "@/lib/i18n/direction";
 
 /** The factory reading family — the DEFAULT row's identity (unset =
  *  this). Exported for tests. */
@@ -97,6 +100,8 @@ export function AppearanceSection({
 	/** PUT the whole appearance section; the page re-applies on success. */
 	onSectionChange: (next: AppearanceSettings) => void;
 }) {
+	const t = useT();
+	const a = t.settings.appearance;
 	const { appearance: resolved } = useAppearance();
 	const md = appearance?.mdRendering;
 
@@ -186,27 +191,42 @@ export function AppearanceSection({
 
 	return (
 		<>
-			<SettingsRow label="Mode" hint="Coming soon" testid="row-mode" dimmed>
-				<ThinSelect value="dark" ariaLabel="mode" onChange={() => {}} testid="select-mode" disabled>
-					<option value="dark">Dark</option>
+			<SettingsRow label={a.language} testid="row-language">
+				<ThinSelect
+					value={resolved.language}
+					ariaLabel={a.languageAria}
+					testid="select-language"
+					onChange={(v) => {
+						if (isUiLanguage(v)) onSectionChange({ ...appearance, language: v });
+					}}
+				>
+					{/* Each language names itself — the reader of a picker
+					    may not read the current UI language. */}
+					<option value="en">English</option>
+					<option value="fa">فارسی</option>
+				</ThinSelect>
+			</SettingsRow>
+			<SettingsRow label={a.mode} hint={a.comingSoon} testid="row-mode" dimmed>
+				<ThinSelect value="dark" ariaLabel={a.modeAria} onChange={() => {}} testid="select-mode" disabled>
+					<option value="dark">{a.dark}</option>
 				</ThinSelect>
 			</SettingsRow>
 			<SettingsRow
-				label="Background"
-				hint={`Empty = ${resolved.background ?? "#141414"}`}
+				label={a.background}
+				hint={a.emptyIs(resolved.background ?? "#141414")}
 				testid="row-background"
 			>
 				<CommitInput
 					value={appearance?.background ?? ""}
 					placeholder="#141414"
-					ariaLabel="background hex"
+					ariaLabel={a.backgroundAria}
 					testid="input-background"
 					onCommit={(v) => onSectionChange({ ...appearance, background: v === "" ? null : v })}
 				/>
 			</SettingsRow>
 			<SettingsRow
-				label="Reading font"
-				hint={`Empty = ${DEFAULT_READING_FONT}`}
+				label={a.readingFont}
+				hint={a.emptyIs(DEFAULT_READING_FONT)}
 				testid="row-font"
 			>
 				<span ref={fontMenuOpen ? menuAnchorRef : undefined} className="relative flex items-center gap-2">
@@ -220,7 +240,7 @@ export function AppearanceSection({
 						const triggerButton = (
 							<SettingsMenuTrigger
 								value={appearance?.fontFamily || DEFAULT_READING_FONT}
-								aria-label="Reading font"
+								aria-label={a.readingFont}
 								aria-expanded={fontMenuOpen}
 								data-testid="font-trigger"
 								onClick={openFontMenu}
@@ -230,7 +250,7 @@ export function AppearanceSection({
 						return fontMenuOpen ? (
 							triggerButton
 						) : (
-							<Hint label="Choose from your installed fonts" side="left">
+							<Hint label={a.readingFontHint} side="left">
 								{triggerButton}
 							</Hint>
 						);
@@ -251,21 +271,21 @@ export function AppearanceSection({
 										? undefined
 										: localFonts === null
 											? enumEmpty
-												? "Common families — installed fonts could not be read"
-												: "Common families — your installed list needs the desktop app"
-											: "Your installed fonts"
+												? a.fontsCommonUnreadable
+												: a.fontsCommonNeedsDesktop
+											: a.fontsInstalled
 								}
 							/>
 						</MenuShell>
 					)}
 				</span>
 			</SettingsRow>
-			<SettingsRow label="Reading font size" hint={`${resolved.proseFontSize}px`} testid="row-prose-size">
+			<SettingsRow label={a.readingFontSize} hint={a.px(resolved.proseFontSize)} testid="row-prose-size">
 				<CommitInput
 					type="number"
 					value={String(appearance?.proseFontSize ?? "")}
 					placeholder="16"
-					ariaLabel="prose font size"
+					ariaLabel={a.proseSizeAria}
 					testid="input-prose-size"
 					onCommit={(v) => {
 						// Empty = factory default (owner, fix wave): omit the key so the record
@@ -281,19 +301,19 @@ export function AppearanceSection({
 					}}
 				/>
 			</SettingsRow>
-			<SettingsRow label="Session names in serif" testid="row-session-serif">
+			<SettingsRow label={a.sessionSerif} testid="row-session-serif">
 				<Toggle
 					checked={appearance?.sessionNameSerif ?? true}
-					label="session names serif"
+					label={a.sessionSerifAria}
 					onChange={(on) => onSectionChange({ ...appearance, sessionNameSerif: on })}
 				/>
 			</SettingsRow>
-			<SettingsRow label="Heading weight" hint={`${resolved.mdRendering.headingWeight}`} testid="row-heading-weight">
+			<SettingsRow label={a.headingWeight} hint={`${resolved.mdRendering.headingWeight}`} testid="row-heading-weight">
 				<CommitInput
 					type="number"
 					value={String(md?.headingWeight ?? "")}
 					placeholder="900"
-					ariaLabel="heading weight"
+					ariaLabel={a.headingWeightAria}
 					testid="input-heading-weight"
 					onCommit={(v) => {
 						// Empty = factory default (owner, fix wave): Number("") is 0, so
@@ -314,20 +334,20 @@ export function AppearanceSection({
 			{/* The emphasis inks default to the REGULAR TEXT COLOR now
 			    (appearance wave, 2026-09-26) — the empty-state labels say
 			    so; explicit hex overrides ride unchanged. */}
-			<SettingsRow label="Bold color" hint="Empty = same as text" testid="row-bold-color">
+			<SettingsRow label={a.boldColor} hint={a.emptySameAsText} testid="row-bold-color">
 				<CommitInput
 					value={md?.boldColor ?? ""}
-					placeholder="same as text"
-					ariaLabel="bold color"
+					placeholder={a.sameAsText}
+					ariaLabel={a.boldColorAria}
 					testid="input-bold-color"
 					onCommit={(v) => onSectionChange({ ...appearance, mdRendering: { ...md, boldColor: v === "" ? null : v } })}
 				/>
 			</SettingsRow>
-			<SettingsRow label="Italic color" hint="Empty = same as text" testid="row-italic-color">
+			<SettingsRow label={a.italicColor} hint={a.emptySameAsText} testid="row-italic-color">
 				<CommitInput
 					value={md?.italicColor ?? ""}
-					placeholder="same as text"
-					ariaLabel="italic color"
+					placeholder={a.sameAsText}
+					ariaLabel={a.italicColorAria}
 					testid="input-italic-color"
 					onCommit={(v) => onSectionChange({ ...appearance, mdRendering: { ...md, italicColor: v === "" ? null : v } })}
 				/>
@@ -355,6 +375,7 @@ export function GraphSection({
 	// the hint and placeholder report exactly the number the trigger waits
 	// for — never a second hand-rolled default.
 	const resolved = resolveSettings(graph === undefined ? null : { version: 1, graph }).graph;
+	const g = useT().settings.graph;
 	return (
 		<>
 			{/* EXTRACTION (renamed, owner 2026-10-06): this switch is the DATA
@@ -363,10 +384,10 @@ export function GraphSection({
 			    switch below arrived: off ≠ no graph, off = the graph stops
 			    growing. The testid keeps the old name's shape (row-enabled) so
 			    this stays one rename, not a test re-pin. */}
-			<SettingsRow label="Extraction" hint="Off = the graph stops growing" testid="graph-row-enabled">
+			<SettingsRow label={g.extraction} hint={g.extractionHint} testid="graph-row-enabled">
 				<Toggle
 					checked={graph?.enabled ?? true}
-					label="extraction enabled"
+					label={g.extractionAria}
 					onChange={(on) =>
 						// Compose, never replace-whole (the section PUT is, but the
 					// row must not drop its sibling field — fixed with the budget
@@ -379,23 +400,23 @@ export function GraphSection({
 			    round): display-only. Off = the home shows the chains view
 			    instead of the canvas. The ledgers, the pipeline, everything
 			    data keeps working — that is the extraction switch above. */}
-			<SettingsRow label="Graph rendering" hint="Off = home shows the chains view" testid="graph-row-rendering">
+			<SettingsRow label={g.rendering} hint={g.renderingHint} testid="graph-row-rendering">
 				<Toggle
 					checked={graph?.rendering ?? true}
-					label="graph rendering enabled"
+					label={g.renderingAria}
 					onChange={(on) => onSectionChange({ ...graph, rendering: on })}
 				/>
 			</SettingsRow>
 			<SettingsRow
-				label="Extraction chunk budget"
-				hint={`${resolved.extractionChunkTokens} tok`}
+				label={g.chunkBudget}
+				hint={g.tokens(resolved.extractionChunkTokens)}
 				testid="graph-row-chunk-tokens"
 			>
 				<CommitInput
 					type="number"
 					value={String(graph?.extractionChunkTokens ?? "")}
 					placeholder={String(resolved.extractionChunkTokens)}
-					ariaLabel="extraction chunk budget"
+					ariaLabel={g.chunkBudgetAria}
 					testid="input-chunk-tokens"
 					onCommit={(v) => {
 						// Empty = factory default (the fix-wave discipline): absence is

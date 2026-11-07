@@ -646,6 +646,9 @@ export function toLlmMessages(messages: readonly AgentMessage[]): Message[] {
 		// adding results for their unexecuted calls would leave orphans.
 		if (role === "assistant") {
 			const assistant = m as AssistantMessage;
+			// pi-ai's transformMessages drops failed/aborted assistant
+			// messages, so a synthesized result for their calls would be an
+			// orphan the provider rejects.
 			if (assistant.stopReason === "error" || assistant.stopReason === "aborted") continue;
 			const calls = assistant.content.filter((b) => b.type === "toolCall");
 			if (calls.length === 0) continue;

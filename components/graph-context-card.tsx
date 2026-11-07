@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ChevronRightIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n";
+import { textDirection } from "@/lib/i18n/direction";
 
 /**
  * The graph-context card (owner, 2026-10-04): the session's map pick —
@@ -23,26 +25,27 @@ export interface GraphContextData {
 export function GraphContextCard({ data }: { data: GraphContextData }) {
 	const [open, setOpen] = useState(false);
 	const { propositions = [], chains = [] } = data ?? {};
-	const noun = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+	const t = useT();
+	const g = t.graph.contextCard;
 	return (
 		<div data-testid="graph-context-card" className="my-1">
 			<button
 				type="button"
 				data-testid="graph-context-toggle"
 				onClick={() => setOpen((v) => !v)}
-				className="flex w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border/70 px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:text-foreground"
+				className="flex w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border/70 px-3 py-2 text-start text-xs text-muted-foreground transition-colors hover:text-foreground"
 			>
-				<ChevronRightIcon aria-hidden="true" className={cn("size-3.5 shrink-0 transition-transform", open && "rotate-90")} />
-				<span className="font-medium">Graph context</span>
+				<ChevronRightIcon aria-hidden="true" className={cn("size-3.5 shrink-0 transition-transform", open ? "rotate-90" : "rtl:-scale-x-100")} />
+				<span className="font-medium">{g.title}</span>
 				<span className="min-w-0 flex-1 truncate">
-					{noun(propositions.length, "proposition", "propositions")}
-					{chains.length > 0 ? ` · ${noun(chains.length, "chain", "chains")}` : ""}
+					{g.propositions(propositions.length)}
+					{chains.length > 0 ? ` · ${g.chains(chains.length)}` : ""}
 				</span>
 			</button>
 			{open && (
 				<div data-testid="graph-context-body" className="mt-1 space-y-1 rounded-lg border border-dashed border-border/70 px-4 py-3 text-xs">
 					{propositions.map((p) => (
-						<div key={p.id} data-testid={`graph-context-prop-${p.id}`} className="leading-relaxed">
+						<div key={p.id} dir={textDirection(`${p.name}${p.statement}`)} data-testid={`graph-context-prop-${p.id}`} className="leading-relaxed">
 							<span className="font-medium text-foreground/80">{p.name}</span>
 							<span className="text-muted-foreground"> — {p.statement}</span>
 						</div>
@@ -50,7 +53,7 @@ export function GraphContextCard({ data }: { data: GraphContextData }) {
 					{chains.length > 0 && (
 						<div className="pt-1">
 							{chains.map((c, i) => (
-								<div key={i} className="font-mono text-[11px] text-muted-foreground">
+								<div key={i} dir={textDirection(c)} className="font-mono text-[11px] text-muted-foreground">
 									{c}
 								</div>
 							))}
