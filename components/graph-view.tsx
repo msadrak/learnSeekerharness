@@ -78,6 +78,8 @@ import { ChainTableOverlay } from "@/components/chain-table.tsx";
 import { Hint } from "@/components/ui/hint";
 import { useT } from "@/components/i18n";
 import { useAppearance } from "@/components/settings/appearance";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { planCostLabel } from "@/components/usage-format";
 import type { Messages } from "@/lib/i18n/messages";
 import { inputDirection, textDirection } from "@/lib/i18n/direction";
@@ -113,8 +115,8 @@ import {
 	toSliderPosition,
 } from "@/src/core";
 
-/** The uniform node look (no state classes — canvas wants hex, not oklch):
- *  the accent color, until the state model lands. */
+/** The "unassessed" node colour (no practice verdict yet; canvas wants hex,
+ *  not oklch). Practiced nodes override it per node with a mastery colour. */
 const NODE_COLOR_TOKEN = "--primary";
 
 /** Per-device graph camera persistence (zoom+pan view state). v1 in the
@@ -936,6 +938,27 @@ export function GraphChromeRow({
 	);
 }
 
+/** Colour key for the mastery fills (shown only once something has been practiced). */
+function MasteryLegend() {
+	const g = useT().graph.mastery;
+	const items = [
+		{ dot: "bg-success", label: g.understood },
+		{ dot: "bg-warning", label: g.inProgress },
+		{ dot: "bg-danger", label: g.needsReview },
+		{ dot: "bg-primary", label: g.unassessed },
+	];
+	return (
+		<div role="group" aria-label={g.legend} data-testid="mastery-legend" className="flex items-center gap-3 rounded-md border bg-card/80 px-2.5 py-1.5 font-ui text-xs text-muted-foreground">
+			{items.map((item) => (
+				<span key={item.dot} className="flex items-center gap-1.5">
+					<span className={`size-2 rounded-full ${item.dot}`} />
+					{item.label}
+				</span>
+			))}
+		</div>
+	);
+}
+
 export function GraphView({
 	chainSelectOpen = false,
 	practiceSelection,
@@ -1046,6 +1069,7 @@ export function GraphView({
 	// Fetch the derived graph. Re-runs when a background pipeline run
 	// finishes (refreshTick) — its merges just landed in the ledger.
 	const [refreshTick, setRefreshTick] = useState(0);
+	const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
 	// The chain table overlay (chains-overlay plan, 2026-09-29) —
 	// component-local: a browsing surface, not graph state.
 	const [chainsOpen, setChainsOpen] = useState(false);
@@ -1064,11 +1088,19 @@ export function GraphView({
 	useEffect(() => {
 		let cancelled = false;
 		fetch("/api/graph")
-			.then((res) => res.json() as Promise<GraphSnapshot>)
-			.then((data) => {
-				if (!cancelled) setSnapshot(data);
+			.then((res) => {
+				if (!res.ok) throw new Error(String(res.status));
+				return res.json() as Promise<GraphSnapshot>;
 			})
-			.catch((err) => console.error("[graph] fetch failed:", err));
+			.then((data) => {
+				if (cancelled) return;
+				setSnapshot(data);
+				setLoadState("ready");
+			})
+			.catch((err) => {
+				console.error("[graph] fetch failed:", err);
+				if (!cancelled) setLoadState("error");
+			});
 		return () => {
 			cancelled = true;
 		};
@@ -1400,13 +1432,22 @@ export function GraphView({
 		const renderer = rendererRef.current;
 		const positions = posRef.current;
 		if (!renderer || !snapshot || snapshot.nodes.length === 0 || !positions) return;
+		const masteryHex = {
+			understood: tokenHex("--lh-success"),
+			inProgress: tokenHex("--lh-warning"),
+			needsReview: tokenHex("--lh-danger"),
+		};
 		renderer.setData({
-			nodes: snapshot.nodes.map((n) => ({
-				id: n.id,
-				x: positions.get(n.id)?.x ?? 0,
-				y: positions.get(n.id)?.y ?? 0,
-				label: n.name,
-			})),
+			nodes: snapshot.nodes.map((n) => {
+				const state = snapshot.mastery?.[n.id]?.state;
+				return {
+					id: n.id,
+					x: positions.get(n.id)?.x ?? 0,
+					y: positions.get(n.id)?.y ?? 0,
+					label: n.name,
+					color: state ? masteryHex[state] : undefined,
+				};
+			}),
 			edges: snapshot.edges.map((e) => ({ from: e.from, to: e.to })),
 			logicalEdges: snapshot.logicalEdges.map((e) => ({ from: e.from, to: e.to })),
 			impLinks: snapshot.impLinks,
@@ -1480,7 +1521,28 @@ export function GraphView({
 	const t = useT();
 	return (
 		<div className="relative h-full w-full">
-			{isEmpty ? (
+			{snapshot === null && loadState === "loading" ? (
+				<div data-testid="graph-loading" className="flex h-full w-full flex-col items-center justify-center gap-3 px-4">
+					<Skeleton className="size-10 rounded-full" />
+					<Skeleton className="h-3 w-40" />
+					<Skeleton className="h-3 w-28" />
+					<span className="sr-only">{t.common.states.loading}</span>
+				</div>
+			) : snapshot === null && loadState === "error" ? (
+				<div role="alert" data-testid="graph-error" className="flex h-full w-full flex-col items-center justify-center gap-3 px-4 text-center text-sm text-muted-foreground">
+					<p>{t.graph.empty.loadFailed}</p>
+					<Button
+						variant="outline"
+						size="xs"
+						onClick={() => {
+							setLoadState("loading");
+							setRefreshTick((n) => n + 1);
+						}}
+					>
+						{t.common.actions.retry}
+					</Button>
+				</div>
+			) : isEmpty ? (
 				// The empty graph keeps the first action clear without zero-valued statistics.
 				<div className="flex h-full w-full items-center justify-center px-4">
 					<div className="flex flex-col items-center gap-3 text-center text-muted-foreground">
@@ -1602,6 +1664,7 @@ export function GraphView({
 					onOpenChains={() => setChainsOpen(true)}
 				/>
 			</div>
+			{!isEmpty && Object.keys(snapshot?.mastery ?? {}).length > 0 && <MasteryLegend />}
 
 			<NotesImportErrors errors={notesImport.errors} />
 			<NotesImportNotices notices={notesImport.notices} />
@@ -1617,7 +1680,7 @@ export function GraphView({
 					key={run.id}
 					className="flex items-center gap-2 rounded-full border bg-card/85 px-3 py-1.5 text-xs text-muted-foreground shadow-lg backdrop-blur"
 				>
-					<Loader2Icon className="size-3.5 shrink-0 animate-spin" />
+					<Loader2Icon className="size-3.5 shrink-0 animate-spin motion-reduce:animate-none" />
 					<span className="capitalize">{(t.graph.pipeline.phases as Record<string, string>)[run.phase] ?? run.phase}</span>
 					<span dir={textDirection(run.title)} className="max-w-48 truncate text-foreground lh-align-page">{run.title}</span>
 					<span className="tabular-nums">{t.graph.pipeline.seconds(Math.max(0, Math.round((Date.now() - run.startedAt) / 1000)))}</span>
@@ -1638,6 +1701,17 @@ export function GraphView({
 				>
 					<div dir={textDirection(selected.node.name)} className="text-sm font-medium leading-snug">{selected.node.name}</div>
 					<div dir={textDirection(selected.node.statement)} className="mt-1 text-xs leading-relaxed text-muted-foreground">{selected.node.statement}</div>
+					{(() => {
+						const g = t.graph.mastery;
+						const m = snapshot?.mastery?.[selected.node.id];
+						const dot = m ? { understood: "bg-success", inProgress: "bg-warning", needsReview: "bg-danger" }[m.state] : "bg-primary";
+						return (
+							<div data-testid="node-mastery" className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+								<span className={`size-2 shrink-0 rounded-full ${dot}`} />
+								{m ? g.lastPracticed(g[m.state], t.common.time.date(new Date(m.at))) : g.unassessed}
+							</div>
+						);
+					})()}
 					{selected.sourceIds.length > 0 ? (
 						<div className="mt-3 flex flex-col gap-1">
 							<div className="text-xs text-muted-foreground">{t.graph.card.sessions}</div>

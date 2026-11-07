@@ -10,6 +10,8 @@ import { generateKeyPair, exportJWK, SignJWT } from "jose";
 import { ChatGPTBackgroundAccess, ChatGPTConnection, ChatGPTUIProvider, CHATGPT_NOTICE, CHATGPT_DISCONNECT_COPY } from "../components/settings/chatgpt-connection.tsx";
 import { SettingsDialogBody } from "../components/settings/settings-dialog.tsx";
 import { KeysSection } from "../components/settings/keys-section.tsx";
+import { DictationSection } from "../components/settings/dictation-section.tsx";
+import { SearchSection } from "../components/settings/search-section.tsx";
 import { ModelControl } from "../components/model-picker.tsx";
 import type { ChatGPTStatus, ChatGPTControlBridge } from "../src/core/index.ts";
 import { completedWithin } from "./completion.ts";
@@ -72,12 +74,12 @@ afterEach(async () => { await act(async () => root?.unmount()); host?.remove(); 
 test("Providers is the first/default page; General is last and other pages keep relative order", () => {
  const html = renderToStaticMarkup(<SettingsDialogBody onClose={() => {}} />);
  const ids = [...html.matchAll(/data-testid="settings-nav-([^"]+)"/g)].map((m) => m[1]);
- assert.deepEqual(ids, ["keys", "agent", "appearance", "graph", "keyboard", "general"]);
+ assert.deepEqual(ids, ["keys", "dictation", "search", "agent", "appearance", "graph", "keyboard", "general"]);
  assert.match(html, /settings-nav-keys[^>]*aria-current="true"/); assert.match(html, />Providers<\/button>/);
  assert.doesNotMatch(html, />Model providers<\/button>/);
 });
 
-test("Providers has six ordered sections including External CLI and Custom APIs; unknown variables stay masked/read-only at the end of Model API keys", async () => {
+test("Providers has four ordered groups including External CLI and Custom APIs; unknown variables stay masked/read-only at the end of Model API keys", async () => {
  globalThis.fetch = async (url) => {
   // Custom APIs and OAuth subscriptions load their own lists beside the keys.
   if (url === "/api/providers") return Response.json({ providers: [] });
@@ -88,18 +90,29 @@ test("Providers has six ordered sections including External CLI and Custom APIs;
  };
  fixture(); await mount(<KeysSection />);
  const headings = [...document.querySelectorAll('[data-testid^="group-"] > p')].map((el) => el.textContent);
- assert.deepEqual(headings, ["Model API keys", "Subscriptions", "External CLI", "Custom APIs", "Dictation", "Search"]);
+ assert.deepEqual(headings, ["Model API keys", "Subscriptions", "External CLI", "Custom APIs"]);
  assert(byTest("claude-code-installation").closest('[data-testid="group-external-cli"]'));
- assert(byTest("key-deepgram_api_key").closest('[data-testid="group-dictation"]'));
- assert(byTest("key-tavily_api_key").closest('[data-testid="group-search"]'));
- assert(byTest("key-brave_api_key").closest('[data-testid="group-search"]'));
- assert(byTest("key-exa_api_key").closest('[data-testid="group-search"]'));
- assert(byTest("key-firecrawl_api_key").closest('[data-testid="group-search"]'));
- assert(byTest("key-ollama_api_key").closest('[data-testid="group-search"]'));
- assert(!document.querySelector('[data-testid="key-ollama_base_url"]'));
+ assert(!document.querySelector('[data-testid="key-deepgram_api_key"]'));
+ assert(!document.querySelector('[data-testid="key-tavily_api_key"]'));
  assert(byTest("unknown-FUTURE_VAR").closest('[data-testid="group-provider-keys"]'));
- assert(byTest("group-unknown-keys").parentElement?.lastElementChild === byTest("group-unknown-keys"));
+ assert(byTest("keys-privacy").previousElementSibling === byTest("group-unknown-keys"), "the privacy line closes the Model API keys group");
  assert.equal(byTest("unknown-FUTURE_VAR").textContent, "FUTURE_VAR…abcd"); assert(!byTest("unknown-FUTURE_VAR").querySelector("input, button"));
+});
+
+test("Dictation and Search keys live in their own sections, not under Providers", async () => {
+ globalThis.fetch = async (url) => {
+  if (url === "/api/search") return Response.json({ available: false, engine: null, reason: "none" });
+  assert.equal(url, "/api/keys");
+  return Response.json({ providers: [{ id: "openai", envVar: "OPENAI_API_KEY", label: "OpenAI" }], keys: [] });
+ };
+ await mount(<DictationSection />);
+ assert(byTest("key-deepgram_api_key").closest('[data-testid="group-dictation"]'));
+ assert(!document.querySelector('[data-testid="key-tavily_api_key"]'));
+ await act(async () => root!.unmount()); host!.remove();
+ await mount(<SearchSection agent={undefined} onAgentChange={() => {}} />);
+ for (const id of ["tavily", "brave", "exa", "firecrawl", "ollama"]) assert(byTest(`key-${id}_api_key`).closest('[data-testid="group-search"]'), id);
+ assert(!document.querySelector('[data-testid="key-deepgram_api_key"]'));
+ assert(!document.querySelector('[data-testid="key-ollama_base_url"]'));
 });
 
 test("disconnected row uses shared Connect action; initial default is ON; cancel discards draft without OAuth/global mutation", async () => {

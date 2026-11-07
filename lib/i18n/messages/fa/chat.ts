@@ -2,6 +2,8 @@ import type { chat as en } from "../en/chat.ts";
 
 export const chat: typeof en = {
 	errors: {
+		providerError: "ارائه‌دهندهٔ مدل خطا برگرداند.",
+		technicalDetails: "جزئیات فنی",
 		generic: "خطایی رخ داد.",
 		emptyStream: "جریان پاسخ این نوبت خالی است.",
 		attachFailed: "اتصال به نوبت در حال اجرا ناموفق بود.",
@@ -12,6 +14,10 @@ export const chat: typeof en = {
 		answerRemainingQuestion: "ابتدا به پرسش باقی‌مانده پاسخ دهید یا آن را کنار بگذارید.",
 		openSessionFailed: "باز کردن جلسه ممکن نشد. پیام شما همچنان اینجاست. دوباره آن را بفرستید.",
 		streamDropped: "اتصال پیش از پایان نوبت قطع شد.",
+	},
+	announce: {
+		responseComplete: "پاسخ کامل شد",
+		questionReady: "پرسشی منتظر پاسخ شماست",
 	},
 	header: {
 		titleInput: "عنوان جلسه",

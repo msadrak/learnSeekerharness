@@ -1,5 +1,8 @@
 "use client";
 
+import { LiveAnnouncer } from "@/components/live-announcer";
+import { prefersReducedMotion } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 import { createContext, Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useChatSession } from "@/components/session";
 import { visibleQueuedSteers } from "@/components/session-core";
@@ -473,6 +476,42 @@ export function Chat({
 	const busy = localStream || turnInFlight;
 	const busyRef = useRef(busy);
 	busyRef.current = busy;
+
+	// Entrance animation (7.2): ids present on the first render are history
+	// and never animate; later arrivals do. `messages` is seeded synchronously
+	// from initialMessages by the session hook, so the first render IS the
+	// loaded history.
+	const initialIdsRef = useRef<Set<string> | null>(null);
+	if (initialIdsRef.current === null) initialIdsRef.current = new Set(messages.map((m) => m.id));
+
+	// The banner's displayed summary, shared by the banner and the announcer.
+	const errorShown = error ? localizeSessionError(error.message, tr.chat.errors) : null;
+	const errorRaw = !!error && errorShown === error.message && isRawProviderError(error.message);
+	const errorSummary = errorRaw ? tr.chat.errors.providerError : errorShown;
+
+	// Screen-reader announcements (7.4). Transitions only: a reload that lands
+	// on a settled turn, an old error or a waiting question stays silent.
+	const [announcement, setAnnouncement] = useState({ message: "", seq: 0 });
+	const announce = useCallback((message: string) => setAnnouncement((a) => ({ message, seq: a.seq + 1 })), []);
+	const prevBusyAnnounceRef = useRef(busy);
+	useEffect(() => {
+		const was = prevBusyAnnounceRef.current;
+		prevBusyAnnounceRef.current = busy;
+		if (was && !busy && !error) announce(tr.chat.announce.responseComplete);
+	}, [busy, error, announce, tr]);
+	const dockKey = pending?.key ?? activeProblem?.toolCallId ?? null;
+	const prevDockKeyRef = useRef(dockKey);
+	useEffect(() => {
+		const was = prevDockKeyRef.current;
+		prevDockKeyRef.current = dockKey;
+		if (dockKey !== null && dockKey !== was) announce(tr.chat.announce.questionReady);
+	}, [dockKey, announce, tr]);
+	const prevErrorAnnounceRef = useRef(error);
+	useEffect(() => {
+		const was = prevErrorAnnounceRef.current;
+		prevErrorAnnounceRef.current = error;
+		if (error && error !== was && errorSummary) announce(errorSummary);
+	}, [error, errorSummary, announce]);
 	// The attach handoff (stream-reattach wave): the moment a resumed
 	// stream takes over the rendering — the SDK left "ready", so
 	// submitted/streaming means chunks are flowing — localStream covers
@@ -1405,7 +1444,8 @@ export function Chat({
 
 				<SessionFind scopeRef={sessionFindScopeRef} scrollContextRef={scrollContextRef} />
 				<div ref={sessionFindScopeRef} className="relative flex min-h-0 flex-1">
-				<Conversation className="h-full min-w-0 flex-1" initial="instant" contextRef={scrollContextRef}>
+				<LiveAnnouncer message={announcement.message} seq={announcement.seq} />
+				<Conversation className="h-full min-w-0 flex-1" initial="instant" contextRef={scrollContextRef} aria-busy={busy}>
 					<SessionMessageNavigation />
 					<ConversationContent className="min-h-full gap-0 p-0">
 						<div data-session-find-root="" className={`${COLUMN} flex flex-1 flex-col gap-4 pt-4`}>
@@ -1528,7 +1568,7 @@ export function Chat({
 												</div>
 											</div>
 									) : (
-									<Message from="assistant" className="max-w-full">
+									<Message from="assistant" className={cn("max-w-full", !initialIdsRef.current?.has(m.id) && "lh-msg-enter")}>
 									<MessageContent className="w-full">
 											{m.parts.map((part, pi) => {
 												const isLastPart = mi === messages.length - 1 && pi === m.parts.length - 1;
@@ -1673,8 +1713,16 @@ export function Chat({
 							)}
 							{openingError && <p role="alert" className="text-sm text-destructive">{tr.chat.errors.openSessionFailed}</p>}
 							{error && (
-								<div className="flex items-center justify-between gap-3 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm">
-									<span>{tr.chat.transcript.errorPrefix}<bdi>{localizeSessionError(error.message, tr.chat.errors)}</bdi></span>
+								<div role="alert" className="flex items-center justify-between gap-3 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm">
+									<div className="min-w-0 flex-1">
+										<span>{tr.chat.transcript.errorPrefix}<bdi>{errorSummary}</bdi></span>
+										{errorRaw && (
+											<details data-testid="error-details" className="mt-1 text-xs text-muted-foreground">
+												<summary className="cursor-pointer select-none">{tr.chat.errors.technicalDetails}</summary>
+												<pre dir="ltr" className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px]">{error.message}</pre>
+											</details>
+										)}
+									</div>
 									{retryable && (
 										<Button variant="outline" size="xs" data-testid="retry-failed-turn" onClick={retryFailedTurn}>
 											{tr.common.actions.retry}
@@ -1874,6 +1922,14 @@ export type EscAbortTarget = "mermaid" | "plan" | "setup" | "question" | "proble
 export function initialPromptOwed(messages: readonly { role: string }[], prompt: string | undefined): boolean {
 	if (!prompt) return false;
 	return !messages.some((m) => m.role === "user" || m.role === "assistant");
+}
+
+/** True when an error message is a raw provider payload (JSON body or a long
+ *  dump) rather than a short human sentence — the banner then shows a
+ *  summary with the payload tucked behind "Technical details". */
+export function isRawProviderError(text: string): boolean {
+	const s = text.trim();
+	return s.startsWith("{") || s.startsWith("[") || s.includes('{"') || s.length > 200;
 }
 
 /** Display-only: session-core's client-authored error lines stay English
@@ -2334,10 +2390,12 @@ function DockOverlay({
 	useIsoLayoutEffect(() => {
 		if (prevExpandedForFadeRef.current === expanded) return;
 		prevExpandedForFadeRef.current = expanded;
-		contentRef.current?.animate(
-			[{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "translateY(0)" }],
-			{ duration: 160, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
-		);
+		if (!prefersReducedMotion()) {
+			contentRef.current?.animate(
+				[{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "translateY(0)" }],
+				{ duration: 200, easing: "ease-out" },
+			);
+		}
 	}, [expanded]);
 	// The height-morph key (components/dock-state-key.ts): the expanded
 	// term (the fold) belongs to EVERY docked variant — question AND
@@ -2365,10 +2423,10 @@ function DockOverlay({
 		// Variant change → re-reserve. Growth applies instantly; a drop (the
 		// fold, or question → composer) is filtered by the offer policy.
 		measureBlock();
-		if (p && Math.abs(p.height - h) > 1) {
+		if (p && Math.abs(p.height - h) > 1 && !prefersReducedMotion()) {
 			el.animate([{ height: `${p.height}px` }, { height: `${h}px` }], {
-				duration: 120,
-				easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+				duration: 200,
+				easing: "ease-out",
 			});
 		}
 		prevRef.current = { key: stateKey, height: h };

@@ -110,7 +110,7 @@ export const DEEPGRAM_KEY_ID = "DEEPGRAM_API_KEY";
  * the token route's raw 503 message is dev-speak ("add it to auth.json
  * (desktop) or .env.local (dev)") — the surface says the short truth
  * instead. Exported for pins; the errored idle button's click recognizes
- * it and deep-links Settings → Keys → the Deepgram row. */
+ * it and deep-links Settings → Dictation → the Deepgram row. */
 export const DICTATION_KEYLESS = "Dictation needs a Deepgram key";
 
 /** The hook's own error values are stable English (pins compare them);
@@ -665,7 +665,7 @@ export function DictationBar({ dictation }: { dictation: Dictation }) {
 	const { phase, error, levelRef, toggle, active, clearError } = dictation;
 	const { open: openSettings } = useSettingsDialog();
 	/** The keyless click (zero-keys wave, owner dictation trio): the errored
-	 *  idle button deep-links Settings → Keys → the Deepgram row and clears
+	 *  idle button deep-links Settings → Dictation → the Deepgram row and clears
 	 *  the error — the surface is clean when the user returns. Any other
 	 *  error keeps the old behavior (click = retry, which clears). */
 	const keyless = error === DICTATION_KEYLESS;
@@ -732,7 +732,7 @@ export function DictationBar({ dictation }: { dictation: Dictation }) {
 					onClick={() => {
 						if (keyless) {
 							clearError();
-							openSettings("keys", DEEPGRAM_KEY_ID);
+							openSettings("dictation", DEEPGRAM_KEY_ID);
 						} else {
 							toggle();
 						}
@@ -765,14 +765,14 @@ export function DictationBar({ dictation }: { dictation: Dictation }) {
 				className="flex h-7 shrink-0 items-center gap-1.5 rounded-md bg-destructive/10 px-2 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
 			>
 				{phase === "stopping" ? (
-					<Loader2Icon className="size-3.5 animate-spin" />
+					<Loader2Icon className="size-3.5 animate-spin motion-reduce:animate-none" />
 				) : (
 					<MicIcon className="size-3.5" />
 				)}
 					{t.common.actions.stop}
 				</button>
 			</Hint>
-			<span className="size-1.5 shrink-0 animate-pulse rounded-full bg-destructive" aria-hidden />
+			<span className="size-1.5 shrink-0 animate-pulse motion-reduce:animate-none rounded-full bg-destructive" aria-hidden />
 			<div ref={meterRef} className="flex h-4 min-w-0 flex-1 items-center gap-[2px]" data-testid="dictation-meter">
 				{levels.slice(-cellCount).map((v, i) => (
 					<span

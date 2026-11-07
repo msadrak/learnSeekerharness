@@ -15,8 +15,11 @@
  *    a paste box on a key the UI cannot make live would mislead.
  *  - OpenRouter is NOT special: one provider among 33, a row only when
  *    stored, otherwise it lives in the Add dropdown like everyone else.
- *  - Providers groups API keys, subscriptions, dictation and search.
- *    Unknown variables stay masked/read-only at the end of Model API keys.
+ *  - Providers groups API keys, subscriptions, external CLI and custom
+ *    APIs; Dictation and Search keys live in their own settings sections
+ *    (dictation-section.tsx, search-section.tsx) over the same row
+ *    component. Unknown variables stay masked/read-only at the end of
+ *    Model API keys.
  *
  * API: GET /api/keys (masked statuses + the providers array), PUT
  * /api/keys/:id (shape-gated 400s land inline), DELETE. Saves take
@@ -24,6 +27,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 import {
 	AUTH_KEYS,
 	CUSTOM_MODEL_DEFAULT_CONTEXT_WINDOW,
@@ -33,6 +37,7 @@ import {
 	type AuthKeyStatus,
 	type CustomModel,
 	type CustomModelOverride,
+	type KeyTestResult,
 } from "@/src/core";
 import { SettingsGroup } from "./controls.tsx";
 import { SubscriptionConnections } from "./subscription-connections.tsx";
@@ -42,7 +47,7 @@ import { SubscriptionsList } from "./subscriptions.tsx";
 import { ProviderMenuList } from "./model-menu.tsx";
 import { MenuShell } from "@/components/menu-shell";
 import { notifySettingsSaved } from "@/components/settings-signal";
-import { DictationLanguageSetting } from "@/components/dictation-language";
+import { useKeyStatuses, type KeyStatuses } from "./use-key-statuses.ts";
 import { useT } from "@/components/i18n";
 import type { Messages } from "@/lib/i18n/messages";
 import { textDirection } from "@/lib/i18n/direction";
@@ -55,11 +60,6 @@ export interface ProviderKeyInfo {
 	id: string;
 	envVar: string;
 	label: string;
-}
-
-interface KeysResponse {
-	keys: AuthKeyStatus[];
-	providers?: ProviderKeyInfo[];
 }
 
 /** The custom endpoint's non-secret status (GET /api/custom-provider). */
@@ -158,19 +158,83 @@ export function providerKeyLabel(
 	return matches?.[0]?.label;
 }
 
-/** The minimal status line, e.g. "…ab12 · 64 chars" (" · env" marks an
- *  environment-owned value — the row itself is read-only then). Pure. */
+/** The minimal status line, e.g. "…ab12 · 64" (tail · character count).
+ *  Who owns the value (environment vs stored) is the badge's job. Pure. */
 export function keyStatusLine(status: AuthKeyStatus, k: Messages["settings"]["keys"]): string {
 	if (!status.present || !status.masked) return k.notSet;
 	const tail = status.masked.replace(/ \((\d+) chars\)$/, "");
 	const chars = status.masked.match(/\((\d+) chars\)$/)?.[1] ?? "?";
-	return `${tail} · ${chars}${status.source === "env" ? " · env" : ""}`;
+	return `${tail} · ${chars}`;
+}
+
+/** The state pill beside a key row: environment-owned, not set, connected /
+ *  invalid (from a key test), or plainly saved. */
+export function KeyStatusBadge({ status, test, testid }: { status: AuthKeyStatus; test?: KeyTestResult; testid: string }) {
+	const k = useT().settings.keys;
+	let text: string;
+	let tone: string;
+	if (status.source === "env") {
+		text = k.statusEnv;
+		tone = "bg-accent text-muted-foreground";
+	} else if (!status.present) {
+		text = k.notSet;
+		tone = "text-muted-foreground/70";
+	} else if (test?.status === "ok") {
+		text = k.statusConnected;
+		tone = "bg-success/15 text-success";
+	} else if (test?.status === "invalid") {
+		text = k.statusInvalid;
+		tone = "bg-danger/15 text-danger";
+	} else {
+		text = k.statusKeySaved;
+		tone = "bg-accent text-muted-foreground";
+	}
+	return (
+		<span data-testid={`${testid}-badge`} className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${tone}`}>
+			{text}
+		</span>
+	);
+}
+
+/** The deep-linked row to unfold: seeded by `initialRow`, re-followed when
+ *  it retargets while the section is open. */
+export function useOpenRow(initialRow: string | undefined) {
+	const state = useState<string | null>(initialRow ?? null);
+	const setOpenRow = state[1];
+	useEffect(() => {
+		if (initialRow !== undefined) setOpenRow(initialRow);
+	}, [initialRow, setOpenRow]);
+	return state;
+}
+
+/** Escape folds any open editor WITHOUT closing the dialog. Claimed at
+ *  document CAPTURE phase — the only stopPropagation that outruns both the
+ *  input's React handler and the dialog's window-level listener. */
+export function useFoldOnEscape(active: boolean, fold: () => void) {
+	const foldRef = useRef(fold);
+	useEffect(() => {
+		foldRef.current = fold;
+	});
+	useEffect(() => {
+		if (!active) return;
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key !== "Escape") return;
+			// A language dropdown above this editor in the dismissal stack owns
+			// the first Escape; do not swallow it at document capture phase.
+			if (document.querySelector('[data-testid="dictation-language-menu"]')) return;
+			e.preventDefault();
+			e.stopPropagation();
+			foldRef.current();
+		};
+		document.addEventListener("keydown", onKeyDown, true);
+		return () => document.removeEventListener("keydown", onKeyDown, true);
+	}, [active]);
 }
 
 /** One table row: label left, tiny docs link + status right. Writable
  *  rows click-unfold an editor beneath (owner interaction); env-owned
  *  rows are dimmed and read-only (a paste box there would mislead). */
-function KeyTableRow({
+export function KeyTableRow({
 	label,
 	docsUrl,
 	status,
@@ -180,6 +244,9 @@ function KeyTableRow({
 	onDelete,
 	onCancel,
 	testid,
+	test,
+	testing,
+	onTest,
 }: {
 	label: string;
 	/** The "Get a key ↗" target — curated keys carry one. */
@@ -193,14 +260,25 @@ function KeyTableRow({
 	 *  must be visible — Cancel beside Save/Delete, not only Esc). */
 	onCancel: () => void;
 	testid: string;
+	/** The last key-test result (drives the badge). */
+	test?: KeyTestResult;
+	testing?: boolean;
+	/** Provider rows only: runs POST /api/keys/:id/test. */
+	onTest?: () => void;
 }) {
 	const t = useT();
 	const k = t.settings.keys;
 	const envOwned = status.source === "env";
 	const [value, setValue] = useState("");
+	const [reveal, setReveal] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const shown = error ? localizeServerError(error, t) : null;
+
+	// The key hides again whenever the editor closes.
+	useEffect(() => {
+		if (!expanded) setReveal(false);
+	}, [expanded]);
 
 	async function save() {
 		if (!value.trim() || busy) return;
@@ -222,7 +300,9 @@ function KeyTableRow({
 				<div className="flex items-center gap-2 rounded-sm px-1 py-1.5" data-testid={`${testid}-editor`}>
 					<span dir={textDirection(label)} className="shrink-0 font-ui text-xs text-foreground">{label}</span>
 					<input
-						type="text"
+						type={reveal ? "text" : "password"}
+						autoComplete="off"
+						spellCheck={false}
 						dir="ltr"
 						value={value}
 						onChange={(e) => setValue(e.target.value)}
@@ -236,6 +316,16 @@ function KeyTableRow({
 						autoFocus
 						className="h-7 min-w-0 flex-1 rounded-sm border border-border bg-background px-1.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-muted-foreground/50"
 					/>
+					<button
+						type="button"
+						onClick={() => setReveal((v) => !v)}
+						aria-label={reveal ? k.hideKey : k.showKey}
+						aria-pressed={reveal}
+						data-testid={`${testid}-reveal`}
+						className="shrink-0 text-muted-foreground/70 transition-colors hover:text-foreground"
+					>
+						{reveal ? <EyeOffIcon className="size-3.5" /> : <EyeIcon className="size-3.5" />}
+					</button>
 					<button
 						type="button"
 						onClick={() => void save()}
@@ -277,33 +367,52 @@ function KeyTableRow({
 
 	return (
 		<div data-testid={testid} className={envOwned ? "opacity-40" : undefined}>
-			<button
-				type="button"
-				aria-expanded={expanded}
-				data-testid={`${testid}-row`}
-				onClick={() => !envOwned && onToggle()}
-				className={`flex w-full items-center justify-between gap-3 rounded-sm px-1 py-1.5 text-start ${
-					envOwned ? "cursor-default" : "cursor-pointer transition-colors hover:bg-accent/50"
-				}`}
-			>
-				<span dir={textDirection(label)} className="font-ui text-xs text-foreground">{label}</span>
-				<span className="flex items-center gap-2">
-					{docsUrl && (
-						<a
-							href={docsUrl}
-							target="_blank"
-							rel="noreferrer"
-							onClick={(e) => e.stopPropagation()}
-							className="text-[10px] text-muted-foreground/60 underline-offset-2 hover:text-foreground hover:underline"
-						>
-							{k.docsLink}
-						</a>
-					)}
-					<span data-testid={`${testid}-status`} dir="ltr" className="font-mono text-[11px] text-muted-foreground">
-						{keyStatusLine(status, k)}
+			<div className="flex items-center gap-1">
+				<button
+					type="button"
+					aria-expanded={expanded}
+					data-testid={`${testid}-row`}
+					onClick={() => !envOwned && onToggle()}
+					className={`flex min-w-0 flex-1 items-center justify-between gap-3 rounded-sm px-1 py-1.5 text-start ${
+						envOwned ? "cursor-default" : "cursor-pointer transition-colors hover:bg-accent/50"
+					}`}
+				>
+					<span dir={textDirection(label)} className="font-ui text-xs text-foreground">{label}</span>
+					<span className="flex items-center gap-2">
+						{docsUrl && (
+							<a
+								href={docsUrl}
+								target="_blank"
+								rel="noreferrer"
+								onClick={(e) => e.stopPropagation()}
+								className="text-[10px] text-muted-foreground/60 underline-offset-2 hover:text-foreground hover:underline"
+							>
+								{k.docsLink}
+							</a>
+						)}
+						{status.present && status.masked && (
+							<span data-testid={`${testid}-status`} dir="ltr" className="font-mono text-[11px] text-muted-foreground">
+								{keyStatusLine(status, k)}
+							</span>
+						)}
+						<KeyStatusBadge status={status} test={test} testid={testid} />
 					</span>
-				</span>
-			</button>
+				</button>
+				{onTest && status.present && (
+					<button
+						type="button"
+						onClick={(e) => {
+							e.stopPropagation();
+							onTest();
+						}}
+						disabled={testing}
+						data-testid={`${testid}-test`}
+						className="shrink-0 text-xs text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline disabled:text-muted-foreground/40 disabled:no-underline"
+					>
+						{testing ? k.testing : k.test}
+					</button>
+				)}
+			</div>
 			{shown && (
 				<p role="alert" dir={textDirection(shown)} data-testid={`${testid}-error`} className="ps-6 text-xs text-danger">
 					{shown}
@@ -382,9 +491,50 @@ function AddProviderRow({
 	);
 }
 
+/** The curated tool-key rows (Dictation and Search sections): the same
+ *  KeyTableRow over statuses from the shared hook, one unfolded at a time. */
+export function ToolKeyRows({
+	statuses,
+	ks,
+	initialRow,
+}: {
+	statuses: readonly AuthKeyStatus[];
+	ks: KeyStatuses;
+	/** A deep-linked row to unfold on arrival (the dictation error's click
+	 *  lands on DEEPGRAM_API_KEY). */
+	initialRow?: string;
+}) {
+	const [openRow, setOpenRow] = useOpenRow(initialRow);
+	useFoldOnEscape(openRow !== null, () => setOpenRow(null));
+	return (
+		<>
+			{statuses.map((status) => {
+				const label = status.info?.label ?? status.id;
+				return (
+					<KeyTableRow
+						key={status.id}
+						label={label}
+						docsUrl={status.info?.docsUrl}
+						status={status}
+						expanded={openRow === status.id}
+						onToggle={() => setOpenRow(openRow === status.id ? null : status.id)}
+						onSave={async (v) => {
+							const err = await ks.save(status.id, v, label);
+							if (!err) setOpenRow(null);
+							return err;
+						}}
+						onCancel={() => setOpenRow(null)}
+						onDelete={() => ks.remove(status.id, label)}
+						testid={`key-${status.id.toLowerCase()}`}
+					/>
+				);
+			})}
+		</>
+	);
+}
+
 export function KeysSection({
-	/** A deep-linked row to unfold on arrival (zero-keys wave): the
-	 *  dictation error's click lands here on DEEPGRAM_API_KEY. Followed
+	/** A deep-linked row to unfold on arrival (zero-keys wave). Followed
 	 *  while mounted too — the settings dialog's while-open retarget
 	 *  pattern. undefined = nothing seeded. */
 	initialRow,
@@ -394,94 +544,109 @@ export function KeysSection({
 	const t = useT();
 	const k = t.settings.keys;
 	const ts = t.settings.toasts;
-	const [statuses, setStatuses] = useState<AuthKeyStatus[] | null>(null);
-	const [providers, setProviders] = useState<ProviderKeyInfo[] | undefined>(undefined);
-	const [loading, setLoading] = useState(true);
+	const ks = useKeyStatuses();
+	const { statuses, providers } = ks;
 	/** The unfolded row (its id), null = all folded. Seeded by the
 	 *  deep-link (initialRow) and re-followed when it retargets. */
-	const [openRow, setOpenRow] = useState<string | null>(initialRow ?? null);
+	const [openRow, setOpenRow] = useOpenRow(initialRow);
 	/** The paste editor for a freshly chosen Add-provider target. */
 	const [adding, setAdding] = useState<ProviderKeyInfo | null>(null);
 	const [addError, setAddError] = useState<string | null>(null);
 	/** The custom endpoint's status + whether its connect editor is open. */
 	const [custom, setCustom] = useState<CustomStatus | null>(null);
 	const [addingCustom, setAddingCustom] = useState(false);
+	/** Key-test results by env var, kept until the dialog unmounts. */
+	const [tests, setTests] = useState<Record<string, KeyTestResult>>({});
+	const [testing, setTesting] = useState<ReadonlySet<string>>(new Set());
+	const [query, setQuery] = useState("");
 
 	// Escape folds any open editor (unfolded row or the Add-provider paste)
-	// WITHOUT closing the dialog. Claimed at document CAPTURE phase — the
-	// only stopPropagation that outruns both the input's React handler and
-	// the dialog's window-level listener.
-	useEffect(() => {
-		if (openRow === null && adding === null && !addingCustom) return;
-		const onKeyDown = (e: KeyboardEvent) => {
-			if (e.key !== "Escape") return;
-			// A language dropdown above this editor in the dismissal stack owns
-			// the first Escape; do not swallow it at document capture phase.
-			if (document.querySelector('[data-testid="dictation-language-menu"]')) return;
-			e.preventDefault();
-			e.stopPropagation();
-			setOpenRow(null);
-			setAdding(null);
-			setAddingCustom(false);
-		};
-		document.addEventListener("keydown", onKeyDown, true);
-		return () => document.removeEventListener("keydown", onKeyDown, true);
-	}, [openRow, adding, addingCustom]);
+	// WITHOUT closing the dialog.
+	useFoldOnEscape(openRow !== null || adding !== null || addingCustom, () => {
+		setOpenRow(null);
+		setAdding(null);
+		setAddingCustom(false);
+	});
 
-	const reload = async () => {
-		try {
-			const body = (await fetch("/api/keys").then((r) => r.json())) as KeysResponse;
-			setStatuses(body.keys ?? []);
-			if (body.providers) setProviders(body.providers);
-		} catch {
-			setStatuses([]);
-		} finally {
-			setLoading(false);
-		}
-		// Best-effort and independent: the custom endpoint's status must never
-		// blank the provider-key list above if its fetch fails.
+	// Best-effort and independent: the custom endpoint's status must never
+	// blank the provider-key list if its fetch fails.
+	const refreshCustom = async () => {
 		try {
 			setCustom(await readCustomStatus());
 		} catch {
 			/* custom status unavailable — leave it unset */
 		}
 	};
+	const reload = async () => {
+		await ks.reload();
+		await refreshCustom();
+	};
 
 	useEffect(() => {
-		void reload();
+		void refreshCustom();
 	}, []);
 
-	// The deep-link follow: a retarget while the section is open (the
-	// same while-open pattern the dialog's section nav uses) unfolds the
-	// named row; a fresh mount seeds it via the useState initializer.
-	useEffect(() => {
-		if (initialRow !== undefined) setOpenRow(initialRow);
-	}, [initialRow]);
+	const isProviderEnv = (id: string) => providers?.some((p) => p.envVar === id) ?? false;
+
+	/** POST /api/keys/:id/test. `notify` = the manual Test button (a toast
+	 *  with the verdict); false = the silent post-save test (badge only). */
+	async function runTest(id: string, label: string, notify: boolean) {
+		setTesting((prev) => new Set(prev).add(id));
+		let result: KeyTestResult | null = null;
+		try {
+			const res = await fetch(`/api/keys/${id}/test`, { method: "POST" });
+			if (res.ok) result = (await res.json()) as KeyTestResult;
+		} catch {
+			/* the app's own server was unreachable */
+		}
+		setTesting((prev) => {
+			const next = new Set(prev);
+			next.delete(id);
+			return next;
+		});
+		if (result) {
+			const settled = result;
+			setTests((prev) => ({ ...prev, [id]: settled }));
+		}
+		if (!notify) return;
+		const r: KeyTestResult = result ?? { status: "unreachable" };
+		switch (r.status) {
+			case "ok":
+				toast.success(label, { description: k.testOk(r.latencyMs ?? 0, r.models) });
+				break;
+			case "invalid":
+				toast.error(label, { description: k.testInvalid });
+				break;
+			case "http_error":
+				toast.error(label, { description: k.testHttp(r.httpStatus ?? 0) });
+				break;
+			case "unreachable":
+				toast.warning(label, { description: k.testUnreachable });
+				break;
+			case "unsupported":
+				toast.info(label, { description: k.testUnsupported });
+				break;
+			case "no_key":
+				toast.info(label, { description: k.testNoKey });
+				break;
+		}
+	}
 
 	async function saveKey(id: string, value: string, label: string): Promise<string | null> {
-		const res = await fetch(`/api/keys/${id}`, {
-			method: "PUT",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ value }),
-		});
-		if (!res.ok) {
-			const body = (await res.json().catch(() => ({}))) as { error?: string };
-			return body.error ?? k.saveFailed(res.status);
-		}
-		await reload();
-		// The cross-surface keys signal (zero-keys wave): the zero-keys pill,
-		// the setup dialog's stage advance, and any other keys reader hear
-		// that a key landed — deletions included (see deleteKey below).
-		notifySettingsSaved("keys");
-		toast.success(ts.keySaved(label));
+		const err = await ks.save(id, value, label);
+		if (err) return err;
+		void refreshCustom();
+		if (isProviderEnv(id)) void runTest(id, label, false);
 		return null;
 	}
 
 	async function deleteKey(id: string, label: string): Promise<void> {
-		const res = await fetch(`/api/keys/${id}`, { method: "DELETE" }).catch(() => undefined);
-		await reload();
-		notifySettingsSaved("keys");
-		if (res?.ok) toast.success(ts.keyDeleted(label));
+		await ks.remove(id, label);
+		setTests((prev) => {
+			const { [id]: _dropped, ...rest } = prev;
+			return rest;
+		});
+		void refreshCustom();
 	}
 
 	/** Forget the custom endpoint (config + key server-side), same rhythm as
@@ -496,11 +661,11 @@ export function KeysSection({
 		return null;
 	}
 
-	if (loading || statuses === null) {
+	if (statuses === null) {
 		return <p className="px-6 py-5 text-xs text-muted-foreground/70">{k.loading}</p>;
 	}
 
-	const { providerRows, toolRows, unknownRows, addable } = classifyKeys(statuses, providers);
+	const { providerRows, unknownRows, addable } = classifyKeys(statuses, providers);
 
 	async function saveNewProvider(p: ProviderKeyInfo, value: string) {
 		const err = await saveKey(p.envVar, value, p.label);
@@ -511,27 +676,80 @@ export function KeysSection({
 		}
 	}
 
+	const rowLabel = (status: AuthKeyStatus) => providerKeyLabel(status.id, providers, k.openCode) ?? status.info?.label ?? status.id;
+	const needle = query.trim().toLowerCase();
+	const matches = (label: string, envVar: string) =>
+		needle === "" || label.toLowerCase().includes(needle) || envVar.toLowerCase().includes(needle);
+	const shownRows = providerRows.filter((status) => matches(rowLabel(status), status.id));
+	/** Unconfigured providers matching the query — rows that unfold the paste editor in place. */
+	const searchHits = needle === "" ? [] : addable.filter((p) => matches(p.label, p.envVar));
+	const onPickProvider = (p: ProviderKeyInfo) => {
+		setAddError(null);
+		if (p.id === CUSTOM_PROVIDER.id) {
+			setAdding(null);
+			setAddingCustom(true);
+		} else {
+			setAddingCustom(false);
+			setAdding(p);
+		}
+	};
+	const addingInResults = adding !== null && searchHits.some((p) => p.id === adding.id);
+
 	return (
 		<>
 			<SettingsGroup label={k.modelKeys} testid="group-provider-keys">
-				{providerRows.map((status) => (
+				<input
+					type="search"
+					data-testid="provider-search"
+					value={query}
+					onChange={(e) => setQuery(e.target.value)}
+					placeholder={t.settings.menus.searchProviders}
+					aria-label={t.settings.menus.searchProviders}
+					className="lh-input mb-1.5 w-full rounded-lg border bg-background px-2 py-1.5 text-xs outline-none"
+				/>
+				{shownRows.map((status) => {
+					const label = rowLabel(status);
+					return (
+						<KeyTableRow
+							key={status.id}
+							label={label}
+							docsUrl={status.info?.docsUrl}
+							status={status}
+							expanded={openRow === status.id}
+							onToggle={() => setOpenRow(openRow === status.id ? null : status.id)}
+							onSave={async (v) => {
+								const err = await saveKey(status.id, v, label);
+								if (!err) setOpenRow(null); // fold on success — rest state
+								return err;
+							}}
+							onCancel={() => setOpenRow(null)}
+							onDelete={() => deleteKey(status.id, label)}
+							testid={`key-${status.id.toLowerCase()}`}
+							test={tests[status.id]}
+							testing={testing.has(status.id)}
+							onTest={isProviderEnv(status.id) ? () => void runTest(status.id, label, true) : undefined}
+						/>
+					);
+				})}
+				{searchHits.map((p) => (
 					<KeyTableRow
-						key={status.id}
-						label={providerKeyLabel(status.id, providers, k.openCode) ?? status.info?.label ?? status.id}
-						docsUrl={status.info?.docsUrl}
-						status={status}
-						expanded={openRow === status.id}
-						onToggle={() => setOpenRow(openRow === status.id ? null : status.id)}
+						key={p.id}
+						label={p.label}
+						status={{ id: p.envVar, info: null, present: false, masked: null, source: "none", shadowedByEnv: false }}
+						expanded={adding?.id === p.id}
+						onToggle={() => (adding?.id === p.id ? setAdding(null) : onPickProvider(p))}
 						onSave={async (v) => {
-							const err = await saveKey(status.id, v, providerKeyLabel(status.id, providers, k.openCode) ?? status.info?.label ?? status.id);
-							if (!err) setOpenRow(null); // fold on success — rest state
+							const err = await saveKey(p.envVar, v, p.label);
+							if (!err) setAdding(null);
 							return err;
 						}}
-						onCancel={() => setOpenRow(null)}
-						onDelete={() => deleteKey(status.id, providerKeyLabel(status.id, providers, k.openCode) ?? status.info?.label ?? status.id)}
-						testid={`key-${status.id.toLowerCase()}`}
+						onCancel={() => setAdding(null)}
+						testid={`key-${p.id}`}
 					/>
 				))}
+				{needle !== "" && shownRows.length === 0 && searchHits.length === 0 && (
+					<p className="px-1 py-1.5 text-xs text-muted-foreground">{t.settings.menus.noProviders}</p>
+				)}
 				{custom?.baseUrl && (
 					<CustomEndpointRow
 						status={custom}
@@ -564,22 +782,13 @@ export function KeysSection({
 						onCancel={() => setAddingCustom(false)}
 					/>
 				)}
-				{providers !== undefined && (
+				{providers !== undefined && needle === "" && (
 					<AddProviderRow
 						addable={custom?.baseUrl ? addable : [...addable, CUSTOM_PROVIDER_INFO]}
-						onPick={(p) => {
-							setAddError(null);
-							if (p.id === CUSTOM_PROVIDER.id) {
-								setAdding(null);
-								setAddingCustom(true);
-							} else {
-								setAddingCustom(false);
-								setAdding(p);
-							}
-						}}
+						onPick={onPickProvider}
 					/>
 				)}
-				{adding && (
+				{adding && !addingInResults && (
 					<div className="flex items-center gap-2 rounded-sm px-1 py-1.5" data-testid={`key-${adding.id}-editor`}>
 						<span dir={textDirection(adding.label)} className="shrink-0 font-ui text-xs text-foreground">{adding.label}</span>
 						<AddProviderEditor provider={adding} onSave={(v) => void saveNewProvider(adding, v)} onCancel={() => setAdding(null)} error={addError} />
@@ -591,6 +800,7 @@ export function KeysSection({
 						<span className="font-mono text-[11px] text-muted-foreground" dir="ltr">{status.masked}</span>
 					</div>)}
 				</div>}
+				<p data-testid="keys-privacy" className="px-1 pt-2 text-[11px] text-muted-foreground">{k.privacy}</p>
 			</SettingsGroup>
 
 			<SettingsGroup label={k.subscriptions} testid="group-subscriptions">
@@ -603,39 +813,6 @@ export function KeysSection({
 			</SettingsGroup>
 
 			<CustomProvidersGroup />
-
-			{(["Dictation", "Search"] as const).map((label) => <SettingsGroup key={label} label={label === "Dictation" ? k.dictation : k.search} testid={label === "Dictation" ? "group-dictation" : "group-search"}>
-				{toolRows.filter((status) => label === "Dictation" ? status.id === "DEEPGRAM_API_KEY" : status.id !== "DEEPGRAM_API_KEY").map((status) => (
-					<KeyTableRow
-						key={status.id}
-						label={status.info?.label ?? status.id}
-						docsUrl={status.info?.docsUrl}
-						status={status}
-						expanded={openRow === status.id}
-						onToggle={() => setOpenRow(openRow === status.id ? null : status.id)}
-						onSave={async (v) => {
-							const err = await saveKey(status.id, v, status.info?.label ?? status.id);
-							if (!err) setOpenRow(null);
-							return err;
-						}}
-						onCancel={() => setOpenRow(null)}
-						onDelete={() => deleteKey(status.id, status.info?.label ?? status.id)}
-						testid={`key-${status.id.toLowerCase()}`}
-					/>
-				))}
-				{label === "Dictation" && <>
-					<DictationLanguageSetting />
-					<p data-testid="dictation-setup-hint" className="px-1 text-[11px] leading-relaxed text-muted-foreground/70">
-						{k.deepgramHintBefore}<a
-							href="https://console.deepgram.com/"
-							target="_blank"
-							rel="noreferrer"
-							className="underline underline-offset-2 hover:text-foreground"
-						>{k.deepgramHintLink}</a>{k.deepgramHintAfter}
-					</p>
-				</>}
-			</SettingsGroup>)}
-
 		</>
 	);
 }

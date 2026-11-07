@@ -3,6 +3,8 @@
 export const chat = {
 	/** session-core's client-authored error lines (display mapping only). */
 	errors: {
+		providerError: "The model provider returned an error.",
+		technicalDetails: "Technical details",
 		generic: "An error occurred.",
 		emptyStream: "The turn stream body is empty.",
 		attachFailed: "Failed to attach to the running turn.",
@@ -13,6 +15,11 @@ export const chat = {
 		answerRemainingQuestion: "Answer or discard the remaining question first.",
 		openSessionFailed: "Couldn’t open the session. Your message is still here. Try sending again.",
 		streamDropped: "The connection dropped before the turn completed.",
+	},
+	/** Screen-reader announcements (LiveAnnouncer). */
+	announce: {
+		responseComplete: "Response complete",
+		questionReady: "A question is waiting for your answer",
 	},
 	header: {
 		titleInput: "Session title",

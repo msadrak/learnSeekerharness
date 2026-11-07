@@ -1,13 +1,11 @@
 "use client";
 /**
  * The Agent section (settings-app wave): the THREE MODEL SLOTS, the tool
- * toggles + the search-engine preference, and the prompt override
+ * toggles, and the prompt override
  * switches — three GROUPS (owner, 2026-09-20: clear separation — Models /
  * Tools / System prompts).
  *
- * Model slots (model-slots wave, 2026-09-20, owner ruling: SLOTS ONLY —
- * the six per-role rows disappeared; per-role overrides remain in the
- * schema for a future advanced surface): Strong = Prober + Teacher, Cheap
+ * Model slots (model-slots wave, 2026-09-20): Strong = Prober + Teacher, Cheap
  * = the five workhorse roles, Vision = Visual maker + PDF reader. Each
  * slot row carries the shared dropdown (fuzzy search, arrow-walk, Enter
  * pick — ModelMenuList/ThinkingMenuList from ./model-menu.tsx) over the
@@ -23,13 +21,10 @@
  * trigger showing "Default" over a live override would lie about the
  * record.
  *
- * Search engine (search wave, 2026-09-20, owner: no default — an engine
- * is live iff its key is present; with a key the engine AUTO-activates,
- * the explicit choice is only a preference between live engines): a row
- * in the Tools group, with the same shared-menu look and
- * the live reason line from /api/search. No engine key at all → the row
- * grays whole-row (a choice without a key would only BLOCK another
- * engine's auto-activation).
+ * Per-role overrides: under the Cheap and Vision slot rows a collapsed
+ * disclosure lists each background role of that tier (agent.models[role]);
+ * a role without an override reads "Same as tier". The strong tier has
+ * none — prober/teacher are chat-controlled.
  *
  * Tools — the owner's final list (2026-09-19): research, demo, visual, pdf.
  * Absent key = enabled in the schema; the UI writes explicit booleans for
@@ -51,7 +46,7 @@
  * missing (the toggle painted its old state until a remount re-fetched).
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import type { CacheRetention } from "@earendil-works/pi-ai";
 import { CacheRetentionMenu, cacheRetentionLabel } from "./cache-retention-menu.tsx";
 import { MenuShell } from "@/components/menu-shell";
@@ -60,13 +55,16 @@ import { defaultOrderLevel, populateLevel } from "@/components/thinking-default"
 import { useModelCatalog } from "@/components/model-catalog";
 import { Hint } from "@/components/ui/hint";
 import type React from "react";
+import { ChevronRightIcon } from "lucide-react";
 import {
 	COMPACTION_THRESHOLD_FLOOR,
 	MODEL_SLOTS,
-	SEARCH_ENGINES,
+	BACKGROUND_MODEL_ROLES,
+	ROLE_SLOT,
 	resolveSettings,
 	isFileAccessFolder,
 	type AgentSettings,
+	type BackgroundModelRole,
 	type CompactionSettings,
 	type GraphSettings,
 	type ModelSlotName,
@@ -198,6 +196,23 @@ export function composeSearchEngine(
 	return { ...agent, search: { engine } };
 }
 
+/** Compose: one background role's model override. null REMOVES the model
+ *  (and `models` itself once empty); a pick keeps the role's thinking level.
+ *  Pure — exported for tests. */
+export function composeRoleModel(
+	agent: AgentSettings | undefined,
+	role: BackgroundModelRole,
+	model: { provider: string; id: string } | null,
+): AgentSettings {
+	const models = { ...agent?.models };
+	const next: AgentSettings = { ...agent };
+	if (model === null) delete models[role];
+	else models[role] = { ...models[role], model };
+	if (Object.keys(models).length === 0) delete next.models;
+	else next.models = models;
+	return next;
+}
+
 /** The indicator under a row whose override IS the version in use (owner
  *  ruling, refined 2026-09-26: the small text states WHICH VERSION IS
  *  IN USE — "Your version is in use" when the switch is on, and NOTHING
@@ -255,7 +270,7 @@ export function composePromptSwitch(agent: AgentSettings | undefined, path: stri
 
 /** The collapsed select look (owner: "the look of the collapsed menu is
  *  good") — now a button that opens the shared model-picker dropdown. */
-function MenuTrigger({
+export function MenuTrigger({
 	value,
 	emptyLabel,
 	ariaLabel,
@@ -337,28 +352,19 @@ export function AgentSection({
 	const { catalog: body, failed: catalogFailed, refresh: refreshCatalog } = useModelCatalog();
 	const catalog = body?.models;
 	const slots = body?.slots;
-	/** The live search state (/api/search) — the row's reason line. */
 	const [folderInput, setFolderInput] = useState("");
 	const [folderError, setFolderError] = useState<string | null>(null);
-	const [search, setSearch] = useState<{ available: boolean; engine: string | null; reason: string } | null>(null);
-	/** Which search engines have a key (/api/keys) — the no-keys-anywhere
-	 *  state grays the row; per-engine marks ride the menu rows. */
-	const [engineKeys, setEngineKeys] = useState<Partial<Record<SearchEngineId, boolean>>>({});
 	const [prompts, setPrompts] = useState<PromptView | null>(null);
 	const [openSegment, setOpenSegment] = useState<string | null>(null);
 	const [segmentDraft, setSegmentDraft] = useState<Record<string, string>>({});
 	const [segmentStatus, setSegmentStatus] = useState<string | null>(null);
-	/** One open dropdown for the whole section: which slot (or the search
-	 *  row), which kind. */
-	const [openMenu, setOpenMenu] = useState<{ target: ModelSlotName | "search"; kind: "model" | "thinking" | "engine" | "cache" } | null>(null);
+	/** One open dropdown for the whole section: which slot (or per-role
+	 *  override row), which kind. */
+	const [openMenu, setOpenMenu] = useState<{ target: ModelSlotName | BackgroundModelRole; kind: "model" | "thinking" | "cache" } | null>(null);
+	/** The slots whose per-role override rows are unfolded (collapsed by default). */
+	const [openRoles, setOpenRoles] = useState<ReadonlySet<ModelSlotName>>(new Set());
 	const [advancedModels, setAdvancedModels] = useState(false);
 	const menuAnchorRef = useRef<HTMLSpanElement>(null);
-
-	const refreshSearch = () =>
-		fetch("/api/search")
-			.then((r) => r.json())
-			.then((body: { available: boolean; engine: string | null; reason: string }) => setSearch(body))
-			.catch(() => setSearch(null));
 
 	/** Re-read the prompt-segment view — the signal seam for the
 	 *  2026-09-26 state-echo fix: the view's `enabled` flags DERIVE from
@@ -389,25 +395,7 @@ export function AgentSection({
 			.then((r) => r.json())
 			.then((body: PromptView) => setPrompts(body))
 			.catch(() => setPrompts(null));
-		fetch("/api/keys")
-			.then((r) => r.json())
-			.then((body: { keys: { id: string; present: boolean }[] }) => {
-				const present: Partial<Record<SearchEngineId, boolean>> = {};
-				for (const { id, envVar } of SEARCH_ENGINES) {
-					present[id] = body.keys.some((k) => k.id === envVar && k.present);
-				}
-				setEngineKeys(present);
-			})
-			.catch(() => {});
 	}, []);
-
-	// The reason line re-reads /api/search AFTER an engine write lands —
-	// the write updates the `agent` prop (the dialog's record mirror), so
-	// keying on the pin avoids the race where the fetch beat the PUT and
-	// the hint contradicted the trigger it sits under.
-	useEffect(() => {
-		refreshSearch();
-	}, [agent?.search?.engine]);
 
 	// The dropdown contract (the chat model selector's, mirrored): any
 	// click outside the open menu — or an Esc — closes it. Esc is CLAIMED
@@ -482,30 +470,6 @@ export function AgentSection({
 		readPrompts();
 		setSegmentStatus(a.deleted);
 	}
-
-		/** The search-engine menu row — label + the quiet live-key mark. */
-	const engineOption = (
-		id: SearchEngineId | "auto",
-		label: string,
-		active: boolean,
-		live: boolean | null,
-		onPick: () => void,
-	) => (
-		<button
-			key={id}
-			type="button"
-			data-testid={`engine-option-${id}`}
-			onClick={onPick}
-			className={`flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-start transition-colors hover:bg-muted ${
-				active ? "bg-muted/60 text-card-foreground" : "text-card-foreground"
-			}`}
-		>
-			<span>{label}</span>
-			<span className="text-muted-foreground">
-				{live === null ? (active && <span aria-hidden>✓</span>) : live ? <span aria-hidden>{a.engineKey}</span> : <span aria-hidden>{a.engineNoKey}</span>}
-			</span>
-		</button>
-	);
 
 	const segmentRow = (info: PromptRow) => {
 		const fileExists = info.overrideText !== null;
@@ -624,6 +588,84 @@ export function AgentSection({
 		compaction === undefined ? null : { version: 1, compaction },
 	).compaction;
 
+	/** Per-role overrides beneath a tier, collapsed by default. */
+	const roleOverrides = (slot: ModelSlotName) => {
+		if (slot === "strong") return null;
+		const expanded = openRoles.has(slot);
+		return (
+			<>
+				<button
+					type="button"
+					data-testid={`role-overrides-toggle-${slot}`}
+					aria-expanded={expanded}
+					onClick={() => {
+						setOpenMenu(null);
+						setOpenRoles((prev) => {
+							const next = new Set(prev);
+							if (next.has(slot)) next.delete(slot);
+							else next.add(slot);
+							return next;
+						});
+					}}
+					className="flex items-center gap-1 self-start text-xs text-muted-foreground hover:text-foreground"
+				>
+					<ChevronRightIcon className={cn("size-3", expanded ? "rotate-90" : "rtl:-scale-x-100")} />
+					{a.roles.toggle}
+				</button>
+				{expanded && BACKGROUND_MODEL_ROLES.filter((role) => ROLE_SLOT[role] === slot).map((role) => {
+					const override = agent?.models?.[role];
+					const name = a.roles.names[role];
+					const isOpen = openMenu?.target === role;
+					return (
+						<SettingsRow key={role} label={name} testid={`role-row-${role}`}>
+							<span ref={isOpen ? menuAnchorRef : undefined} className="relative flex items-center gap-2">
+								{override?.model && (
+									<button
+										type="button"
+										data-testid={`role-reset-${role}`}
+										onClick={() => onSectionChange(composeRoleModel(agent, role, null))}
+										className="text-xs text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+									>
+										{a.roles.sameAsTier}
+									</button>
+								)}
+								<MenuTrigger
+									value={override?.model ? prettyModel(override.model.id) : ""}
+									hint={override?.model ? `${override.model.provider}:${override.model.id}` : undefined}
+									emptyLabel={a.roles.sameAsTier}
+									ariaLabel={a.roles.modelAria(name)}
+									testid={`role-model-${role}`}
+									open={isOpen}
+									onClick={() => setOpenMenu(isOpen ? null : { target: role, kind: "model" })}
+									widthClass="min-w-20"
+								/>
+								{isOpen && (
+									<MenuShell
+										preferredSide="down"
+										anchorTestid={`role-model-${role}`}
+										testid={`role-model-menu-${role}`}
+										menuClass="flex w-[22rem] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+									>
+										<ModelMenuList
+											models={catalog ?? undefined}
+											effectiveId={override?.model?.id}
+											effectiveProvider={override?.model?.provider}
+											vision={role === "visualMaker"}
+											onPick={(entry) => {
+												onSectionChange(composeRoleModel(agent, role, { provider: entry.provider, id: entry.id }));
+												setOpenMenu(null);
+											}}
+										/>
+									</MenuShell>
+								)}
+							</span>
+						</SettingsRow>
+					);
+				})}
+			</>
+		);
+	};
+
 	return (
 		<>
 			<SettingsGroup label={a.groups.models} testid="group-models">
@@ -654,8 +696,8 @@ export function AgentSection({
 					const levels = chosen ? chosen.supportedLevels : THINKING_LEVELS;
 					const thisMenuOpen = openMenu?.target === slot ? openMenu.kind : null;
 					return (
+						<Fragment key={slot}>
 						<SettingsRow
-							key={slot}
 							label={a.slots[slot].label}
 							hint={a.slots[slot].roster}
 							testid={`slot-row-${slot}`}
@@ -768,6 +810,8 @@ export function AgentSection({
 								)}
 							</span>
 						</SettingsRow>
+						{roleOverrides(slot)}
+						</Fragment>
 					);
 				})}
 			</SettingsGroup>
@@ -892,51 +936,6 @@ export function AgentSection({
 								</div>
 							))}
 						</div>
-					);
-				})()}
-				{(() => {
-					const engine = agent?.search?.engine ?? null;
-					const anyKey = SEARCH_ENGINES.some(({ id }) => engineKeys[id] === true);
-					const open = openMenu?.target === "search";
-					return (
-						<SettingsRow
-							label={a.searchEngine}
-							hint={search?.reason ?? undefined}
-							testid="search-engine-row"
-							dimmed={!anyKey}
-						>
-							<span ref={open ? menuAnchorRef : undefined} className="relative flex items-center gap-2">
-								<MenuTrigger
-									value={SEARCH_ENGINES.find(({ id }) => id === engine)?.label ?? ""}
-									emptyLabel={a.automatic}
-									ariaLabel={a.searchEngine}
-									testid="search-engine-trigger"
-									open={open}
-									onClick={() => setOpenMenu(open ? null : { target: "search", kind: "engine" })}
-									widthClass="min-w-20"
-									disabled={!anyKey}
-								/>
-								{open && (
-									<MenuShell
-										preferredSide="down"
-											anchorTestid="search-engine-trigger"
-										testid="search-engine-menu"
-										menuClass="flex w-44 flex-col gap-0.5 rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
-									>
-										{engineOption("auto", a.automatic, engine === null, null, () => {
-											onSectionChange(composeSearchEngine(agent, null));
-											setOpenMenu(null);
-										})}
-										{SEARCH_ENGINES.map(({ id, label }) =>
-											engineOption(id, label, engine === id, engineKeys[id] ?? false, () => {
-												onSectionChange(composeSearchEngine(agent, id));
-												setOpenMenu(null);
-											}),
-										)}
-									</MenuShell>
-								)}
-							</span>
-						</SettingsRow>
 					);
 				})()}
 			</SettingsGroup>

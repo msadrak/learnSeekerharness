@@ -346,6 +346,7 @@ function QuestionDockForm({
 	// deliberate (the same number, the same meaning). The dock unmounts
 	// between questions, so each question starts fresh at 50.
 	const [confIdx, setConfIdx] = useState<number>(initialDraft?.confidenceIndex ?? DEFAULT_CONFIDENCE_INDEX);
+	const confStop = CONFIDENCE_STOPS[confIdx]!;
 	const selectMode: SelectMode = qd.mode === "multi-select" ? "multi-select" : "single-select";
 
 	// The PRIMARY dictation input (owner, STT round 1): while a question
@@ -806,7 +807,7 @@ function QuestionDockForm({
 								value={CONFIDENCE_STOPS[confIdx]}
 								disabled={sel.dontKnow}
 								aria-label={t.cards.questionDock.confidenceAria}
-								aria-valuetext={t.cards.questionDock.confidenceValueText(CONFIDENCE_STOPS[confIdx]!)}
+								aria-valuetext={t.cards.questionDock.confidenceValueText(confStop, t.cards.questionDock.confidenceLabel(confStop))}
 								title={t.cards.questionDock.confidenceTitle}
 								data-testid="confidence-slider"
 								onChange={(e) => {
@@ -835,11 +836,11 @@ function QuestionDockForm({
 						<span
 							data-testid="confidence-value"
 							className={cn(
-								"w-9 shrink-0 text-end font-mono text-sm tabular-nums",
+								"shrink-0 whitespace-nowrap text-end font-ui text-xs",
 								sel.dontKnow && "text-muted-foreground/50",
 							)}
 						>
-							{sel.dontKnow ? "—" : `${CONFIDENCE_STOPS[confIdx]}%`}
+							{sel.dontKnow ? "—" : <>{t.cards.questionDock.confidenceLabel(confStop)} · <bdi dir="ltr" className="font-mono tabular-nums">{confStop}%</bdi></>}
 						</span>
 					</div>
 				</div>

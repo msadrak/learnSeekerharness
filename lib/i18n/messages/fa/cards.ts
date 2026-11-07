@@ -26,7 +26,9 @@ export const cards: typeof en = {
 		otherPlaceholder: "پاسخ خودتان را بنویسید…",
 		confidence: "اطمینان",
 		confidenceAria: "اطمینان — احتمال درست بودن پاسخ انتخابی شما",
-		confidenceValueText: (n) => `${n} درصد`,
+		confidenceLabel: (stop) =>
+			stop >= 100 ? "کاملاً مطمئنم" : stop >= 90 ? "مطمئنم" : stop >= 70 ? "تقریباً مطمئنم" : stop >= 50 ? "مطمئن نیستم" : stop >= 30 ? "حدس می‌زنم" : "هیچ ایده‌ای ندارم",
+		confidenceValueText: (n, label) => `${label}، ${n} درصد`,
 		confidenceTitle: "احتمال درست بودن پاسخ انتخابی شما — 50% یعنی شیر یا خط. با ←/→ تنظیم کنید.",
 		yourAnswer: "پاسخ شما",
 		answerPlaceholder: "پاسخ خود را بنویسید…",

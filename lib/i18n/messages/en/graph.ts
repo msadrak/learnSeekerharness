@@ -58,6 +58,7 @@ export const graph = {
 		title: "Knowledge graph",
 		startHint: "Start a session to begin learning.",
 		attachHint: "Attach your material with the paperclip or drag and drop.",
+		loadFailed: "Couldn't load the graph.",
 	},
 	pipeline: {
 		/** Keyed by the extraction registry's phase id (src ExtractionPhase). */
@@ -73,6 +74,14 @@ export const graph = {
 	card: {
 		sessions: "Sessions",
 		noSessions: "No sessions recorded.",
+	},
+	mastery: {
+		legend: "Mastery",
+		understood: "Understood",
+		inProgress: "In progress",
+		needsReview: "Needs review",
+		unassessed: "Not practiced yet",
+		lastPracticed: (state: string, date: string) => `${state} · last practiced ${date}`,
 	},
 	contextCard: {
 		title: "Graph context",

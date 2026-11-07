@@ -222,8 +222,8 @@ for (const source of ["none", "file", "env"] as const) test(`Language is below t
 		present: source !== "none", masked: source === "none" ? null : "…test (32 chars)",
 		source, shadowedByEnv: false,
 	}];
-	const { KeysSection } = await import("../components/settings/keys-section.tsx");
-	await f.render(<KeysSection />);
+	const { DictationSection } = await import("../components/settings/dictation-section.tsx");
+	await f.render(<DictationSection />);
 	const group = byTest("group-dictation");
 	const rows = group.lastElementChild!.children;
 	assert.equal(rows[0]!.getAttribute("data-testid"), "key-deepgram_api_key");
@@ -258,12 +258,13 @@ test("the shared model menu preserves ranking, provider identity, keyboard clamp
 	const picked: ModelCatalogEntry[] = [];
 	await f.render(<ModelMenuList models={models} effectiveId="alpha" effectiveProvider="p2" onPick={(m) => picked.push(m)} footer="Model footer" />);
 	const modelInput = document.querySelector<HTMLInputElement>('[data-testid="model-search"]')!;
-	const options = () => [...document.querySelectorAll<HTMLButtonElement>('[data-testid="model-list"] button')];
+	const options = () => [...document.querySelectorAll<HTMLButtonElement>('[data-testid="model-list"] button[data-idx]')];
 	assert.equal(document.activeElement, modelInput);
 	assert.match(options()[0]!.textContent!, /p1 · alpha/);
-	assert.match(options()[1]!.textContent!, /p2 · alpha/);
+	assert.match(options()[1]!.textContent!, /p1 · beta/);
+	assert.match(options()[2]!.textContent!, /p2 · alpha/);
 	assert.ok(!options()[0]!.className.includes("bg-muted/60"));
-	assert.ok(options()[1]!.className.includes("bg-muted/60"));
+	assert.ok(options()[2]!.className.includes("bg-muted/60"));
 	assert.match(options()[0]!.textContent!, /\$1\.00\/\$2\.00/);
 	assert.match(options()[0]!.textContent!, /32k/);
 	assert.match(document.body.textContent!, /Model footer/);
@@ -271,11 +272,11 @@ test("the shared model menu preserves ranking, provider identity, keyboard clamp
 	assert.equal(picked[0], models[1], "Enter without walking selects the first ranked result");
 	await key(modelInput, "ArrowUp");
 	await key(modelInput, "Enter");
-	assert.equal(picked[1], models[0], "ArrowUp enters at the last result");
+	assert.equal(picked[1], models[2], "ArrowUp enters at the last result");
 	await key(modelInput, "ArrowDown");
 	await key(modelInput, "ArrowDown");
 	await key(modelInput, "Enter");
-	assert.equal(picked[2], models[0], "ArrowDown clamps at the last result");
+	assert.equal(picked[2], models[2], "ArrowDown clamps at the last result");
 	await search("p2", modelInput);
 	assert.equal(options().length, 1);
 	await key(modelInput, "Enter");

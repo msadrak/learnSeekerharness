@@ -192,7 +192,7 @@ export function CoverageMenuBody({
 		<div data-testid="ctx-coverage" className="flex flex-col gap-1 px-2.5 pt-1 pb-2">
 			{busy ? (
 				<span className="flex items-center gap-1.5 text-muted-foreground" data-testid="ctx-coverage-running">
-					<span className="size-1.5 animate-pulse rounded-full bg-foreground/70" aria-hidden />
+					<span className="size-1.5 animate-pulse motion-reduce:animate-none rounded-full bg-foreground/70" aria-hidden />
 					{c.extracting}
 				</span>
 			) : complete ? (
@@ -340,7 +340,7 @@ export function CoverageRingGlyph({ fill, running }: { fill: number; running: bo
 	return (
 		<svg
 			viewBox="0 0 16 16"
-			className={running ? "size-full animate-pulse" : "size-full"}
+			className={running ? "size-full animate-pulse motion-reduce:animate-none" : "size-full"}
 			aria-hidden="true"
 		>
 			<circle cx="8" cy="8" r="6" fill="none" strokeWidth="2.5" className="stroke-border" />

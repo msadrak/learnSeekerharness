@@ -84,6 +84,9 @@ export interface CanvasNode {
 	x: number;
 	y: number;
 	label: string;
+	/** Optional fill override (hex): the mastery state colour. Absent = the
+	 *  unassessed `colors.node`. */
+	color?: string;
 }
 
 /** One directed edge of the DERIVED view (chains-primary, 2026-09-30):
@@ -641,7 +644,7 @@ export class GraphCanvasRenderer {
 	// changes (geoVersion). Camera moves just re-rasterize the same paths.
 	private geoVersion = 0; // bump = geometry inputs changed
 	private builtVersion = -1; // version the cache was built at
-	private nodesPath: Path2D | null = null;
+	private nodePaths: Map<string, Path2D> | null = null;
 	private shaftsPath: Path2D = new Path2D();
 	private headsPath: Path2D = new Path2D();
 	private regionCanvas: HTMLCanvasElement | null = null;
@@ -1241,15 +1244,22 @@ export class GraphCanvasRenderer {
 		const visible = this.visible;
 		const isVisible = (id: string) => !visible || visible.has(id);
 
-		// Node discs: one Path2D, one fill() per frame. Implication nodes
-		// are pure geometry — never a disc, never a label, never picked.
-		const nodesPath = new Path2D();
+		// Node discs: one Path2D per fill colour (key "" = the default node
+		// colour), one fill() each per frame. Implication nodes are pure
+		// geometry — never a disc, never a label, never picked.
+		const nodePaths = new Map<string, Path2D>();
 		for (const n of data.nodes) {
 			if (!isVisible(n.id) || isImpNodeId(n.id)) continue;
-			nodesPath.moveTo(n.x + nodeR, n.y);
-			nodesPath.arc(n.x, n.y, nodeR, 0, Math.PI * 2);
+			const key = n.color ?? "";
+			let path = nodePaths.get(key);
+			if (!path) {
+				path = new Path2D();
+				nodePaths.set(key, path);
+			}
+			path.moveTo(n.x + nodeR, n.y);
+			path.arc(n.x, n.y, nodeR, 0, Math.PI * 2);
 		}
-		this.nodesPath = nodesPath;
+		this.nodePaths = nodePaths;
 
 		// Edge shafts + arrowheads (rendering arc, owner 2026-09-30): all
 		// arrows are PLAIN single shafts — the old double-shaft glyph is
@@ -1630,7 +1640,7 @@ export class GraphCanvasRenderer {
 			this.regionBuiltVersion = this.geoVersion;
 		}
 		if (this.builtVersion !== this.geoVersion) this.buildGeometry();
-		if (!this.nodesPath) return;
+		if (!this.nodePaths) return;
 
 		const { x: tx, y: ty, k } = this.transform;
 		// THE camera: one transform, then everything is world coordinates.
@@ -1666,9 +1676,11 @@ export class GraphCanvasRenderer {
 			ctx.fill(this.headsPath);
 		}
 
-		// 4. Nodes: one cached Path2D, one fill.
-		ctx.fillStyle = data.colors.node;
-		ctx.fill(this.nodesPath);
+		// 4. Nodes: one cached Path2D per colour, one fill each.
+		for (const [key, path] of this.nodePaths) {
+			ctx.fillStyle = key || data.colors.node;
+			ctx.fill(path);
+		}
 
 		// 6. Node labels — one global gate, faded together. World-scaled
 		// with the graph (they grow as you zoom in, Obsidian-style).
@@ -1693,9 +1705,10 @@ export class GraphCanvasRenderer {
 				? null // filtered out by search — no glow on hidden nodes
 				: this.hoverNode;
 			if (n) {
+				const glowColor = n.color ?? data.colors.node;
 				const glow = ctx.createRadialGradient(n.x, n.y, nodeR, n.x, n.y, glowOuter);
-				glow.addColorStop(0, rgbaFromHex(data.colors.node, GLOW_ALPHA * this.hoverFade));
-				glow.addColorStop(1, rgbaFromHex(data.colors.node, 0));
+				glow.addColorStop(0, rgbaFromHex(glowColor, GLOW_ALPHA * this.hoverFade));
+				glow.addColorStop(1, rgbaFromHex(glowColor, 0));
 				ctx.fillStyle = glow;
 				ctx.beginPath();
 				ctx.arc(n.x, n.y, glowOuter, 0, Math.PI * 2);

@@ -333,7 +333,7 @@ export function MermaidOverlay({
 					</>
 				) : (
 					<div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
-						<span className="inline-block size-4 animate-spin rounded-full border border-current border-b-2" />
+						<span className="inline-block size-4 animate-spin motion-reduce:animate-none rounded-full border border-current border-b-2" />
 						{o.rendering}
 					</div>
 				)}

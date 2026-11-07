@@ -47,6 +47,8 @@ import type { ModelsSettings } from "@/src/core";
 import { MENU_CLOSE_EVENT, MENU_OPEN_EVENT } from "@/components/menu-shell";
 import { notifySettingsSaved } from "@/components/settings-signal";
 import { KeysSection } from "./keys-section.tsx";
+import { DictationSection } from "./dictation-section.tsx";
+import { SearchSection } from "./search-section.tsx";
 import { Hint } from "@/components/ui/hint";
 import { AppearanceSection, GraphSection } from "./appearance-section.tsx";
 import { KeyboardSection } from "./keyboard-section.tsx";
@@ -62,6 +64,8 @@ import { toast } from "sonner";
  *  real question users ask). */
 const SECTIONS = [
 	{ id: "keys" },
+	{ id: "dictation" },
+	{ id: "search" },
 	{ id: "agent" },
 	{ id: "appearance" },
 	{ id: "graph" },
@@ -70,11 +74,11 @@ const SECTIONS = [
 ] as const;
 type SectionId = (typeof SECTIONS)[number]["id"];
 
-/** `open(section?, row?)` — the optional ROW deep-links into the Keys
- *  section with that row unfolded (zero-keys wave: the dictation error's
- *  click lands on the Deepgram row). `row` is the KEY ID (the env-var
- *  name, e.g. DEEPGRAM_API_KEY — KeysSection's openRow state), not the
- *  row's testid. */
+/** `open(section?, row?)` — the optional ROW deep-links into a keys
+ *  section (keys, dictation or search) with that row unfolded (zero-keys
+ *  wave: the dictation error's click lands on the Deepgram row). `row` is
+ *  the KEY ID (the env-var name, e.g. DEEPGRAM_API_KEY — the section's
+ *  openRow state), not the row's testid. */
 const DialogContext = createContext<{ open: (section?: string, row?: string) => void }>({ open: () => {} });
 
 /** AppShell-level mount: the sidebar row and the mod+, chord call this.
@@ -377,6 +381,20 @@ export function SettingsDialogBody({
 							{active === "keys" && (
 								<SettingsSection title={t.settings.dialog.nav.keys} testid="section-keys">
 									<KeysSection initialRow={initialRow ?? undefined} />
+								</SettingsSection>
+							)}
+							{active === "dictation" && (
+								<SettingsSection title={t.settings.dialog.nav.dictation} testid="section-dictation">
+									<DictationSection initialRow={initialRow ?? undefined} />
+								</SettingsSection>
+							)}
+							{active === "search" && (
+								<SettingsSection title={t.settings.dialog.nav.search} testid="section-search">
+									<SearchSection
+										agent={record.agent}
+										onAgentChange={(next: AgentSettings) => void write("agent", next)}
+										initialRow={initialRow ?? undefined}
+									/>
 								</SettingsSection>
 							)}
 							{active === "agent" && (

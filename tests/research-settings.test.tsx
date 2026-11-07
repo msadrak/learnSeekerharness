@@ -4,10 +4,11 @@ import assert from "node:assert/strict";
 import { it } from "node:test";
 import { parseHTML } from "linkedom";
 import { AgentSection } from "../components/settings/agent-section.tsx";
+import { SearchSection } from "../components/settings/search-section.tsx";
 import type { AgentSettings } from "../src/core/index.ts";
 import { SEARCH_ENGINES } from "../src/core/search.ts";
 
-it("keyless settings keep Research interactive while search-engine setup retains its own disabled state", async () => {
+it("keyless settings keep Research interactive in Agent while the Search section's engine row retains its own disabled state", async () => {
 	const dom = parseHTML("<html><body><div id='root'></div></body></html>");
 	const globals = globalThis as Record<string, unknown>;
 	const previous = new Map<string, PropertyDescriptor | undefined>();
@@ -56,6 +57,7 @@ it("keyless settings keep Research interactive while search-engine setup retains
 		assert.ok(!row.textContent?.includes(reason), "search setup hint is no longer a research-disable hint");
 		act(() => { toggle.click(); });
 		assert.equal(written?.tools?.research, false, "the keyless toggle emits the same stored boolean");
+		await act(async () => { root.render(<SearchSection agent={undefined} onAgentChange={() => {}} />); });
 		const engine = document.querySelector<HTMLButtonElement>('[data-testid="search-engine-trigger"]')!;
 		assert.ok(engine.className.includes("cursor-not-allowed"), "search engine preference retains its own key gate");
 		act(() => { engine.click(); });
@@ -100,8 +102,7 @@ it(`a ${label}-only key enables the engine menu and selecting ${label} saves the
 	const root = createRoot(document.getElementById("root")!);
 	let written: AgentSettings | undefined;
 	try {
-		await act(async () => root.render(<AgentSection agent={undefined} models={undefined} graph={undefined} compaction={undefined}
-			onSectionChange={(next) => { written = next; }} onModelsChange={() => {}} onCompactionChange={() => {}} />));
+		await act(async () => root.render(<SearchSection agent={undefined} onAgentChange={(next) => { written = next; }} />));
 		const trigger = document.querySelector<HTMLButtonElement>('[data-testid="search-engine-trigger"]')!;
 		assert.ok(!trigger.hasAttribute("disabled"));
 		await act(async () => trigger.click());

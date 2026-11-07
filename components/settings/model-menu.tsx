@@ -20,12 +20,14 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { StarIcon } from "lucide-react";
 import type { ModelCatalogEntry } from "@/src/core";
-import { CLAUDE_CODE_PROVIDER, CUSTOM_PROVIDER, fuzzyScore, subscriptionLabel } from "@/src/core";
+import { AUTH_PROVIDER_KEYS, CLAUDE_CODE_PROVIDER, CUSTOM_PROVIDER, fuzzyScore, subscriptionLabel } from "@/src/core";
 import { formatTokens } from "@/components/usage-format";
 import { SearchMenuList } from "./search-menu-list";
 import { useT } from "@/components/i18n";
 import { textDirection } from "@/lib/i18n/direction";
+import { useFavoriteModels } from "./use-favorite-models";
 
 function priceLabel(cost: ModelCatalogEntry["cost"], unpriced: string): string {
 	if (!cost) return unpriced;
@@ -63,6 +65,9 @@ export function ModelMenuList({
 	vision?: boolean;
 }) {
 	const m = useT().settings.menus;
+	const { favorites, toggle } = useFavoriteModels();
+	const pinKey = (entry: ModelCatalogEntry) => `${entry.provider}:${entry.id}`;
+	const optionTestid = (entry: ModelCatalogEntry) => `model-option-${entry.id.replace(/[^a-z0-9-]/gi, "_")}`;
 	// Vision slot: built-ins must report image input; custom-endpoint models
 	// stay selectable (the endpoint may not report a modality). Image-capable
 	// ones float to the top of the list.
@@ -81,10 +86,38 @@ export function ModelMenuList({
 				onPick={onPick}
 				searchTestid="model-search"
 				listTestid="model-list"
-				optionTestid={(entry) => `model-option-${entry.id.replace(/[^a-z0-9-]/gi, "_")}`}
+				optionTestid={optionTestid}
 				placeholder={m.searchModels}
 				loading={m.loadingModels}
 				empty={m.noModels}
+				sections={(results) => {
+					const starred = results.filter((entry) => favorites.has(pinKey(entry)));
+					const rest = results.filter((entry) => !favorites.has(pinKey(entry)));
+					const providers = [...new Set((models ?? []).map((entry) => entry.provider))];
+					return [
+						{ key: "favorites", label: m.favorites, items: starred },
+						...providers.map((provider) => {
+							const items = rest.filter((entry) => entry.provider === provider);
+							const first = items[0];
+							const label = first
+								? subscriptionLabel(`${provider}:${first.id}`) ?? AUTH_PROVIDER_KEYS.find((x) => x.id === provider)?.label ?? provider
+								: provider;
+							return { key: provider, label, items };
+						}),
+					];
+				}}
+				renderTrailing={(entry) => {
+					const starred = favorites.has(pinKey(entry));
+					return <button
+						type="button"
+						tabIndex={-1}
+						aria-pressed={starred}
+						aria-label={starred ? m.removeFavorite(entry.name) : m.addFavorite(entry.name)}
+						data-testid={`model-star-${entry.id.replace(/[^a-z0-9-]/gi, "_")}`}
+						onClick={(e) => { e.stopPropagation(); toggle(pinKey(entry)); }}
+						className={`shrink-0 rounded-md p-1.5 outline-none transition-colors ${starred ? "text-warning" : "text-muted-foreground/50 hover:text-foreground"}`}
+					><StarIcon className={`size-3.5${starred ? " fill-current" : ""}`} /></button>;
+				}}
 				renderItem={(entry) => <>
 					<span className="flex items-center justify-between gap-2">
 						<span dir={textDirection(entry.name)} className="truncate text-card-foreground lh-align-page">{entry.name}</span>

@@ -24,6 +24,8 @@ import { ChainTableOverlay } from "@/components/chain-table.tsx";
 import { GraphCostControl } from "@/components/graph-view.tsx";
 import { NotesImportControl, NotesImportErrors, NotesImportNotices, useNotesImport } from "@/components/notes-import.tsx";
 import { Hint } from "@/components/ui/hint";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { ChatSummary, GraphCostSummary, GraphSnapshot } from "@/src/core";
 import { useT } from "@/components/i18n";
 
@@ -92,20 +94,22 @@ export function MinimalHome({
 	const [costs, setCosts] = useState<GraphCostSummary | null>(null);
 	const [chats, setChats] = useState<ChatSummary[]>([]);
 	const [chainsOpen, setChainsOpen] = useState(false);
+	const [failed, setFailed] = useState(false);
 
 	const readState = useCallback(() => {
-		fetch("/api/graph")
-			.then((res) => res.json() as Promise<GraphSnapshot>)
-			.then(setSnapshot)
-			.catch(() => {});
-		fetch("/api/graph/costs")
-			.then((res) => res.json() as Promise<GraphCostSummary>)
-			.then(setCosts)
-			.catch(() => {});
-		fetch("/api/chats")
-			.then((res) => res.json() as Promise<{ chats: ChatSummary[] }>)
-			.then((body) => setChats(body.chats))
-			.catch(() => {});
+		setFailed(false);
+		const read = <T,>(url: string, apply: (body: T) => void) => {
+			fetch(url)
+				.then((res) => {
+					if (!res.ok) throw new Error(String(res.status));
+					return res.json() as Promise<T>;
+				})
+				.then(apply)
+				.catch(() => setFailed(true));
+		};
+		read<GraphSnapshot>("/api/graph", setSnapshot);
+		read<GraphCostSummary>("/api/graph/costs", setCosts);
+		read<{ chats: ChatSummary[] }>("/api/chats", (body) => setChats(body.chats));
 	}, []);
 	useEffect(() => {
 		readState();
@@ -129,14 +133,33 @@ export function MinimalHome({
 	return (
 		<div className="relative h-full">
 			{/* The quiet summary — centered, biased up off the composer. */}
-			<div className="pointer-events-none flex h-full items-center justify-center pb-40">
-				<KnowledgeSummary
-					propositions={snapshot?.propositions.length ?? 0}
-					chains={snapshot?.chains.length ?? 0}
-					teachSessions={teachSessions}
-					practiceSessions={practiceSessions}
-					importedNotes={Object.keys(snapshot?.fileSources ?? {}).length}
-				/>
+			<div className="pointer-events-none flex h-full flex-col items-center justify-center gap-3 pb-40">
+				{failed && (
+					<div className="pointer-events-auto flex flex-col items-center gap-2 text-center">
+						<p role="alert" data-testid="minimal-home-error" className="text-xs text-danger">
+							{t.shell.minimalHome.loadFailed}
+						</p>
+						<Button variant="outline" size="xs" onClick={readState}>
+							{t.common.actions.retry}
+						</Button>
+					</div>
+				)}
+				{snapshot === null && !failed ? (
+					<div data-testid="minimal-home-loading" className="flex flex-col items-center gap-2">
+						{Array.from({ length: 5 }, (_, i) => (
+							<Skeleton key={i} className="h-3 w-40" />
+						))}
+						<span className="sr-only">{t.common.states.loading}</span>
+					</div>
+				) : (
+					<KnowledgeSummary
+						propositions={snapshot?.propositions.length ?? 0}
+						chains={snapshot?.chains.length ?? 0}
+						teachSessions={teachSessions}
+						practiceSessions={practiceSessions}
+						importedNotes={Object.keys(snapshot?.fileSources ?? {}).length}
+					/>
+				)}
 			</div>
 
 			{/* The chrome survivors in the graph view's own places (owner,

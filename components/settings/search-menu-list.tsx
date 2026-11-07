@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { fuzzyScore } from "@/src/core";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function SearchMenuList<T>({
 	items, itemKey, searchTerms, compare, prioritize, isSelected, onPick, renderItem,
 	searchTestid, listTestid, optionTestid, placeholder, ariaLabel, loading, empty,
-	disabled = false,
+	disabled = false, sections, renderTrailing,
 }: {
 	items: readonly T[] | undefined;
 	itemKey: (item: T) => string;
@@ -31,6 +31,12 @@ export function SearchMenuList<T>({
 	loading?: string;
 	empty: string;
 	disabled?: boolean;
+	/** Grouped layout for the blank-query state: the flattened sections, in
+	 *  order, ARE the list (arrow/Enter indices index into it). A non-blank
+	 *  query falls back to the flat ranked list. */
+	sections?: (results: readonly T[]) => Array<{ key: string; label: string; items: T[] }>;
+	/** Rendered as a sibling after the option button inside its row. */
+	renderTrailing?: (item: T) => ReactNode;
 }) {
 	const [query, setQuery] = useState("");
 	const [menuIdx, setMenuIdx] = useState<number | null>(null);
@@ -54,6 +60,9 @@ export function SearchMenuList<T>({
 		)
 		.map(({ item }) => item);
 
+	const grouped = sections && query.trim() === "" ? sections(results) : null;
+	const flat = grouped ? grouped.flatMap((section) => section.items) : results;
+
 	return <>
 		<input
 			type="text"
@@ -67,12 +76,12 @@ export function SearchMenuList<T>({
 				if (event.key === "ArrowDown" || event.key === "ArrowUp") {
 					event.preventDefault();
 					event.stopPropagation();
-					if (disabled || results.length === 0) return;
+					if (disabled || flat.length === 0) return;
 					setMenuIdx((i) => event.key === "ArrowDown"
-						? Math.min((i ?? -1) + 1, results.length - 1)
-						: Math.max((i ?? results.length) - 1, 0));
+						? Math.min((i ?? -1) + 1, flat.length - 1)
+						: Math.max((i ?? flat.length) - 1, 0));
 				} else if (event.key === "Enter") {
-					const chosen = results[menuIdx ?? 0];
+					const chosen = flat[menuIdx ?? 0];
 					if (!disabled && chosen !== undefined) {
 						event.preventDefault();
 						event.stopPropagation();
@@ -87,20 +96,34 @@ export function SearchMenuList<T>({
 			{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="mx-2 my-1 h-8" />)}
 			<span className="sr-only">{loading}</span>
 		</div>}
-		{items && results.length === 0 && <div className="px-2 py-3 text-center text-muted-foreground">{empty}</div>}
+		{items && flat.length === 0 && <div className="px-2 py-3 text-center text-muted-foreground">{empty}</div>}
 		<ul ref={listRef} data-testid={listTestid} className="flex max-h-72 flex-col overflow-y-auto px-1">
-			{results.map((item, i) => <li key={itemKey(item)}>
-				<button
-					type="button"
-					data-testid={optionTestid(item)}
-					data-idx={i}
-					disabled={disabled}
-					onClick={() => onPick(item)}
-					className={`flex w-full flex-col gap-0.5 rounded-lg px-2 py-1.5 text-start outline-none transition-colors hover:bg-muted ${
-						i === menuIdx ? "bg-accent/40 ring-1 ring-inset ring-border" : ""
-					}${isSelected(item) && i !== menuIdx ? " bg-muted/60" : ""}`}
-				>{renderItem(item)}</button>
-			</li>)}
+			{(grouped ?? [{ key: "", label: "", items: results }]).map((section, s, all) => {
+				const offset = all.slice(0, s).reduce((n, prev) => n + prev.items.length, 0);
+				return <Fragment key={section.key}>
+					{grouped && section.items.length > 0 && <li
+						role="presentation"
+						data-testid={`menu-group-${section.key}`}
+						className="px-2 pt-2 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+					>{section.label}</li>}
+					{section.items.map((item, j) => {
+						const i = offset + j;
+						return <li key={itemKey(item)} className="flex items-center">
+							<button
+								type="button"
+								data-testid={optionTestid(item)}
+								data-idx={i}
+								disabled={disabled}
+								onClick={() => onPick(item)}
+								className={`flex w-full flex-1 flex-col gap-0.5 rounded-lg px-2 py-1.5 text-start outline-none transition-colors hover:bg-muted ${
+									i === menuIdx ? "bg-accent/40 ring-1 ring-inset ring-border" : ""
+								}${isSelected(item) && i !== menuIdx ? " bg-muted/60" : ""}`}
+							>{renderItem(item)}</button>
+							{renderTrailing?.(item)}
+						</li>;
+					})}
+				</Fragment>;
+			})}
 		</ul>
 	</>;
 }

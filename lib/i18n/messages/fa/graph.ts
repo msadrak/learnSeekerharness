@@ -58,6 +58,7 @@ export const graph: typeof en = {
 		title: "گراف دانش",
 		startHint: "برای شروع یادگیری، یک جلسه آغاز کنید.",
 		attachHint: "مطالب خود را با گیرهٔ کاغذ یا کشیدن و رها کردن پیوست کنید.",
+		loadFailed: "گراف بارگذاری نشد.",
 	},
 	pipeline: {
 		phases: {
@@ -72,6 +73,14 @@ export const graph: typeof en = {
 	card: {
 		sessions: "جلسه‌ها",
 		noSessions: "جلسه‌ای ثبت نشده است.",
+	},
+	mastery: {
+		legend: "میزان تسلط",
+		understood: "فهمیده‌شده",
+		inProgress: "در حال یادگیری",
+		needsReview: "نیازمند مرور",
+		unassessed: "هنوز تمرین نشده",
+		lastPracticed: (state, date) => `${state} · آخرین تمرین \u2068${date}\u2069`,
 	},
 	contextCard: {
 		title: "زمینهٔ گراف",

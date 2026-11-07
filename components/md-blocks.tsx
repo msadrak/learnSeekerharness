@@ -185,7 +185,7 @@ function MermaidInline({ chart }: { chart: string }) {
 	if (incomplete || (svg === null && error === null)) {
 		return (
 			<div data-testid="md-mermaid" className="my-4 flex justify-center p-4" aria-busy="true">
-				<span className="inline-block size-4 animate-spin rounded-full border border-current border-b-2 text-muted-foreground" />
+				<span className="inline-block size-4 animate-spin motion-reduce:animate-none rounded-full border border-current border-b-2 text-muted-foreground" />
 			</div>
 		);
 	}

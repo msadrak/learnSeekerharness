@@ -52,6 +52,7 @@ export const shell = {
 		practice: "Practice",
 	},
 	minimalHome: {
+		loadFailed: "Couldn't load your knowledge summary.",
 		propositions: (n: number) => `${n} ${n === 1 ? "proposition" : "propositions"}`,
 		chains: (n: number) => `${n} ${n === 1 ? "chain" : "chains"}`,
 		teachingSessions: (n: number) => `${n} ${n === 1 ? "teaching session" : "teaching sessions"}`,
@@ -66,6 +67,12 @@ export const shell = {
 		practiceDescription:
 			"Pick nodes from your knowledge graph, describe what you want to practice, or bring your own problem.",
 		teachDescription: "The teacher will open by probing what you already know.",
+		examplesLabel: "Example goals",
+		examples: [
+			"How does public-key cryptography work?",
+			"What is entropy, really?",
+			"How do vaccines train the immune system?",
+		],
 	},
 	setupCta: {
 		addProviderKey: "Add a provider key",

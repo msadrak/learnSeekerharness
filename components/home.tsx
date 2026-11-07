@@ -14,6 +14,7 @@ import { SidebarToggle } from "@/components/sidebar";
 import { StatsBar } from "@/components/stats-bar";
 import { PathInput } from "@/components/path-input";
 import { AttachFilesButton } from "@/components/attach-files-button";
+import { ExampleChips } from "@/components/example-chips";
 import { SessionStarter } from "@/components/start-session";
 import type { TurnUsage } from "@/src/core";
 import { useT } from "@/components/i18n";
@@ -293,6 +294,15 @@ export function Home({
 						<CornerDownLeftIcon className="size-5 rtl:-scale-x-100" />
 					</button>
 					</form>
+					{mode === "teach" && topic === "" && (
+						<ExampleChips
+							onPick={(ex) => {
+								topicRef.current = ex;
+								setTopic(ex);
+								topicInputRef.current?.focus();
+							}}
+						/>
+					)}
 					{/* Same as the chat view's under-composer stats bar (owner) — no
 					    session yet, so the LEFT side renders nothing (wave 7 sweep)
 					    while the RIGHT keeps the strong-slot control (fix wave: the

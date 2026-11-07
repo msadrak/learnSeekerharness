@@ -27,7 +27,9 @@ export const cards = {
 		otherPlaceholder: "Type your own answer…",
 		confidence: "Confidence",
 		confidenceAria: "Confidence — the probability your selected answer is correct",
-		confidenceValueText: (n: number) => `${n} percent`,
+		confidenceLabel: (stop: number): string =>
+			stop >= 100 ? "Certain" : stop >= 90 ? "Confident" : stop >= 70 ? "Fairly sure" : stop >= 50 ? "Unsure" : stop >= 30 ? "Guessing" : "No idea",
+		confidenceValueText: (n: number, label: string) => `${label}, ${n} percent`,
 		confidenceTitle: "The probability your selected answer is correct — 50% is a coin flip. Adjust with ←/→.",
 		yourAnswer: "Your answer",
 		answerPlaceholder: "Type your answer…",

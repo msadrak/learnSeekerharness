@@ -49,11 +49,12 @@ describe("GraphChromeRow — the empty-graph ruling (owner, 2026-09-25)", () => 
 		assert.equal(html.split("graph-chrome-fade-in").length - 1, 1, "only the inventory button has the appearance animation");
 	});
 
-	it("empty graph uses the same session-first lead and secondary material guidance as home", () => {
+	it("before the first fetch resolves, the graph shows a loading skeleton — never the empty-state lead", () => {
 		const html = renderToStaticMarkup(createElement(ServerEventsProvider, { children: createElement(GraphView, {}) }));
-		assert.ok(html.includes("<p>Start a session to begin learning.</p>"));
-		assert.ok(html.includes("Attach your material with the paperclip or drag and drop.</p>"));
-		assert.ok(!html.includes("import notes to build"));
+		assert.ok(html.includes('data-testid="graph-loading"'));
+		assert.ok(html.includes("Loading…"));
+		assert.ok(!html.includes("Start a session to begin learning."));
+		assert.ok(!html.includes('data-testid="graph-error"'));
 	});
 
 	it("POPULATED graph: all four render, the gated trio carries the fade", () => {

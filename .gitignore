@@ -1,5 +1,6 @@
 node_modules/
 data/
+.visual-smoke/
 .next/
 *.log
 .DS_Store

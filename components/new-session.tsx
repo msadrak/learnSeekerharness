@@ -13,6 +13,7 @@ import { StatsBar } from "@/components/stats-bar";
 import { ChainTableOverlay } from "@/components/chain-table.tsx";
 import { ComposerActions, NodePickerControl } from "@/components/composer-actions";
 import { SessionStarter } from "@/components/start-session";
+import { ExampleChips } from "@/components/example-chips";
 import type { ChatSettings, GraphSnapshot } from "@/src/core";
 import { useT } from "@/components/i18n";
 
@@ -208,6 +209,14 @@ export function DraftShell({
 										placeholder={mode === "practice" ? t.shell.home.placeholderPractice : t.shell.home.placeholderLearn}
 									/>
 								</div>
+								{mode === "teach" && text === "" && (
+									<ExampleChips
+										onPick={(ex) => {
+											onChange(ex);
+											composerInputRef.current?.focus();
+										}}
+									/>
+								)}
 								<StatsBar
 									dictationSlot={<DictationBar dictation={dictation} />}
 									turns={[]}

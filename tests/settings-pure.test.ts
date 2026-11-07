@@ -11,6 +11,7 @@ import { appearanceVars, derivedPalette, resolveAppearance, resolveScheme, stale
 import {
 	PROMPT_IN_USE_HINT,
 	composePromptSwitch,
+	composeRoleModel,
 	composeSearchEngine,
 	composeSlotModel,
 	composeTool,
@@ -202,6 +203,16 @@ describe("agent section compose helpers — the replace-whole PUT body", () => {
 		assert.deepEqual(after2.strong, { model: { provider: "zai", id: "glm-4.7-flash" } }, "thinking dropped, model kept");
 	});
 
+	it("composeRoleModel: a pick keeps the thinking level; null removes the model and then `models` itself", () => {
+		const picked = composeRoleModel({ models: { researcher: { thinkingLevel: "low" } } }, "researcher", { provider: "zai", id: "m" });
+		assert.deepEqual(picked.models?.researcher, { model: { provider: "zai", id: "m" }, thinkingLevel: "low" });
+		const other: AgentSettings = { models: { researcher: { model: { provider: "zai", id: "m" } }, auditor: { model: { provider: "zai", id: "n" } } } };
+		assert.deepEqual(Object.keys(composeRoleModel(other, "researcher", null).models ?? {}), ["auditor"]);
+		const cleared = composeRoleModel({ tools: { research: true }, models: { researcher: { model: { provider: "zai", id: "m" } } } }, "researcher", null);
+		assert.equal("models" in cleared, false);
+		assert.deepEqual(cleared.tools, { research: true });
+	});
+
 	it("composeSearchEngine: null REMOVES the pin (auto-activation's resting state)", () => {
 		const withPin: AgentSettings = { search: { engine: "tavily" } };
 		const cleared = composeSearchEngine(withPin, null);
@@ -300,10 +311,10 @@ describe("keyStatusLine — the minimal at-a-glance state", () => {
 		);
 	});
 
-	it("env-owned key carries the 'env' marker (the row renders read-only)", () => {
+	it("env-owned key reads like any other (the status badge carries the ownership)", () => {
 		assert.equal(
 			keyStatusLine({ id: "X", info: null, present: true, masked: "…ca10 (73 chars)", source: "env", shadowedByEnv: false }, en.settings.keys),
-			"…ca10 · 73 · env",
+			"…ca10 · 73",
 		);
 	});
 

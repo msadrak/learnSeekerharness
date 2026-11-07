@@ -57,6 +57,7 @@ export const shell: typeof en = {
 		practice: "تمرین",
 	},
 	minimalHome: {
+		loadFailed: "خلاصهٔ دانش شما بارگذاری نشد.",
 		propositions: (n: number) => `${n} گزاره`,
 		chains: (n: number) => `${n} زنجیره`,
 		teachingSessions: (n: number) => `${n} جلسهٔ آموزشی`,
@@ -71,6 +72,12 @@ export const shell: typeof en = {
 		practiceDescription:
 			"گره‌هایی از گراف دانش‌تان انتخاب کنید، بنویسید چه چیزی را می‌خواهید تمرین کنید، یا مسئلهٔ خودتان را بیاورید.",
 		teachDescription: "معلم با سنجش دانسته‌های فعلی شما شروع می‌کند.",
+		examplesLabel: "نمونه‌هایی از هدف یادگیری",
+		examples: [
+			"رمزنگاری با کلید عمومی چگونه کار می‌کند؟",
+			"آنتروپی واقعاً چیست؟",
+			"واکسن‌ها چگونه دستگاه ایمنی را آموزش می‌دهند؟",
+		],
 	},
 	setupCta: {
 		addProviderKey: "افزودن کلید ارائه‌دهنده",
