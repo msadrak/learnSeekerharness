@@ -83,6 +83,7 @@ import { NativeSubscriptionBackgroundAccess } from "./subscription-connections";
 import { useT } from "@/components/i18n";
 import { en, type Messages } from "@/lib/i18n/messages";
 import { textDirection } from "@/lib/i18n/direction";
+import { localizeServerError } from "@/lib/i18n/server-errors";
 
 /** The owner's final toggleable-tool list (confirm with the user before
  *  changing — the Teacher stream settled this 2026-09-19). */
@@ -220,7 +221,7 @@ export function sectionedSegments(view: PromptView, a: Messages["settings"]["age
 	const agents = [
 		{ id: "teacher", label: a.sections.teacher },
 		{ id: "prober", label: a.sections.prober },
-		{ id: "practice", label: "Practice" },
+		{ id: "practice", label: a.sections.practice },
 	] as const;
 	const shared = new Map<string, SegmentInfo>();
 	for (const { id } of agents) {
@@ -235,8 +236,8 @@ export function sectionedSegments(view: PromptView, a: Messages["settings"]["age
 			label: a.sections.shared,
 			segments: [...shared.values()].map((segment) => {
 				const users = agents.filter(({ id }) => view[id].some((s) => s.path === segment.path)).map(({ label }) => label);
-				const usage = users.length > 1 ? `${users.slice(0, -1).join(", ")} and ${users.at(-1)}` : users[0];
-				return { ...segment, usageHint: `Used by ${usage}` };
+				const usage = users.length > 1 ? a.userList(users) : users[0];
+				return { ...segment, usageHint: a.usedBy(usage!) };
 			}),
 		},
 	];
@@ -446,7 +447,7 @@ export function AgentSection({
 			body: JSON.stringify({ text }),
 		});
 		if (!res.ok) {
-			setSegmentStatus(a.saveFailed(String((await res.json().catch(() => ({}))).error ?? res.status)));
+			setSegmentStatus(a.saveFailed(localizeServerError(String((await res.json().catch(() => ({}))).error ?? res.status), t)));
 			return;
 		}
 		readPrompts();
@@ -632,8 +633,8 @@ export function AgentSection({
 					aria-expanded={advancedModels}
 					onClick={() => { setAdvancedModels(!advancedModels); setOpenMenu(null); }}
 					className="mb-1 self-start text-xs text-muted-foreground hover:text-foreground"
-				>{advancedModels ? "Hide advanced settings" : "Show advanced settings"}</button>
-				{catalogFailed && <p role="alert" className="text-xs text-danger">Model catalog could not be loaded. Check the connection and retry. <button type="button" className="underline" onClick={refreshCatalog}>{t.common.actions.retry}</button></p>}
+				>{advancedModels ? a.hideAdvanced : a.showAdvanced}</button>
+				{catalogFailed && <p role="alert" className="text-xs text-danger">{a.catalogFailed}<button type="button" className="underline" onClick={refreshCatalog}>{t.common.actions.retry}</button></p>}
 				{MODEL_SLOTS.map((slot) => {
 					const override = models?.[slot];
 					const modelId = override?.model?.id ?? "";
@@ -698,9 +699,9 @@ export function AgentSection({
 									widthClass="w-20"
 								/>
 								{advancedModels && <MenuTrigger
-									value={cacheRetentionLabel(override?.cacheRetention)}
-									emptyLabel="Cache: default"
-									ariaLabel={`${a.slots[slot].label} cache retention`}
+									value={cacheRetentionLabel(override?.cacheRetention, t.settings.cacheRetention)}
+									emptyLabel={a.cacheDefault}
+									ariaLabel={a.cacheRetentionAria(a.slots[slot].label)}
 									testid={`slot-cache-${slot}`}
 									open={thisMenuOpen === "cache"}
 									disabled={!override?.model}
@@ -854,37 +855,38 @@ export function AgentSection({
 					const folders = agent?.fileAccess?.folders ?? [];
 					const restricted = Boolean(fileAccessError) || agent?.fileAccess?.restricted === true;
 					const effectiveAgent = fileAccessError ? { ...agent, fileAccess: { restricted: true, folders } } : agent;
+					const shownFileAccessError = fileAccessError ? localizeServerError(fileAccessError, t) : null;
 					const addFolder = () => {
 						const next = folderInput.trim();
-						if (!isFolderEntry(next)) { setFolderError("Enter an absolute path or ~/folder."); return; }
+						if (!isFolderEntry(next)) { setFolderError(a.fileAccess.absolutePathError); return; }
 						if (!folders.includes(next)) onSectionChange(composeAddFolder(effectiveAgent, next));
 						setFolderInput("");
 						setFolderError(null);
 					};
 					return (
 						<div data-testid="file-access-row" className="flex flex-col gap-2">
-							<SettingsRow label="File access" hint={!restricted
-								? "Broad local source access, except protected locations"
-								: folders.length ? "Only listed folders and subfolders."
-									: "Restricted: no folders allowed. Add a folder to enable access."}>
+							<SettingsRow label={a.fileAccess.title} hint={!restricted
+								? a.fileAccess.broadHint
+								: folders.length ? a.fileAccess.restrictedHint
+									: a.fileAccess.emptyRestrictedHint}>
 								<div className="flex items-center gap-2 text-xs">
-									<span>Restrict to listed folders</span>
-									<Toggle checked={restricted} label="Restrict to listed folders" onChange={(on) => onSectionChange(composeFileRestriction(effectiveAgent, on))} />
+									<span>{a.fileAccess.restrict}</span>
+									<Toggle checked={restricted} label={a.fileAccess.restrict} onChange={(on) => onSectionChange(composeFileRestriction(effectiveAgent, on))} />
 								</div>
 							</SettingsRow>
-							{fileAccessError && <p role="alert" dir={textDirection(fileAccessError)} data-testid="file-access-config-error" className="text-xs text-danger">{fileAccessError}</p>}
+							{shownFileAccessError && <p role="alert" dir={textDirection(shownFileAccessError)} data-testid="file-access-config-error" className="text-xs text-danger">{shownFileAccessError}</p>}
 							<div className="flex gap-2 ps-3">
-								<input dir="ltr" value={folderInput} aria-label="Allowed folder path" data-testid="file-access-add" placeholder="Absolute path or ~/folder"
+								<input dir="ltr" value={folderInput} aria-label={a.fileAccess.folderAria} data-testid="file-access-add" placeholder={a.fileAccess.folderPlaceholder}
 									onChange={(event) => { setFolderInput(event.target.value); setFolderError(null); }}
 									onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addFolder(); } }}
 									className="min-w-0 flex-1 rounded-sm border border-border bg-background px-2 py-1 font-ui text-xs" />
-								<button type="button" data-testid="file-access-add-button" disabled={!folderInput.trim()} onClick={addFolder} className="rounded-sm border border-border px-2 text-xs disabled:opacity-40">Add folder</button>
+								<button type="button" data-testid="file-access-add-button" disabled={!folderInput.trim()} onClick={addFolder} className="rounded-sm border border-border px-2 text-xs disabled:opacity-40">{a.fileAccess.addFolder}</button>
 							</div>
 							{folderError && <p role="alert" data-testid="file-access-input-error" className="ps-3 text-xs text-danger">{folderError}</p>}
 							{folders.map((folder) => (
 								<div key={folder} data-testid="file-access-folder" className="flex items-center justify-between gap-4 ps-3 text-xs">
 									<span title={folder} dir="ltr" className="min-w-0 truncate font-ui text-muted-foreground">{folder}</span>
-									<button type="button" aria-label={`Remove ${folder}`} data-testid="file-access-remove"
+									<button type="button" aria-label={a.fileAccess.removeFolderAria(folder)} data-testid="file-access-remove"
 										onClick={() => onSectionChange(composeRemoveFolder(effectiveAgent, folder))}
 										className="rounded-sm px-1.5 text-muted-foreground hover:text-foreground">{t.common.actions.remove}</button>
 								</div>

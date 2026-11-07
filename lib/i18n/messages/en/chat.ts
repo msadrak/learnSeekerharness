@@ -10,6 +10,9 @@ export const chat = {
 		sendFailed: (status: number) => `The send failed (${status}).`,
 		steerFailed: (status: number) => `The steer failed (${status}).`,
 		dismissalFailed: (status: number) => `The dismissal failed (${status}).`,
+		answerRemainingQuestion: "Answer or discard the remaining question first.",
+		openSessionFailed: "Couldn’t open the session. Your message is still here. Try sending again.",
+		streamDropped: "The connection dropped before the turn completed.",
 	},
 	header: {
 		titleInput: "Session title",
@@ -99,6 +102,9 @@ export const chat = {
 		micUnavailable: "mic unavailable",
 		reconnectFailed: "Deepgram reconnect failed",
 		connectionLost: (code: string) => `Deepgram connection lost (${code})`,
+		tokenRoute: (status: number) => `token route ${status}`,
+		languageUnavailable: "Dictation language unavailable",
+		tokenUnavailable: "token unavailable",
 	},
 	thinking: {
 		yourThinking: "YOUR THINKING",

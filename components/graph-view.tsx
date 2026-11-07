@@ -1487,8 +1487,8 @@ export function GraphView({
 						<WaypointsIcon className="size-10 opacity-40" strokeWidth={1.25} />
 						<div className="text-lg font-medium text-foreground">{t.graph.empty.title}</div>
 						<div className="max-w-sm text-sm">
-							<p>Start a session to begin learning.</p>
-							<p className="mt-1 text-xs">Attach your material with the paperclip or drag and drop.</p>
+							<p>{t.graph.empty.startHint}</p>
+							<p className="mt-1 text-xs">{t.graph.empty.attachHint}</p>
 						</div>
 					</div>
 				</div>

@@ -102,7 +102,7 @@ export function VisualOutputCard({
 			</div>
 		);
 	}
-	if (result.image && !snapshot.image) return <div className="my-4 text-sm text-muted-foreground" role="status">{snapshot.failed ? "Image snapshot could not be loaded." : "Loading image…"}</div>;
+	if (result.image && !snapshot.image) return <div className="my-4 text-sm text-muted-foreground" role="status">{snapshot.failed ? t.cards.image.snapshotFailed : t.cards.image.loading}</div>;
 	return (
 		/* NO CARD CHROME (owner round, 2026-10-07): the figure is document
 		   material — no border, no padding box. Image first, then the CAPTION

@@ -114,7 +114,7 @@ export function StatsBar({
 	const pricedCount = turns.length - unpriced - subscription;
 	const providers = pricing?.subscriptionProviders ?? subscriptionLabels(turns.map((turn) => turn.model));
 	const cliBilled = turns.some((turn) => turn.model.startsWith(`${CLAUDE_CODE_PROVIDER}:`));
-	const costLabel = planCostLabel(pricedCount > 0 ? cost : null, cliBilled ? [...providers, "CLI"] : providers);
+	const costLabel = planCostLabel(pricedCount > 0 ? cost : null, cliBilled ? [...providers, s.cli] : providers);
 
 	return (
 		<div
@@ -169,7 +169,7 @@ export function StatsBar({
 								</span>
 							</div>
 							{selectedModel?.startsWith(`${CLAUDE_CODE_PROVIDER}:`) && (
-								<p>Window reported by Claude Code; may be lower for auto-compaction.</p>
+								<p>{s.claudeWindowHint}</p>
 							)}
 							<div className="flex justify-between gap-2">
 								<span>{subscription ? s.usage : s.totalCost}</span>
@@ -177,7 +177,7 @@ export function StatsBar({
 							</div>
 							{cacheHitRate !== null && (
 								<div data-testid="stats-cache-hit-rate" className="flex justify-between gap-2">
-									<span>Cache hit rate</span>
+									<span>{s.cacheHitRate}</span>
 									<span className="tabular-nums text-card-foreground">{(cacheHitRate * 100).toFixed(1)}%</span>
 								</div>
 							)}
@@ -204,7 +204,7 @@ export function StatsBar({
 												</span>
 												<span className="flex shrink-0 items-center gap-2 tabular-nums text-card-foreground">
 													<span className="text-muted-foreground">{s.steps(turn.steps.length)}</span>
-													<span>{turn.model.startsWith(`${CLAUDE_CODE_PROVIDER}:`) ? "CLI" : subscriptionLabel(turn.model) ?? (c === null ? "—" : formatUsd(c))}</span>
+													<span>{turn.model.startsWith(`${CLAUDE_CODE_PROVIDER}:`) ? s.cli : subscriptionLabel(turn.model) ?? (c === null ? "—" : formatUsd(c))}</span>
 												</span>
 											</li>
 										);

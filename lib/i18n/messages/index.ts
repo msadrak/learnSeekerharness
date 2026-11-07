@@ -18,12 +18,14 @@ import { shell as en_shell } from "./en/shell.ts";
 import { graph as en_graph } from "./en/graph.ts";
 import { settings as en_settings } from "./en/settings.ts";
 import { cards as en_cards } from "./en/cards.ts";
+import { errors as en_errors } from "./en/errors.ts";
 import { common as fa_common } from "./fa/common.ts";
 import { chat as fa_chat } from "./fa/chat.ts";
 import { shell as fa_shell } from "./fa/shell.ts";
 import { graph as fa_graph } from "./fa/graph.ts";
 import { settings as fa_settings } from "./fa/settings.ts";
 import { cards as fa_cards } from "./fa/cards.ts";
+import { errors as fa_errors } from "./fa/errors.ts";
 
 export const en = {
 	common: en_common,
@@ -32,6 +34,7 @@ export const en = {
 	graph: en_graph,
 	settings: en_settings,
 	cards: en_cards,
+	errors: en_errors,
 };
 
 export type Messages = typeof en;
@@ -43,6 +46,7 @@ export const fa: Messages = {
 	graph: fa_graph,
 	settings: fa_settings,
 	cards: fa_cards,
+	errors: fa_errors,
 };
 
 export const MESSAGES: Record<UiLanguage, Messages> = { en, fa };

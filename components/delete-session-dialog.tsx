@@ -7,6 +7,7 @@ import type { ChatDeleteMode, ChatListItem } from "@/src/core";
 import { useT } from "@/components/i18n";
 import { en } from "@/lib/i18n/messages";
 import { textDirection } from "@/lib/i18n/direction";
+import { localizeServerError } from "@/lib/i18n/server-errors";
 
 /** The graph-traces checkbox copy (owner, 2026-09-24 flow rework — was
  *  the delete-nodes option's body in the two-button design): the
@@ -164,6 +165,7 @@ export function DeleteSessionBody({
 	const t = useT();
 	const s = t.shell.deleteSession;
 	const titleDir = textDirection(chat.title);
+	const shownFailure = failure ? localizeServerError(failure.error, t) : "";
 	return (
 		<div
 			role="dialog"
@@ -210,7 +212,7 @@ export function DeleteSessionBody({
 					data-testid="delete-failure"
 					className="mt-3 rounded-sm border border-border/60 px-3 py-2 text-xs"
 				>
-					<span dir={textDirection(failure.error)} className="text-foreground">{failure.error}</span>
+					<span dir={textDirection(shownFailure)} className="text-foreground">{shownFailure}</span>
 					<button
 						type="button"
 						data-testid="delete-retry"

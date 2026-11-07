@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { SettingsRow, Toggle } from "./controls.tsx";
+import { useT } from "@/components/i18n";
+import { en, type Messages } from "@/lib/i18n/messages";
 
 /** Observational snapshot from electron/main.cjs; never updater permission. */
 export type UpdateState = {
@@ -14,9 +16,8 @@ export type UpdateState = {
 
 export const APP_VERSION = process.env.LH_VERSION ?? "";
 const HOMEPAGE = process.env.LH_HOMEPAGE ?? "";
-export const MANUAL_UPDATE_HINT = "Checking downloads available updates. Downloaded updates install when you quit the app.";
-export const AUTO_UPDATE_HINT = "Check at startup and every 24 hours. Turning this off does not stop updates already in progress or ready to install.";
-const UPDATE_ERROR = "Couldn’t check for updates. Try again later.";
+export const MANUAL_UPDATE_HINT = en.settings.updates.manualHint;
+export const AUTO_UPDATE_HINT = en.settings.updates.automaticHint;
 
 /** Subscribe before requesting the snapshot. IPC replies and pushes can
  * cross; a revision prevents an older reply from hiding a newer event.
@@ -44,13 +45,13 @@ export function useUpdateState() {
 	return { state, failed };
 }
 
-export function updateStatusText(state: UpdateState | null): string | null {
+export function updateStatusText(state: UpdateState | null, u: Messages["settings"]["updates"] = en.settings.updates): string | null {
 	switch (state?.status) {
-		case "checking": return "Checking for updates…";
-		case "downloading": return state.version ? `Downloading version ${state.version}…` : "Downloading an update…";
-		case "up-to-date": return "No newer version was found at the last check.";
-		case "downloaded": return `${state.version ? `Version ${state.version}` : "An update"} is ready. It will install when you quit the app.`;
-		case "error": return UPDATE_ERROR;
+		case "checking": return u.checking;
+		case "downloading": return state.version ? u.downloadingVersion(state.version) : u.downloading;
+		case "up-to-date": return u.upToDate;
+		case "downloaded": return u.ready(state.version);
+		case "error": return u.checkFailed;
 		default: return null;
 	}
 }
@@ -68,13 +69,15 @@ export function UpdateSettings({
 	version?: string;
 	homepage?: string;
 }) {
+	const t = useT();
+	const u = t.settings.updates;
 	const { state, failed } = useUpdateState();
 	const [checkFailed, setCheckFailed] = useState(false);
 	useEffect(() => setCheckFailed(false), [state]);
 	const active = state !== null && state.status !== "disabled";
 	const busy = state?.status === "checking" || state?.status === "downloading";
-	const status = state?.status === "downloaded" ? updateStatusText(state)
-		: failed || checkFailed ? UPDATE_ERROR : updateStatusText(state);
+	const status = state?.status === "downloaded" ? updateStatusText(state, u)
+		: failed || checkFailed ? u.checkFailed : updateStatusText(state, u);
 	const releaseNotes = version && homepage ? `${homepage}/releases/tag/v${version}` : null;
 	const check = () => {
 		setCheckFailed(false);
@@ -84,28 +87,28 @@ export function UpdateSettings({
 	return (
 		<>
 			<SettingsRow
-				label={`Version ${version || "unknown"}`}
+				label={u.version(version)}
 				testid="row-version"
 				hint={
 					<>
 						{status && <span className="block" role="status" data-testid="update-status">{status}</span>}
-						{active && <span className="block">{MANUAL_UPDATE_HINT}</span>}
-						{releaseNotes && <a href={releaseNotes} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:text-foreground hover:underline" data-testid="release-notes">Release notes</a>}
+						{active && <span className="block">{u.manualHint}</span>}
+						{releaseNotes && <a href={releaseNotes} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:text-foreground hover:underline" data-testid="release-notes">{u.releaseNotes}</a>}
 					</>
 				}
 			>
 				{active && (state.status === "downloaded" ? (
-					<Button type="button" size="xs" className="cursor-pointer" data-testid="update-restart" onClick={() => window.lh?.installUpdate?.()}>Restart</Button>
+					<Button type="button" size="xs" className="cursor-pointer" data-testid="update-restart" onClick={() => window.lh?.installUpdate?.()}>{u.restart}</Button>
 				) : (
 					<Button type="button" size="xs" variant="outline" className="cursor-pointer disabled:cursor-not-allowed" data-testid="update-check" disabled={busy} aria-busy={busy} onClick={check}>
-						{busy && <BrailleSpinner label={state.status === "downloading" ? "Downloading update" : "Checking for updates"} />}
-						Check for updates
+						{busy && <BrailleSpinner label={state.status === "downloading" ? u.downloadingAria : u.checkingAria} />}
+						{u.check}
 					</Button>
 				))}
 			</SettingsRow>
 			{active && (
-				<SettingsRow label="Automatic updates" hint={AUTO_UPDATE_HINT} testid="row-auto-update">
-					<Toggle checked={autoUpdate} label="auto update" onChange={onAutoUpdateChange} />
+				<SettingsRow label={t.settings.dialog.autoUpdate} hint={u.automaticHint} testid="row-auto-update">
+					<Toggle checked={autoUpdate} label={t.settings.dialog.autoUpdateAria} onChange={onAutoUpdateChange} />
 				</SettingsRow>
 			)}
 		</>

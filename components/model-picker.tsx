@@ -14,6 +14,7 @@ export { useModelCatalog } from "@/components/model-catalog";
 import { defaultOrderLevel, populateLevel } from "@/components/thinking-default";
 import { useT } from "@/components/i18n";
 import { textDirection } from "@/lib/i18n/direction";
+import { localizeServerError } from "@/lib/i18n/server-errors";
 
 /** provider:id → known contextWindow over the cached catalog, mirroring
  * the server's catalogContextLimits join. CLI aliases have no global
@@ -275,6 +276,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 		setError(null);
 		if (kind === "model") refresh();
 	};
+	const shownError = error ? localizeServerError(error, t) : null;
 
 	return (
 		<div ref={containerRef} className="relative flex items-center gap-1.5" data-testid="model-control">
@@ -341,7 +343,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 					preferredSide="up"
 					menuClass="flex w-[22rem] flex-col rounded-xl border bg-card p-2 text-xs shadow-xl"
 				>
-					{error && <div dir={textDirection(error)} className="mb-1.5 text-destructive">{error}</div>}
+					{shownError && <div dir={textDirection(shownError)} className="mb-1.5 text-destructive">{shownError}</div>}
 					<ModelMenuList
 						models={catalog?.models}
 						effectiveId={effectiveId}
@@ -372,7 +374,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 						empty={catalog ? (effectiveId ? mp.noThinkingLevels(prettyModel(effectiveId)) : mp.pickModelFirst) : t.common.states.loading}
 						footer={mp.levelsFooter}
 					/>
-					{error && <div dir={textDirection(error)} className="mt-1 text-destructive">{error}</div>}
+					{shownError && <div dir={textDirection(shownError)} className="mt-1 text-destructive">{shownError}</div>}
 				</MenuShell>
 			)}
 		</div>

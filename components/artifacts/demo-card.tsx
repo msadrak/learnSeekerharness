@@ -254,14 +254,16 @@ export function DemoErrorChip({
 	onSend?: () => void;
 }) {
 	const t = useT();
+	// The reducer keeps the English sentinel (pinned); only the display translates it.
+	const shown = message === "unknown error" ? t.cards.demo.unknownError : message;
 	return (
 		<div
 			className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger"
 			data-testid="demo-error-chip"
 		>
 			<span className="font-medium">{t.cards.demo.threwError}</span>
-			<span dir={textDirection(message)} className="min-w-0 flex-1 truncate font-mono text-xs" title={message}>
-				{message}
+			<span dir={textDirection(shown)} className="min-w-0 flex-1 truncate font-mono text-xs" title={shown}>
+				{shown}
 			</span>
 			{onSend && (
 				<button

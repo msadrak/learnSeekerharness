@@ -7,14 +7,16 @@ import { Hint } from "@/components/ui/hint";
 import { SettingsMenuTrigger, SettingsRow } from "@/components/settings/controls";
 import { SearchMenuList } from "@/components/settings/search-menu-list";
 import { useDictationActive } from "@/components/dictation-state";
-import { useDictationLanguage } from "@/components/dictation-preference";
+import { useDictationLanguage, DICTATION_LOAD_ERROR, DICTATION_SAVE_ERROR } from "@/components/dictation-preference";
+import { useT } from "@/components/i18n";
 
 type LanguagePreference = ReturnType<typeof useDictationLanguage>;
 
 export function DictationLanguageSetting() {
+	const t = useT();
 	const preference = useDictationLanguage();
 	const active = useDictationActive();
-	return <SettingsRow label="Language" testid="row-dictation-language" dimmed={active}>
+	return <SettingsRow label={t.settings.appearance.language} testid="row-dictation-language" dimmed={active}>
 		<DictationLanguagePicker preference={preference} disabled={active} />
 	</SettingsRow>;
 }
@@ -23,7 +25,10 @@ function DictationLanguagePicker({ preference, disabled }: {
 	preference: LanguagePreference;
 	disabled: boolean;
 }) {
-	const { language, saving, error, load, save } = preference;
+	const d = useT().settings.dictation;
+	const { language, saving, error: rawError, load, save } = preference;
+	/** The store keeps English sentinels; the display site maps them. */
+	const error = rawError === DICTATION_LOAD_ERROR ? d.loadFailed : rawError === DICTATION_SAVE_ERROR ? d.saveFailed : rawError;
 	const [open, setOpen] = useState(false);
 	const triggerRef = useRef<HTMLButtonElement>(null);
 	const label = DICTATION_LANGUAGES.find((item) => item.code === language)?.label ?? "—";
@@ -55,12 +60,12 @@ function DictationLanguagePicker({ preference, disabled }: {
 	};
 
 	return <>
-		<Hint label={error ?? `Dictation language: ${label}`} side="top">
+		<Hint label={error ?? d.languageHint(label)} side="top">
 			<SettingsMenuTrigger
 				ref={triggerRef}
 				value={label}
 				data-testid="dictation-language"
-				aria-label={`Dictation language: ${label}`}
+				aria-label={d.languageHint(label)}
 				aria-expanded={open && !disabled}
 				disabled={disabled || saving}
 				onKeyDown={(event) => { if (open) closeOnEscape(event); }}
@@ -97,9 +102,9 @@ function DictationLanguagePicker({ preference, disabled }: {
 					searchTestid="dictation-language-search"
 					listTestid="dictation-language-list"
 					optionTestid={(item) => `dictation-language-${item.code}`}
-					ariaLabel="Search dictation languages"
-					placeholder="Search languages…"
-					empty="No languages match."
+					ariaLabel={d.searchAria}
+					placeholder={d.searchPlaceholder}
+					empty={d.noMatches}
 					renderItem={(item) => <span className="text-card-foreground">{item.label}</span>}
 				/>
 			</div>

@@ -6,6 +6,7 @@ import { useBackdropDismiss } from "@/components/backdrop-dismiss";
 import { useT } from "@/components/i18n";
 import { en } from "@/lib/i18n/messages";
 import { textDirection } from "@/lib/i18n/direction";
+import { localizeServerError } from "@/lib/i18n/server-errors";
 
 /** The 409 extraction_running line (owner phrasing, node interlude):
  *  the server's error names the extraction; the ACTIVITY DOCK is the
@@ -53,6 +54,7 @@ export function DeleteNodeBody({
 }) {
 	const t = useT();
 	const d = t.graph.deleteNode;
+	const shownFailure = failure ? (failure.code === "extraction_running" ? d.extractionRetry : localizeServerError(failure.error, t)) : "";
 	const names = nodes.slice(0, 8).map((n) => n.name).join(", ");
 	return (
 		<div
@@ -64,7 +66,7 @@ export function DeleteNodeBody({
 			className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-xl border bg-card p-5 shadow-xl"
 		>
 			<h2 className="text-sm font-semibold text-destructive">
-				{folders.length > 0 ? (nodes.length > 0 ? "Delete nodes and remove empty folders?" : "Remove empty folders?") : nodes.length === 1 ? d.titleOne : d.titleMany(nodes.length)}
+				{folders.length > 0 ? (nodes.length > 0 ? d.nodesAndFoldersTitle : d.foldersTitle) : nodes.length === 1 ? d.titleOne : d.titleMany(nodes.length)}
 			</h2>
 			{/* The node name(s) below the title in JetBrains Mono (owner,
 			    2026-09-24): the name is the payload — mono suits it, and
@@ -87,12 +89,12 @@ export function DeleteNodeBody({
 					</code>
 				)}
 			</div>
-			{folders.length > 0 && <p className="mt-2 text-sm" data-testid="folder-removal-names">Empty folders: <span dir={textDirection(folders.map((f) => f.name).join(", "))}>{folders.map((f) => f.name).join(", ")}</span></p>}
+			{folders.length > 0 && <p className="mt-2 text-sm" data-testid="folder-removal-names">{d.emptyFolders} <span dir={textDirection(folders.map((f) => f.name).join(", "))}>{folders.map((f) => f.name).join(", ")}</span></p>}
 			{nodes.length > 0 && <p className="mt-2 text-sm text-muted-foreground" data-testid="node-permanence-line">
 				{nodes.length === 1 ? d.permanenceOne : d.permanenceMany(nodes.length)}
 			</p>}
 			<p className="mt-2 text-xs text-muted-foreground" data-testid="folder-removal-explanation">
-				{folders.length > 0 ? "Only the named empty folders are removed. " : ""}Sessions, imported source records, and non-empty folders are kept.
+				{d.keptExplanation(folders.length > 0)}
 			</p>
 			{failure && (
 				<div
@@ -100,8 +102,8 @@ export function DeleteNodeBody({
 					data-testid="node-delete-failure"
 					className="mt-3 rounded-sm border border-border/60 px-3 py-2 text-xs"
 				>
-					<span dir={textDirection(failure.code === "extraction_running" ? d.extractionRetry : failure.error)} className="text-foreground">
-						{failure.code === "extraction_running" ? d.extractionRetry : failure.error}
+					<span dir={textDirection(shownFailure)} className="text-foreground">
+						{shownFailure}
 					</span>
 					<button
 						type="button"
@@ -226,7 +228,7 @@ export function DeleteNodeDialog({
 				revision = body.graphRevision ?? revision;
 			}
 			for (const folder of folders) {
-				if (!onRemoveFolder) throw new Error("Folder removal is unavailable.");
+				if (!onRemoveFolder) throw new Error(t.graph.deleteNode.folderRemovalUnavailable);
 				await onRemoveFolder(folder.id);
 				removedFolders.push(folder.id);
 			}

@@ -21,6 +21,7 @@ import {
 import { notifySettingsSaved } from "@/components/settings-signal";
 import { useT } from "@/components/i18n";
 import { inputDirection, textDirection } from "@/lib/i18n/direction";
+import { localizeServerError } from "@/lib/i18n/server-errors";
 import { SettingsGroup, ThinSelect } from "./controls.tsx";
 
 interface ProviderView extends CustomProviderDef {
@@ -150,6 +151,7 @@ function ProviderEditor({
 }) {
 	const t = useT();
 	const c = t.settings.customProviders;
+	const shown = error ? localizeServerError(error, t) : null;
 	const protocol = CUSTOM_API_PROTOCOLS.find((p) => p.id === draft.api);
 	const patch = (p: Partial<Draft>) => setDraft({ ...draft, ...p });
 	const patchModel = (i: number, p: Partial<DraftModel>) =>
@@ -259,9 +261,9 @@ function ProviderEditor({
 				</button>
 			</div>
 
-			{error && (
-				<p role="alert" dir={textDirection(error)} data-testid="custom-provider-error" className="text-xs text-danger">
-					{error}
+			{shown && (
+				<p role="alert" dir={textDirection(shown)} data-testid="custom-provider-error" className="text-xs text-danger">
+					{shown}
 				</p>
 			)}
 			<div className="flex items-center gap-3">

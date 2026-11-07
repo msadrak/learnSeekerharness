@@ -113,6 +113,7 @@ export const cards: typeof en = {
 		downloadTitle: "دانلود به‌صورت HTML",
 		threwError: "این نمایش تعاملی خطا داد",
 		sendToTeacher: "ارسال برای معلم",
+		unknownError: "خطای ناشناخته",
 	},
 	figure: {
 		unreadable: "شکل کامل شد، اما نتیجه قابل نمایش نیست.",
@@ -181,5 +182,17 @@ export const cards: typeof en = {
 		output: "خروجی",
 		running: "در حال اجرا…",
 		imagesAttached: (n) => `[${n} تصویر به مدل پیوست شد]`,
+	},
+	malformed: {
+		message: (canRetry) => `نمایش این پرسش ممکن نشد.${canRetry ? " دوباره تلاش کنید یا برای ادامه پیامی بفرستید." : ""}`,
+		retryTitle: "از مدل یک پرسش جایگزین درخواست می‌کند.",
+		retryQuestion: "تلاش دوباره برای پرسش",
+	},
+	image: {
+		unreadable: "تصویر ارائه شد، اما نمایش آن ممکن نشد.",
+		snapshotFailed: "بارگذاری نمای ذخیره‌شدهٔ تصویر ممکن نشد.",
+		loading: "در حال بارگذاری تصویر…",
+		label: "تصویر",
+		open: "نمایش تمام‌صفحهٔ تصویر",
 	},
 };

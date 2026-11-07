@@ -31,6 +31,23 @@ export const shell: typeof en = {
 			problemWaiting: (ago: string) => `مسئله در انتظار · ${ago}`,
 		},
 	},
+	meta: {
+		title: "Learning Harness",
+		description: "یک عامل معلم با حافظه؛ شامل جلسه‌ها، آزمون‌ها و گراف دانشی از آنچه می‌دانید.",
+	},
+	attach: {
+		chooseFolderFailed: "انتخاب پوشه ممکن نشد. دوباره تلاش کنید.",
+		filesOrFolder: "پیوست کردن فایل‌ها یا یک پوشه",
+		files: "پیوست کردن فایل‌ها",
+		filesOption: "فایل‌ها",
+		folderOption: "پوشه",
+		browserNotice: "مسیر فایل‌های محلی فقط در برنامهٔ دسکتاپ قابل پیوست است. می‌توانید به‌جای آن یک مسیر کامل بچسبانید.",
+		noLocalPaths: "هیچ مسیر فایل محلی در دسترس نبود. فایل‌ها یا پوشه‌های موجود را از رایانهٔ خود رها کنید.",
+		openChat: "برای پیوست کردن مسیر فایل‌ها، یک گفت‌وگو باز کنید.",
+		somePathsUnavailable: "مسیر فایل برخی موارد رهاشده در دسترس نبود.",
+		dropPaths: "برای پیوست کردن مسیر فایل‌ها رها کنید",
+		dismissNotice: "نادیده گرفتن اعلان پیوست",
+	},
 	home: {
 		setUpModels: "مدل‌هایتان را تنظیم کنید",
 		placeholderPractice: "چه چیزی را می‌خواهید تمرین کنید؟",
@@ -129,6 +146,7 @@ export const shell: typeof en = {
 		ready: (version: string | null) => (version ? `LearnHarness ${iso(version)} آماده است` : "به‌روزرسانی LearnHarness آماده است"),
 		restartHint: " — برای تکمیل نصب، برنامه را دوباره راه‌اندازی کنید.",
 		restart: "راه‌اندازی دوباره",
+		dismiss: "نادیده گرفتن اعلان به‌روزرسانی",
 	},
 	activity: {
 		title: "عامل‌های پس‌زمینه",
@@ -175,6 +193,9 @@ export const shell: typeof en = {
 		unpricedTurns: "نوبت‌های بی‌قیمت",
 		turns: "نوبت‌ها",
 		steps: (n: number) => `${n} گام`,
+		cli: "CLI",
+		claudeWindowHint: "پنجره‌ای که Claude Code گزارش کرده است؛ ممکن است به‌دلیل فشرده‌سازی خودکار کمتر باشد.",
+		cacheHitRate: "نرخ برخورد کش",
 	},
 	modelPicker: {
 		modelSelector: "انتخابگر مدل",

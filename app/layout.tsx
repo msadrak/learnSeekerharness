@@ -9,6 +9,7 @@ import { AppearanceProvider } from "@/components/settings/appearance";
 import UpdateBanner from "@/components/update-banner";
 import { InlineScript } from "@/components/inline-script";
 import { languageDirection } from "@/lib/i18n/direction";
+import { MESSAGES } from "@/lib/i18n/messages";
 import { resolveSettings } from "@/src/core";
 import { readSettingsRecord } from "@/src/server";
 
@@ -28,10 +29,11 @@ const SYSTEM_SCHEME_SCRIPT = `(function(){try{if(window.matchMedia("(prefers-col
 // (a prerendered shell would freeze the build machine's language).
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-	title: "Learning Harness",
-	description: "A teacher agent with a memory — sessions, quizzes, and a knowledge graph of what you know.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+	const { language } = resolveSettings(readSettingsRecord() ?? null).appearance;
+	const { title, description } = MESSAGES[language].shell.meta;
+	return { title, description };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	const record = readSettingsRecord();

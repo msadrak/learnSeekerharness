@@ -39,7 +39,7 @@ export default function UpdateBanner() {
 			</button>
 			<button
 				type="button"
-				aria-label="Dismiss update notification"
+				aria-label={t.shell.updateBanner.dismiss}
 				onClick={() => setDismissedVersion(ready.version)}
 				className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 			>

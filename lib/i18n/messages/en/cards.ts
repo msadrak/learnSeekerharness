@@ -115,6 +115,7 @@ export const cards = {
 		downloadTitle: "Download as HTML",
 		threwError: "This demo threw an error",
 		sendToTeacher: "Send to teacher",
+		unknownError: "unknown error",
 	},
 	figure: {
 		unreadable: "Figure completed, but the result could not be displayed.",
@@ -188,5 +189,17 @@ export const cards = {
 		output: "Output",
 		running: "running…",
 		imagesAttached: (n: number) => `[${n} image${n > 1 ? "s" : ""} attached to the model]`,
+	},
+	malformed: {
+		message: (canRetry: boolean) => `This question could not be displayed.${canRetry ? " Retry it or send a message to continue." : ""}`,
+		retryTitle: "Requests a replacement from the model.",
+		retryQuestion: "Retry question",
+	},
+	image: {
+		unreadable: "Image shown, but it could not be displayed.",
+		snapshotFailed: "Image snapshot could not be loaded.",
+		loading: "Loading image…",
+		label: "Image",
+		open: "Open image fullscreen",
 	},
 };

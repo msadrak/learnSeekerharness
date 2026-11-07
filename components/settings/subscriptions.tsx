@@ -15,6 +15,7 @@ import type { LoginEvent, LoginSessionView, SubscriptionProviderInfo } from "@/s
 import { notifySettingsSaved } from "@/components/settings-signal";
 import { useT } from "@/components/i18n";
 import { textDirection } from "@/lib/i18n/direction";
+import { localizeServerError } from "@/lib/i18n/server-errors";
 
 const POLL_MS = 1000;
 
@@ -225,6 +226,7 @@ export function SubscriptionsList() {
 		await reload();
 		notifySettingsSaved("keys");
 	}
+	const shown = error ? localizeServerError(error, t) : null;
 
 	if (providers === null) return <p className="px-1 py-1.5 text-xs text-muted-foreground/70">{t.common.states.loading}</p>;
 	return (
@@ -256,9 +258,9 @@ export function SubscriptionsList() {
 					</div>
 				);
 			})}
-			{error && (
-				<p role="alert" dir={textDirection(error)} data-testid="subscriptions-error" className="px-1 py-1 text-xs text-danger">
-					{error}
+			{shown && (
+				<p role="alert" dir={textDirection(shown)} data-testid="subscriptions-error" className="px-1 py-1 text-xs text-danger">
+					{shown}
 				</p>
 			)}
 		</div>

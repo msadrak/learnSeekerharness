@@ -10,6 +10,7 @@ import { setDictationActive } from "@/components/dictation-state";
 export { isDictationActive } from "@/components/dictation-state";
 import { useT, type Messages } from "@/components/i18n";
 import { textDirection } from "@/lib/i18n/direction";
+import { localizeServerError } from "@/lib/i18n/server-errors";
 
 /**
  * Voice dictation — the cloud engine (STT wave 1, 2026-09-17).
@@ -121,6 +122,10 @@ function localizeDictationError(error: string, d: Messages["chat"]["dictation"])
 	if (error === "Deepgram reconnect failed") return d.reconnectFailed;
 	const lost = /^Deepgram connection lost \((.*)\)$/.exec(error);
 	if (lost) return d.connectionLost(lost[1]!);
+	if (error === "Dictation language unavailable") return d.languageUnavailable;
+	if (error === "token unavailable") return d.tokenUnavailable;
+	const route = /^token route (\d+)$/.exec(error);
+	if (route) return d.tokenRoute(Number(route[1]));
 	return error;
 }
 
@@ -667,8 +672,9 @@ export function DictationBar({ dictation }: { dictation: Dictation }) {
 	const t = useT();
 	const d = t.chat.dictation;
 	/** The error as shown: the hook's stable English values map to the
-	 *  active language; anything else (a raw platform message) shows as-is. */
-	const shownError = error === null ? null : localizeDictationError(error, d);
+	 *  active language, server messages (token route) map through
+	 *  localizeServerError; anything else (a raw platform message) shows as-is. */
+	const shownError = error === null ? null : localizeServerError(localizeDictationError(error, d), t);
 	const [levels, setLevels] = useState<number[]>(() => new Array(METER_CELLS).fill(0));
 	/** Adaptive cell count (owner round 2): derived from the meter's
 	 *  measured width — narrow rows show fewer bars instead of

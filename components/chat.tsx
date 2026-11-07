@@ -28,7 +28,7 @@ import { ChatSessionComposer } from "@/components/composer";
 import { useEnterSubmits } from "@/components/enter-submits";
 import { blurAfterPointerClick } from "@/components/focus-hygiene";
 import { dockStateKey } from "@/components/dock-state-key";
-import { clearOpeningPrompt, readOpeningPromptEntry, stashOpeningPrompt, OPENING_PROMPT_FAILURE } from "@/components/opening-prompt";
+import { clearOpeningPrompt, readOpeningPromptEntry, stashOpeningPrompt } from "@/components/opening-prompt";
 import { forwardDockWheel, useDockHeight } from "@/components/dock-height";
 import { QueuedSteersBody, type QueuedSteerLine } from "@/components/queued-steers";
 import { DictationBar, finishDictation, joinDictation, useDictation } from "@/components/dictation";
@@ -1597,7 +1597,7 @@ export function Chat({
 													case "tool-recall": {
 														const malformed = !busy && malformedQuestions.find(call => call.messageId === part.sourceMessageId && call.contentIndex === part.sourceContentIndex && call.toolCallId === part.toolCallId);
 														if (malformed) return <MalformedQuestion key={pi} disabled={!!pending || compacting}
-															reason={pending ? "Answer or discard the remaining question first." : undefined}
+															reason={pending ? tr.chat.errors.answerRemainingQuestion : undefined}
 															onRetry={() => {
 																draftRef.current = null;
 																void send({ type: "retry-question", messageId: malformed.messageId, contentIndex: malformed.contentIndex, toolCallId: malformed.toolCallId });
@@ -1671,7 +1671,7 @@ export function Chat({
 									</Shimmer>
 								</span>
 							)}
-							{openingError && <p role="alert" className="text-sm text-destructive">{OPENING_PROMPT_FAILURE}</p>}
+							{openingError && <p role="alert" className="text-sm text-destructive">{tr.chat.errors.openSessionFailed}</p>}
 							{error && (
 								<div className="flex items-center justify-between gap-3 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm">
 									<span>{tr.chat.transcript.errorPrefix}<bdi>{localizeSessionError(error.message, tr.chat.errors)}</bdi></span>
@@ -1884,6 +1884,8 @@ export function localizeSessionError(text: string, e: Messages["chat"]["errors"]
 	if (text === "The turn stream body is empty.") return e.emptyStream;
 	if (text === "Failed to attach to the running turn.") return e.attachFailed;
 	if (text === "A turn is already running — try again in a moment.") return e.turnRunning;
+	if (text === "The connection dropped before the turn completed.") return e.streamDropped;
+	if (text === "Couldn’t open the session. Your message is still here. Try sending again.") return e.openSessionFailed;
 	const m = /^The (send|steer|dismissal) failed \((\d+)\)\.$/.exec(text);
 	if (m) {
 		const status = Number(m[2]);

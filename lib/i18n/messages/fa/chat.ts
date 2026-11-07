@@ -9,6 +9,9 @@ export const chat: typeof en = {
 		sendFailed: (status: number) => `ارسال ناموفق بود (${status}).`,
 		steerFailed: (status: number) => `هدایت ناموفق بود (${status}).`,
 		dismissalFailed: (status: number) => `رد کردن ناموفق بود (${status}).`,
+		answerRemainingQuestion: "ابتدا به پرسش باقی‌مانده پاسخ دهید یا آن را کنار بگذارید.",
+		openSessionFailed: "باز کردن جلسه ممکن نشد. پیام شما همچنان اینجاست. دوباره آن را بفرستید.",
+		streamDropped: "اتصال پیش از پایان نوبت قطع شد.",
 	},
 	header: {
 		titleInput: "عنوان جلسه",
@@ -96,6 +99,9 @@ export const chat: typeof en = {
 		micUnavailable: "میکروفون در دسترس نیست",
 		reconnectFailed: "اتصال دوباره به Deepgram ناموفق بود",
 		connectionLost: (code: string) => `اتصال Deepgram قطع شد (${code})`,
+		tokenRoute: (status) => `مسیر توکن خطای ${status} داد`,
+		languageUnavailable: "زبان دیکته در دسترس نیست",
+		tokenUnavailable: "توکن در دسترس نیست",
 	},
 	thinking: {
 		yourThinking: "تفکر شما",

@@ -9,10 +9,11 @@ import { useChatGPTBridge } from "./subscription-client";
 import { useT } from "@/components/i18n";
 import { textDirection } from "@/lib/i18n/direction";
 import { en, type Messages } from "@/lib/i18n/messages";
+import { localizeServerError } from "@/lib/i18n/server-errors";
 
 export const CHATGPT_NOTICE = en.settings.chatgpt.notice;
 /** Web wording rewrites the given notice (default English); localized notices without the English phrase only gain the suffix. */
-export function chatGPTNotice(web = false, notice: string = CHATGPT_NOTICE): string { return web ? `${notice.replace("on this device", "on the machine running LearnHarness")} Complete ChatGPT sign-in in a browser on that same machine.` : notice; }
+export function chatGPTNotice(web = false, notice: string = CHATGPT_NOTICE, c: Messages["settings"]["chatgpt"] = en.settings.chatgpt): string { return web ? `${notice.replace("on this device", c.onMachine)}${c.sameMachineSignIn}` : notice; }
 export const CHATGPT_BACKGROUND_HINT = en.settings.chatgpt.backgroundHint;
 /** Sentinel the desktop backend also reports verbatim in status.error —
  *  compared, never shown directly (shown via shownError). */
@@ -25,9 +26,11 @@ type LoginAttempt = { generation: number; dialog: Dialog; registration: string; 
 const CONTROL_ERROR = "The ChatGPT connection could not be changed. Try again.";
 const BRIDGE_UNAVAILABLE = "The desktop connection is unavailable. Retry when the app is ready.";
 /** Error state keeps the English sentinels (they are compared); the
- *  display site words them in the UI language. Server text passes verbatim. */
-function shownError(message: string, c: Messages["settings"]["chatgpt"]): string {
-	return message === CONTROL_ERROR ? c.controlError : message === BRIDGE_UNAVAILABLE ? c.bridgeUnavailable : message === REVOCATION_WARNING ? c.revocationWarning : message;
+ *  display site words them in the UI language, then maps server text
+ *  through localizeServerError (unknown text passes verbatim). */
+function shownError(message: string, t: Messages): string {
+	const c = t.settings.chatgpt;
+	return localizeServerError(message === CONTROL_ERROR ? c.controlError : message === BRIDGE_UNAVAILABLE ? c.bridgeUnavailable : message === REVOCATION_WARNING ? c.revocationWarning : message, t);
 }
 function isStatus(value: unknown): value is ChatGPTStatus {
 	if (!value || typeof value !== "object") return false;
@@ -269,15 +272,15 @@ export function ChatGPTUIProvider({ children }: { children: React.ReactNode }) {
 	return <Context.Provider value={context}>
 		{children}
 		{dialog && <AccountDialog key={`${dialog.kind}:${dialog.kind === "manage" && !!dialog.confirm}`} onClose={close} busy={busy && operation.current !== "login"}>
-			<h2 className="text-sm font-semibold text-foreground">ChatGPT</h2>
+			<h2 className="text-sm font-semibold text-foreground">{c.label}</h2>
 			{dialog.kind === "warning" ? <>
 				<p role="alert" className="rounded-sm border border-border px-3 py-2 text-xs text-foreground" data-testid="chatgpt-revocation-warning">{c.revocationWarning}</p>
 				<div className="mt-4 flex justify-end"><Button variant="outline" size="sm" onClick={() => { context.dismissWarning(); showDialog(null); }}>{t.common.actions.dismiss}</Button></div>
 			</> : dialog.kind === "manage" && dialog.confirm ? <div data-testid="chatgpt-disconnect-confirmation">
 				<p className="mt-3 text-sm font-semibold text-danger">{c.disconnectTitle}</p>
 				<p className="mt-3 text-xs text-foreground" dir="ltr">{managed?.email || c.account}</p>
-				<p className="mt-3 text-xs text-muted-foreground">{web ? c.disconnectBody.replace("from this device", "from the machine running LearnHarness") : c.disconnectBody}</p>
-				{context.error && <p role="alert" dir={textDirection(shownError(context.error, c))} className="mt-3 text-xs text-danger">{shownError(context.error, c)}</p>}
+				<p className="mt-3 text-xs text-muted-foreground">{web ? c.disconnectBody.replace("from this device", c.fromMachine) : c.disconnectBody}</p>
+				{context.error && <p role="alert" dir={textDirection(shownError(context.error, t))} className="mt-3 text-xs text-danger">{shownError(context.error, t)}</p>}
 				<div className="mt-4 flex items-center justify-end gap-2">
 					<Button variant="ghost" size="sm" disabled={busy} onClick={close}>{t.common.actions.cancel}</Button>
 					<Button variant="destructive" size="sm" data-testid="chatgpt-confirm-disconnect" disabled={busy || !managedPresent} onClick={() => bridge && managed && void control("disconnect", () => bridge.disconnect(managed.id), managed.id)}>{c.disconnectAccount}</Button>
@@ -291,7 +294,7 @@ export function ChatGPTUIProvider({ children }: { children: React.ReactNode }) {
 						</select>
 						{registration && <Button variant="ghost" size="xs" disabled={busy} onClick={() => context.manage(registration)}>{c.manage}</Button>}
 					</div>}
-					<p className="mt-3 text-xs leading-relaxed text-muted-foreground" data-testid="chatgpt-privacy-notice">{web ? chatGPTNotice(true, c.notice) : c.notice}</p>
+					<p className="mt-3 text-xs leading-relaxed text-muted-foreground" data-testid="chatgpt-privacy-notice">{web ? chatGPTNotice(true, c.notice, c) : c.notice}</p>
 				</> : null}
 				<div className={`mt-4 flex items-center gap-3 text-xs text-foreground ${busy && operation.current === "change" && status.available && !status.pending ? "[&>button:disabled]:cursor-auto" : ""}`} data-testid="chatgpt-global-background">
 					<Toggle label={c.backgroundLabel} checked={dialog.kind === "connect" ? background : status.allowBackgroundUse} disabled={busy || status.pending || !status.available} onChange={(enabled) => {
@@ -306,7 +309,7 @@ export function ChatGPTUIProvider({ children }: { children: React.ReactNode }) {
 				</div>
 				{!status.available && <p className="mt-3 text-xs text-muted-foreground">{c.desktopOnly}</p>}
 				{status.pending && <p role="status" className="mt-3 text-xs text-muted-foreground">{c.waiting}</p>}
-				{context.error && <p role="alert" dir={textDirection(shownError(context.error, c))} className="mt-3 text-xs text-danger">{shownError(context.error, c)}</p>}
+				{context.error && <p role="alert" dir={textDirection(shownError(context.error, t))} className="mt-3 text-xs text-danger">{shownError(context.error, t)}</p>}
 				{dialog.kind === "manage" && managed && <div className="mt-4 flex flex-wrap items-center justify-between gap-3" data-testid="chatgpt-account-strip">
 					<div data-testid="chatgpt-managed-identity" className="flex min-w-0 items-center gap-2 text-xs text-foreground">
 						{status.accounts.length > 1 && managedPresent && !busy ? <select aria-label={c.manageAccountAria} value={managed.id} onChange={(event) => context.manage(event.target.value)} className="min-w-0 rounded-sm border border-border bg-background px-2 py-1.5">
@@ -318,7 +321,7 @@ export function ChatGPTUIProvider({ children }: { children: React.ReactNode }) {
 				<ConnectionFooter testid="chatgpt-account-footer" leading={dialog.kind === "manage" && <div data-testid="chatgpt-account-actions">
 					<Button variant="ghost" size="sm" className="cursor-pointer text-danger hover:bg-danger/10 hover:text-danger/80" data-testid="chatgpt-disconnect" disabled={busy || status.pending || !managedPresent} onClick={() => showDialog({ ...dialog, confirm: true })}>{t.common.actions.disconnect}</Button>
 				</div>}>
-					{dialog.kind === "manage" && managedPresent && managed && !managed.connected && managed.canSignInAgain === true && status.available && <Button variant="outline" size="sm" disabled={busy || status.pending || !status.available} onClick={() => openConnect(managed.id)}>Sign in again</Button>}
+					{dialog.kind === "manage" && managedPresent && managed && !managed.connected && managed.canSignInAgain === true && status.available && <Button variant="outline" size="sm" disabled={busy || status.pending || !status.available} onClick={() => openConnect(managed.id)}>{c.signInAgain}</Button>}
 					<Button variant={dialog.kind === "manage" ? "outline" : "ghost"} size="sm" onClick={close} disabled={busy && operation.current !== "login"}>{dialog.kind === "connect" ? t.common.actions.cancel : t.common.actions.close}</Button>
 					{dialog.kind === "connect" && <ContinueButton onClick={() => void login()} disabled={!status.available || busy || status.pending} testid="chatgpt-proceed" />}
 				</ConnectionFooter>
@@ -350,13 +353,13 @@ export function ChatGPTConnection({ labelClassName }: { setup?: boolean; labelCl
 	const active = ui.status.accounts.find((a) => a.id === ui.status.activeId && a.connected);
 	const accounts = ui.status.accounts.filter((a) => a.connected);
 	return <div className="flex flex-col gap-2" data-testid="chatgpt-connection">
-		<ConnectionRow label="ChatGPT" labelClassName={labelClassName} actionTestid={active ? undefined : "chatgpt-login"} action={active ? c.manage : t.common.actions.connect} disabled={!ui.status.available || ui.busy || ui.status.pending} onAction={() => active ? ui.manage(active.id) : ui.connect()}>
+		<ConnectionRow label={c.label} labelClassName={labelClassName} actionTestid={active ? undefined : "chatgpt-login"} action={active ? c.manage : t.common.actions.connect} disabled={!ui.status.available || ui.busy || ui.status.pending} onAction={() => active ? ui.manage(active.id) : ui.connect()}>
 			{active && <select aria-label={c.accountAria} value={active.id} disabled={ui.busy || ui.status.pending} onChange={(event) => ui.select(event.target.value)} className="min-w-0 rounded-sm border border-border bg-background px-2 py-1 text-xs text-foreground">
 				{accounts.map((a) => <option key={a.id} value={a.id} dir={textDirection(a.email || c.account)}>{a.email || c.account}</option>)}
 			</select>}
 		</ConnectionRow>
-		{ui.inlineError && <p role="alert" dir={textDirection(shownError(ui.inlineError, c))} className="text-xs text-danger">{shownError(ui.inlineError, c)}</p>}
-		{ui.warning && <div role="alert" dir={textDirection(shownError(ui.warning, c))} data-testid="chatgpt-revocation-warning" className="rounded-sm border border-border px-3 py-2 text-xs text-muted-foreground">{shownError(ui.warning, c)}<button type="button" className="ms-2 cursor-pointer underline underline-offset-2" onClick={ui.dismissWarning}>{t.common.actions.dismiss}</button></div>}
+		{ui.inlineError && <p role="alert" dir={textDirection(shownError(ui.inlineError, t))} className="text-xs text-danger">{shownError(ui.inlineError, t)}</p>}
+		{ui.warning && <div role="alert" dir={textDirection(shownError(ui.warning, t))} data-testid="chatgpt-revocation-warning" className="rounded-sm border border-border px-3 py-2 text-xs text-muted-foreground">{shownError(ui.warning, t)}<button type="button" className="ms-2 cursor-pointer underline underline-offset-2" onClick={ui.dismissWarning}>{t.common.actions.dismiss}</button></div>}
 	</div>;
 }
 

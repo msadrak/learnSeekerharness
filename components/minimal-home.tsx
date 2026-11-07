@@ -66,8 +66,8 @@ export function KnowledgeSummary({
 			<p className="font-ui text-sm text-muted-foreground">{s.importedNotes(importedNotes)}</p>
 			{empty && (
 				<div className="pt-2 font-ui text-xs text-muted-foreground/70">
-					<p>Start a session to begin learning.</p>
-					<p className="mt-1">Attach your material with the paperclip or drag and drop.</p>
+					<p>{t.graph.empty.startHint}</p>
+					<p className="mt-1">{t.graph.empty.attachHint}</p>
 				</div>
 			)}
 		</div>

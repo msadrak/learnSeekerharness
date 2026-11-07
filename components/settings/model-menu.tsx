@@ -27,8 +27,8 @@ import { SearchMenuList } from "./search-menu-list";
 import { useT } from "@/components/i18n";
 import { textDirection } from "@/lib/i18n/direction";
 
-function priceLabel(cost: ModelCatalogEntry["cost"]): string {
-	if (!cost) return "Unpriced";
+function priceLabel(cost: ModelCatalogEntry["cost"], unpriced: string): string {
+	if (!cost) return unpriced;
 	const fmt = (n: number) => `$${n < 1 ? n.toFixed(2).replace(/0$/, "") : n.toFixed(2)}`;
 	return `${fmt(cost.input)}/${fmt(cost.output)}`;
 }
@@ -88,12 +88,12 @@ export function ModelMenuList({
 				renderItem={(entry) => <>
 					<span className="flex items-center justify-between gap-2">
 						<span dir={textDirection(entry.name)} className="truncate text-card-foreground lh-align-page">{entry.name}</span>
-						<span className="shrink-0 tabular-nums text-muted-foreground" title={entry.provider === CLAUDE_CODE_PROVIDER ? "Billing is determined by your Claude Code configuration; LearnHarness does not estimate it." : subscriptionLabel(`${entry.provider}:${entry.id}`) ? "Subscription connection" : entry.cost ? m.priceTitle : "Price unavailable"}>
-							{entry.provider === CLAUDE_CODE_PROVIDER ? "CLI billing" : subscriptionLabel(`${entry.provider}:${entry.id}`) ?? <span dir="ltr">{priceLabel(entry.cost)}</span>}
+						<span className="shrink-0 tabular-nums text-muted-foreground" title={entry.provider === CLAUDE_CODE_PROVIDER ? m.claudeBillingHint : subscriptionLabel(`${entry.provider}:${entry.id}`) ? m.subscriptionConnection : entry.cost ? m.priceTitle : m.priceUnavailable}>
+							{entry.provider === CLAUDE_CODE_PROVIDER ? m.cliBilling : subscriptionLabel(`${entry.provider}:${entry.id}`) ?? <span dir="ltr">{priceLabel(entry.cost, m.unpriced)}</span>}
 						</span>
 					</span>
 					<span className="flex items-center justify-between gap-2 text-muted-foreground">
-						<span className="truncate" dir="ltr">{subscriptionLabel(`${entry.provider}:${entry.id}`) ? `${subscriptionLabel(`${entry.provider}:${entry.id}`)} (subscription)` : entry.provider} · {entry.id}</span>
+						<span className="truncate" dir="ltr">{subscriptionLabel(`${entry.provider}:${entry.id}`) ? m.subscriptionLabel(subscriptionLabel(`${entry.provider}:${entry.id}`)!) : entry.provider} · {entry.id}</span>
 						<span className="shrink-0 tabular-nums">{entry.contextWindow === null ? "—" : formatTokens(entry.contextWindow)}</span>
 					</span>
 				</>}

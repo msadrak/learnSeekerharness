@@ -57,6 +57,7 @@ import { ThinkingMenuList } from "@/components/settings/model-menu";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import { useT } from "@/components/i18n";
 import { textDirection } from "@/lib/i18n/direction";
+import { localizeServerError } from "@/lib/i18n/server-errors";
 
 /** The pickers' slot identity — same roster language as the Agent
  *  section's slot rows. Labels/rosters live in t.shell.setup.slots. */
@@ -157,6 +158,7 @@ export function SetupKeysBody({
 }) {
 	const t = useT();
 	const s = t.shell.setup;
+	const shown = error ? localizeServerError(error, t) : null;
 	return (
 		<div className="flex flex-col gap-3 px-6 py-5" data-testid="setup-stage-keys">
 			<p className="text-xs text-muted-foreground">
@@ -218,9 +220,9 @@ export function SetupKeysBody({
 						</div>
 					</div>
 				))}
-				{error && (
-					<p role="alert" data-testid="setup-key-error" dir={textDirection(error)} className="text-xs text-danger">
-						{error}
+				{shown && (
+					<p role="alert" data-testid="setup-key-error" dir={textDirection(shown)} className="text-xs text-danger">
+						{shown}
 					</p>
 				)}
 			</div>
@@ -424,7 +426,7 @@ function OpenSetupDialog({ onClose, onDone }: SetupDialogProps) {
 		}).catch(() => null);
 		if (!res || !res.ok) {
 			setSaving(false);
-			setError(res ? s.saveFailedDetail(String((await res.json().catch(() => ({}))).error ?? res.status)) : s.saveFailedConnection);
+			setError(res ? s.saveFailedDetail(localizeServerError(String((await res.json().catch(() => ({}))).error ?? res.status), t)) : s.saveFailedConnection);
 			return;
 		}
 		notifySettingsSaved("models");

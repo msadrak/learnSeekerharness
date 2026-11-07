@@ -6,6 +6,11 @@ import {
 	type DictationLanguage, type UserSettings,
 } from "@/src/core";
 import { notifySettingsSaved, onSettingsSaved } from "@/components/settings-signal";
+import { en } from "@/lib/i18n/messages";
+
+/** English sentinels; display sites map them to the active dictionary. */
+export const DICTATION_LOAD_ERROR = en.settings.dictation.loadFailed;
+export const DICTATION_SAVE_ERROR = en.settings.dictation.saveFailed;
 
 const INITIAL = { language: undefined as DictationLanguage | undefined, saving: false, error: null as string | null };
 
@@ -45,7 +50,7 @@ export function createDictationLanguageStore(request: typeof fetch, saved: () =>
 				return language;
 			} catch {
 				if (version !== revision) return getLanguage();
-				const message = "Could not load dictation language. Try again.";
+				const message = DICTATION_LOAD_ERROR;
 				publish({ error: message });
 				throw new Error(message);
 			} finally {
@@ -75,7 +80,7 @@ export function createDictationLanguageStore(request: typeof fetch, saved: () =>
 				saved();
 				return true;
 			} catch {
-				publish({ error: "Could not save dictation language. Try again." });
+				publish({ error: DICTATION_SAVE_ERROR });
 				return false;
 			} finally {
 				writing = null;

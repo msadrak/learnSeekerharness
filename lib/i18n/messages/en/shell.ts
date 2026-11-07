@@ -26,6 +26,23 @@ export const shell = {
 			problemWaiting: (ago: string) => `Problem waiting · ${ago}`,
 		},
 	},
+	meta: {
+		title: "Learning Harness",
+		description: "A teacher agent with a memory — sessions, quizzes, and a knowledge graph of what you know.",
+	},
+	attach: {
+		chooseFolderFailed: "Could not choose a folder. Try again.",
+		filesOrFolder: "Attach files or a folder",
+		files: "Attach files",
+		filesOption: "Files",
+		folderOption: "Folder",
+		browserNotice: "Local file paths can only be attached in the desktop app. You can paste a full path instead.",
+		noLocalPaths: "No local file paths were available. Drop existing files or folders from your computer.",
+		openChat: "Open a chat to attach file paths.",
+		somePathsUnavailable: "Some dropped items had no available file path.",
+		dropPaths: "Drop to attach file paths",
+		dismissNotice: "Dismiss attachment notice",
+	},
 	home: {
 		setUpModels: "Set up your models",
 		placeholderPractice: "What do you want to practice?",
@@ -126,6 +143,7 @@ export const shell = {
 		ready: (version: string | null) => `LearnHarness ${version ?? "update"} is ready`,
 		restartHint: " — restart to finish installing.",
 		restart: "Restart",
+		dismiss: "Dismiss update notification",
 	},
 	activity: {
 		title: "Background agents",
@@ -173,6 +191,9 @@ export const shell = {
 		unpricedTurns: "Unpriced turns",
 		turns: "Turns",
 		steps: (n: number) => `${n} steps`,
+		cli: "CLI",
+		claudeWindowHint: "Window reported by Claude Code; may be lower for auto-compaction.",
+		cacheHitRate: "Cache hit rate",
 	},
 	modelPicker: {
 		modelSelector: "Model selector",
