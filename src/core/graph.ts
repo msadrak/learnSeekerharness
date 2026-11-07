@@ -68,6 +68,7 @@ import { MIN_CLUSTER_SIZE } from "./clusters.ts";
 import { formatChainLine } from "./chains.ts";
 import { attachImpToCommunities, birthSessionOf, birthSessionPartition } from "./session-clusters.ts";
 import { sourceFileLabel } from "./source-label.ts";
+import { deriveMastery, practiceVerdicts, type PracticeVerdict } from "./mastery.ts";
 import type { ChatStore, GraphStore } from "./ports.ts";
 
 /** The storage ports every graph operation needs, passed explicitly. */
@@ -588,6 +589,16 @@ export function graphSnapshot(deps: GraphDeps, sourceNames: Readonly<Record<stri
 	// one-shot pass until the first merge writes the ledger.
 	const positions = deps.graphStore.readPositions();
 
+	// PRACTICE MASTERY: derived per read from the practice chats' clean
+	// conclude verdicts — never stored (contracts/graph.ts).
+	const verdicts: PracticeVerdict[] = [];
+	for (const summary of deps.chatStore.listChats()) {
+		if (summary.kind !== "practice") continue;
+		const chat = deps.chatStore.getChat(summary.id);
+		if (chat) verdicts.push(...practiceVerdicts(chat.id, chat.messages, graph.nodes));
+	}
+	const mastery = deriveMastery(verdicts);
+
 	return {
 		nodes,
 		propositions: graph.nodes,
@@ -600,6 +611,7 @@ export function graphSnapshot(deps: GraphDeps, sourceNames: Readonly<Record<stri
 		nodeSessions,
 		clusters,
 		...(Object.keys(positions).length > 0 ? { positions } : {}),
+		mastery,
 	};
 }
 

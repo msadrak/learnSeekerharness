@@ -88,6 +88,18 @@ describe("sanitizeUserSettings", () => {
 		assert.deepEqual(sanitizeUserSettings({ appearance: { mode: "sepia" } })?.appearance, {});
 	});
 
+	it("favorites: keeps well-formed provider:id pins, dedupes in order, drops malformed, caps at 200", () => {
+		const out = sanitizeUserSettings({
+			favorites: { models: ["a:b", "a:b", "nocolon", ":x", "p:", "p q:x", 3, null, "c:d/e:f"] },
+		});
+		assert.deepEqual(out?.favorites, { models: ["a:b", "c:d/e:f"] });
+		const many = sanitizeUserSettings({
+			favorites: { models: Array.from({ length: 250 }, (_, i) => `p:m${i}`) },
+		});
+		assert.equal(many?.favorites?.models?.length, 200);
+		assert.deepEqual(sanitizeUserSettings({ favorites: { models: "a:b" } })?.favorites, {});
+	});
+
 	it("null and non-objects → null (first-boot semantics), never throws", () => {
 		assert.equal(sanitizeUserSettings(null), null);
 		assert.equal(sanitizeUserSettings("junk"), null);

@@ -242,3 +242,13 @@ export interface AuthKeyStatus {
 	 *  settings page explains why a saved key is not the live one. */
 	shadowedByEnv: boolean;
 }
+
+/** Outcome of a live provider-key probe (POST /api/keys/:id/test). Never
+ *  carries the key. */
+export type KeyTestStatus = "ok" | "invalid" | "unreachable" | "http_error" | "unsupported" | "no_key";
+export interface KeyTestResult {
+	status: KeyTestStatus;
+	latencyMs?: number;
+	httpStatus?: number;
+	models?: number;
+}

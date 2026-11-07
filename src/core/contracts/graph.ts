@@ -6,10 +6,11 @@
  * (derivable) and supports (grounds without entailing); provenance is
  * message-granular; extraction is free-form and post-hoc, fully decoupled
  * from the session's plan tree. The graph is an extraction of the reasoning
- * chains from all teaching sessions (and imported notes) — NOTHING else:
- * no quiz outcomes, no understanding assessments (2026-09-27 cleanup).
- * Anything not
- * yet decided (the state model, strength derivation, selection strategies) is deliberately NOT here — transitional
+ * chains from all teaching sessions (and imported notes). The snapshot also
+ * carries a derived practice-mastery map (core/mastery.ts, rebuilt from the
+ * practice chats' conclude verdicts on every read); it is not stored in any
+ * ledger. Anything not yet decided (the state model, strength derivation,
+ * selection strategies) is deliberately NOT here — transitional
  * stubs carry the renderer until those land.
  *
  * Part of the domain-split contracts (src/core/contracts/): each domain file
@@ -344,6 +345,18 @@ export interface GraphSnapshot {
 	 *  exists (core/layout.ts settle writes it). Absent on a fresh graph —
 	 *  the view then falls back to its own one-shot forceAtlas2 pass. */
 	positions?: Record<string, Position>;
+	/** proposition id → latest practice verdict (core/mastery.ts); absent id = never practiced. */
+	mastery?: Record<string, PropositionMastery>;
+}
+
+/** How a proposition stands after its latest practice conclusion. */
+export type MasteryState = "understood" | "inProgress" | "needsReview";
+
+export interface PropositionMastery {
+	state: MasteryState;
+	/** ISO time of the deciding conclude */
+	at: string;
+	chatId: string;
 }
 
 /** A node's resting position in layout space (the positions ledger). */

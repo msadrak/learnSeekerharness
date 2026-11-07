@@ -484,6 +484,16 @@ export interface CompactionSettings {
 	thresholdTokens?: number;
 }
 
+/** Starred models, each `"provider:id"`. Order = the order the user starred. */
+export interface FavoritesSettings {
+	models?: string[];
+}
+
+/** The shape of one pin: a provider id with no whitespace or colon, then a
+ *  colon, then the model id (which may itself contain colons). */
+export const FAVORITE_MODEL_PATTERN = /^[^\s:]+:\S+$/;
+export const MAX_FAVORITE_MODELS = 200;
+
 /** THE record. Every section optional (delta); unknown top-level keys are
  *  preserved verbatim by the sanitizer (forward-compat with newer records). */
 export interface UserSettings {
@@ -495,6 +505,8 @@ export interface UserSettings {
 	agent?: AgentSettings;
 	/** The strong/cheap/vision model slots (model slots wave, 2026-09-20). */
 	models?: ModelsSettings;
+	/** Starred models for the model picker. */
+	favorites?: FavoritesSettings;
 	/** The custom OpenAI-compatible endpoint (non-secret config only). */
 	customProvider?: CustomProviderSettings;
 	appearance?: AppearanceSettings;
@@ -611,6 +623,22 @@ function sanitizeRoleOverride(raw: unknown): RoleModelOverride | undefined {
 		out.thinkingLevel = r.thinkingLevel as ThinkingLevel;
 	}
 	return Object.keys(out).length ? out : undefined;
+}
+
+/** The favorites section: keeps well-formed `provider:id` pins, dedupes in
+ *  order and caps at MAX_FAVORITE_MODELS. Clamp-never-reject. */
+export function sanitizeFavorites(raw: Record<string, unknown>): FavoritesSettings {
+	const out: FavoritesSettings = {};
+	if (Array.isArray(raw.models)) {
+		const seen = new Set<string>();
+		for (const m of raw.models) {
+			if (typeof m !== "string" || !FAVORITE_MODEL_PATTERN.test(m) || seen.has(m)) continue;
+			seen.add(m);
+			if (seen.size >= MAX_FAVORITE_MODELS) break;
+		}
+		out.models = [...seen];
+	}
+	return out;
 }
 
 /** The models section (model slots wave, 2026-09-20): each slot keeps
@@ -861,6 +889,9 @@ export function sanitizeUserSettings(raw: unknown): UserSettings | null {
 	if (r.models !== null && typeof r.models === "object" && !Array.isArray(r.models)) {
 		const models = sanitizeModels(r.models as Record<string, unknown>);
 		if (Object.keys(models).length) out.models = models;
+	}
+	if (r.favorites !== null && typeof r.favorites === "object" && !Array.isArray(r.favorites)) {
+		out.favorites = sanitizeFavorites(r.favorites as Record<string, unknown>);
 	}
 	if (r.customProvider !== null && typeof r.customProvider === "object" && !Array.isArray(r.customProvider)) {
 		out.customProvider = sanitizeCustomProvider(r.customProvider as Record<string, unknown>);

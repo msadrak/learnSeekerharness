@@ -11,6 +11,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
 	parseAgentSettingsBody,
+	parseFavoritesSettingsBody,
 	parseModelsSettingsBody,
 	parseAppearanceSettingsBody,
 	parseGeneralSettingsBody,
@@ -261,8 +262,52 @@ describe("SETTINGS_SECTIONS (the route's section map)", () => {
 		// connected through POST /api/custom-provider.
 		assert.deepEqual(
 			Object.keys(SETTINGS_SECTIONS),
-			["general", "chat", "agent", "appearance", "graph", "compaction", "models", "dictation", "claudeCode"],
+			["general", "chat", "agent", "appearance", "graph", "compaction", "models", "dictation", "favorites", "claudeCode"],
 		);
+	});
+});
+
+describe("parseFavoritesSettingsBody (model favorites, step 5.4)", () => {
+	it("accepts valid provider:id pins and dedupes in order", () => {
+		const r = parseFavoritesSettingsBody({
+			models: ["anthropic:claude-opus", "openrouter:z-ai/glm:free", "anthropic:claude-opus"],
+		});
+		assert.ok(r.ok);
+		assert.deepEqual(r.settings, { models: ["anthropic:claude-opus", "openrouter:z-ai/glm:free"] });
+	});
+
+	it("models is optional: {} and [] are valid", () => {
+		const empty = parseFavoritesSettingsBody({});
+		assert.ok(empty.ok);
+		assert.deepEqual(empty.settings, {});
+		const none = parseFavoritesSettingsBody({ models: [] });
+		assert.ok(none.ok);
+		assert.deepEqual(none.settings, { models: [] });
+	});
+
+	it("rejects a non-object body, a non-array, and malformed pins", () => {
+		const notObject = parseFavoritesSettingsBody([]);
+		assert.ok(!notObject.ok);
+		assert.equal(notObject.error, "Invalid JSON body");
+		const message = 'models must be an array of "provider:id" strings';
+		for (const bad of ["anthropic:x", { 0: "a:b" }, null, 7]) {
+			const r = parseFavoritesSettingsBody({ models: bad });
+			assert.ok(!r.ok, JSON.stringify(bad));
+			assert.equal(r.error, message);
+		}
+		for (const pin of ["no-colon", ":missing-provider", "provider:", "has space:x", "p:has space", 5]) {
+			const r = parseFavoritesSettingsBody({ models: ["ok:fine", pin] });
+			assert.ok(!r.ok, String(pin));
+			assert.equal(r.error, message);
+		}
+	});
+
+	it("rejects more than 200 entries", () => {
+		const at = (n: number) => Array.from({ length: n }, (_, i) => `p:m${i}`);
+		assert.ok(parseFavoritesSettingsBody({ models: at(200) }).ok);
+		const r = parseFavoritesSettingsBody({ models: at(201) });
+		assert.ok(!r.ok);
+		assert.equal(r.error, "at most 200 favorite models");
 	});
 });
 

@@ -24,10 +24,11 @@ import type {
 	DictationSettings,
 	GraphSettings,
 	ModelsSettings,
+	FavoritesSettings,
 	ModelSlot,
 	RoleModelOverride,
 } from "../core/settings.ts";
-import { APPEARANCE_MODES, BACKGROUND_MODEL_ROLES, CACHE_RETENTIONS, COMPACTION_THRESHOLD_FLOOR, CUSTOM_MODEL_PIN_FLOOR, EXTRACTION_CHUNK_TOKENS_FLOOR, isUiLanguage, MODEL_SLOTS, UI_LANGUAGES, type AppearanceMode } from "../core/settings.ts";
+import { APPEARANCE_MODES, BACKGROUND_MODEL_ROLES, CACHE_RETENTIONS, COMPACTION_THRESHOLD_FLOOR, CUSTOM_MODEL_PIN_FLOOR, EXTRACTION_CHUNK_TOKENS_FLOOR, FAVORITE_MODEL_PATTERN, isUiLanguage, MAX_FAVORITE_MODELS, MODEL_SLOTS, UI_LANGUAGES, type AppearanceMode } from "../core/settings.ts";
 import { WRITABLE_TOOL_KEYS } from "../core/pending.ts";
 import { isSearchEngineId, SEARCH_ENGINES } from "../core/search.ts";
 import { isDictationLanguage } from "../core/dictation.ts";
@@ -422,6 +423,23 @@ export function parseDictationSettingsBody(body: unknown): SettingsBodyResult<Di
 	return { ok: true, settings: { language: raw.language } };
 }
 
+/** favorites: { models?: ["provider:id", …] } — at most 200, deduped in order. */
+export function parseFavoritesSettingsBody(body: unknown): SettingsBodyResult<FavoritesSettings> {
+	const raw = asRecord(body);
+	if (!raw) return { ok: false, error: "Invalid JSON body" };
+	if (raw.models === undefined) return { ok: true, settings: {} };
+	if (
+		!Array.isArray(raw.models) ||
+		!raw.models.every((m) => typeof m === "string" && FAVORITE_MODEL_PATTERN.test(m))
+	) {
+		return { ok: false, error: 'models must be an array of "provider:id" strings' };
+	}
+	if (raw.models.length > MAX_FAVORITE_MODELS) {
+		return { ok: false, error: `at most ${MAX_FAVORITE_MODELS} favorite models` };
+	}
+	return { ok: true, settings: { models: [...new Set(raw.models as string[])] } };
+}
+
 /** The custom endpoint's per-model pins (PATCH /api/custom-provider): the
  *  whole desired map, replace-whole like every section. Strict write side — a
  *  token count must be a whole number at or above the floor (the read side
@@ -472,6 +490,7 @@ export const SETTINGS_SECTIONS = {
 	compaction: parseCompactionSettingsBody,
 	models: parseModelsSettingsBody,
 	dictation: parseDictationSettingsBody,
+	favorites: parseFavoritesSettingsBody,
 	claudeCode: parseClaudeCodeSettingsBody,
 } as const;
 
