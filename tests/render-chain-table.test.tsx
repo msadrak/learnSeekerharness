@@ -294,7 +294,7 @@ describe("ChainTableBody — the floating selection bar (never shifts layout)", 
 			const bar = html.match(/<div[^>]*data-testid="chain-selection-bar"[^>]*>/)?.[0] ?? "";
 			const button = html.match(new RegExp(`<button[^>]*data-testid="${action}"[^>]*>`))?.[0] ?? "";
 			assert.match(bar, /rounded-full/); assert.match(button, /rounded-full/);
-			assert.match(bar, /py-2 pl-4 pr-2/, "keep text inset, match right inset to the vertical inset");
+			assert.match(bar, /py-2 ps-4 pe-2/, "keep text inset, match right inset to the vertical inset");
 			assert.equal(bar.includes(" px-4 "), false);
 		}
 	});

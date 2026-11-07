@@ -28,6 +28,12 @@
 	outline: none;
 }
 
+/* Keyboard-only ring: shown after Tab/arrow input, never on an element focused by pointer (the stray-ring case the no-ring law was written against). shadcn primitives (data-slot) keep their own focus-visible rings. */
+:root[data-kbd-nav] :focus-visible:not([data-pointer-focus]):not([data-slot]) {
+	outline: 2px solid var(--ring);
+	outline-offset: 2px;
+}
+
 
 /* CMU Serif bold (titles) — bundled local file, no CDN dependency. */
 @font-face {
@@ -158,6 +164,12 @@ body {
    layer; :where keeps specificity zero. */
 .lh-prose :where(ul, ol) {
 	padding-inline-start: 1.5rem;
+}
+
+/* Reading measure: prose blocks cap at 72ch and centre in the full-width column; tables, code, math, figures and artifact cards keep the full column. */
+.lh-prose :where(p, h1, h2, h3, h4, h5, h6, ul, ol, dl, blockquote):not(:where(li, td, th, blockquote, [data-testid="md-callout"]) *) {
+	max-width: 72ch;
+	margin-inline: auto;
 }
 
 /* Persian prose (Persian locale wave): Arabic-script glyphs carry tall

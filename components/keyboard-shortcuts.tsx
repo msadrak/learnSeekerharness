@@ -36,6 +36,7 @@ import {
 	KEYBOARD_ACTIONS,
 } from "@/src/core";
 import { isDictationActive } from "@/components/dictation";
+import { installFocusVisibility } from "@/components/focus-visibility";
 import { useSettingsDialog } from "@/components/settings/settings-dialog.tsx";
 import { useT } from "@/components/i18n";
 
@@ -57,6 +58,8 @@ export function KeyboardShortcuts() {
 		openSettings: () => void;
 	}>({ router, setCheatOpen, openSettings });
 	handlersRef.current = { router, setCheatOpen, openSettings };
+
+	useEffect(() => installFocusVisibility(), []);
 
 	useEffect(() => {
 		const onKeyDown = (e: KeyboardEvent) => {

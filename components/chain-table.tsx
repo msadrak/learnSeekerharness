@@ -574,7 +574,7 @@ export function ChainTableBody({
 										</div>
 									);
 								})}
-							<div data-testid={`source-separator-${group.key}`} className="pointer-events-none absolute bottom-[-1px] right-0 border-b border-border/60" style={{ left: depth === 0 ? 0 : 1 }} />
+							<div data-testid={`source-separator-${group.key}`} className="pointer-events-none absolute bottom-[-1px] inset-e-0 border-b border-border/60" style={{ insetInlineStart: depth === 0 ? 0 : 1 }} />
 						</div>
 					);
 				}} />
@@ -587,7 +587,7 @@ export function ChainTableBody({
 				<div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center pb-4">
 					<div
 						data-testid="chain-selection-bar"
-						className="pointer-events-auto flex items-center gap-3 rounded-full border bg-card py-2 pl-4 pr-2 shadow-lg"
+						className="pointer-events-auto flex items-center gap-3 rounded-full border bg-card py-2 ps-4 pe-2 shadow-lg"
 					>
 						<span data-testid="chain-selected-summary" className="text-xs font-medium">
 							{selectMode ? c.selectedSummary(selection.size, derived.length)

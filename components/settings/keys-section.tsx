@@ -718,7 +718,7 @@ function CustomEndpointRow({
 				data-testid="custom-endpoint-row-btn"
 				aria-expanded={expanded}
 				onClick={onToggle}
-				className="flex w-full items-center justify-between gap-3 rounded-sm px-1 py-1.5 text-left cursor-pointer transition-colors hover:bg-accent/50"
+				className="flex w-full items-center justify-between gap-3 rounded-sm px-1 py-1.5 text-start cursor-pointer transition-colors hover:bg-accent/50"
 			>
 				<span className="font-ui text-xs text-foreground">Custom endpoint</span>
 				<span data-testid="custom-endpoint-status" className="max-w-[60%] truncate font-mono text-[11px] text-muted-foreground">
@@ -973,7 +973,7 @@ function CustomEndpointEditor({
 			</div>
 			{!setup && models.length > 0 && (
 				<div className="flex flex-col gap-1" data-testid="custom-pins">
-					<div className="flex max-h-56 flex-col gap-1 overflow-y-auto pr-1">
+					<div className="flex max-h-56 flex-col gap-1 overflow-y-auto pe-1">
 						{models.map((m) => {
 							const d = draftOf(m);
 							return (
@@ -1031,7 +1031,7 @@ function CustomEndpointEditor({
 							onClick={() => void savePins()}
 							disabled={pinsBusy || !dirty}
 							data-testid="custom-pins-save"
-							className="ml-auto shrink-0 text-xs text-foreground underline-offset-2 hover:underline disabled:text-muted-foreground/40 disabled:no-underline"
+							className="ms-auto shrink-0 text-xs text-foreground underline-offset-2 hover:underline disabled:text-muted-foreground/40 disabled:no-underline"
 						>
 							{pinsBusy ? "Saving…" : "Save limits"}
 						</button>
@@ -1042,7 +1042,7 @@ function CustomEndpointEditor({
 				{!setup && models.length > 0 && <p data-testid="custom-budget-help">Budget pins do not resize backend context. Blank uses reported limits, then fallback (8192 context / 4096 output). Custom pricing is unknown.</p>}
 				<p data-testid="custom-reasoning-help">Reasoning support is a capability declaration. The effort picker’s Off may not disable a custom backend’s default thinking.</p>
 			</div>
-			{(error || pinsError) && <button type="button" data-testid="custom-reload" onClick={() => void onReload()} className="text-left text-xs underline">Reload configuration</button>}
+			{(error || pinsError) && <button type="button" data-testid="custom-reload" onClick={() => void onReload()} className="text-start text-xs underline">Reload configuration</button>}
 			{error && (
 				<p role="alert" data-testid="custom-error" className="text-xs text-danger">
 					{error}

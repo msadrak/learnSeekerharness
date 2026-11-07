@@ -226,7 +226,7 @@ export function Composer({
 								: "bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40",
 						)}
 					>
-						{busy && !canSend ? <SquareIcon className="size-4" /> : <CornerDownLeftIcon className="size-5" />}
+						{busy && !canSend ? <SquareIcon className="size-4" /> : <CornerDownLeftIcon className="size-5 rtl:-scale-x-100" />}
 					</button>
 				)}
 		</form>
