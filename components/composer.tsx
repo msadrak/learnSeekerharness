@@ -154,7 +154,7 @@ export function Composer({
 	return (
 		<form
 			data-testid="composer"
-			className="flex items-end gap-1.5 p-1.5"
+			className="flex items-end gap-1.5 p-2"
 			onSubmit={(e) => {
 				e.preventDefault();
 				act();
@@ -187,7 +187,7 @@ export function Composer({
 				placeholder={placeholder ?? t.chat.composer.placeholder}
 				dir={inputDirection(value)}
 				autoFocus={autoFocus}
-				className="field-sizing-content lh-input max-h-48 min-h-10 flex-1 resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground"
+				className="field-sizing-content lh-input max-h-48 min-h-10 flex-1 resize-none bg-transparent px-3 py-2 outline-none placeholder:text-muted-foreground"
 			/>
 			<AttachFilesButton editorRef={editorRef} />
 			{/* The button follows the text (owner report 2026-10-03): while
@@ -209,7 +209,7 @@ export function Composer({
 						type="submit"
 						data-testid="next-problem-button"
 						aria-label={t.chat.composer.nextProblem}
-						className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-success-solid px-4 font-ui text-xs font-medium uppercase tracking-wide text-white transition-colors hover:bg-success-solid-hover"
+						className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full bg-success-solid px-4 font-ui text-xs font-medium text-white transition-colors duration-150 motion-reduce:transition-none hover:bg-success-solid-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
 					>
 						{t.chat.composer.nextProblem}
 						<ArrowRightIcon className="size-4 rtl:-scale-x-100" />
@@ -220,10 +220,10 @@ export function Composer({
 						aria-label={busy && !canSend ? t.common.actions.stop : t.common.actions.send}
 						disabled={!busy && !canSend}
 						className={cn(
-							"flex size-10 shrink-0 items-center justify-center rounded-[10px] transition-colors",
+							"flex size-10 shrink-0 items-center justify-center rounded-full transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
 							busy && !canSend
 								? "bg-secondary text-foreground hover:bg-accent"
-								: "bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40",
+								: "bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100",
 						)}
 					>
 						{busy && !canSend ? <SquareIcon className="size-4" /> : <CornerDownLeftIcon className="size-5 rtl:-scale-x-100" />}

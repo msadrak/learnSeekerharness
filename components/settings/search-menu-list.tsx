@@ -90,7 +90,7 @@ export function SearchMenuList<T>({
 				}
 			}}
 			placeholder={placeholder}
-			className="lh-input mb-1.5 w-full rounded-lg border bg-background px-2 py-1.5 text-foreground outline-none focus:ring-1 focus:ring-ring"
+			className="lh-input mb-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
 		/>
 		{!items && loading && <div>
 			{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="mx-2 my-1 h-8" />)}
@@ -104,7 +104,7 @@ export function SearchMenuList<T>({
 					{grouped && section.items.length > 0 && <li
 						role="presentation"
 						data-testid={`menu-group-${section.key}`}
-						className="px-2 pt-2 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+						className="px-2.5 pt-3 pb-1 text-xs font-medium text-muted-foreground"
 					>{section.label}</li>}
 					{section.items.map((item, j) => {
 						const i = offset + j;
@@ -115,9 +115,9 @@ export function SearchMenuList<T>({
 								data-idx={i}
 								disabled={disabled}
 								onClick={() => onPick(item)}
-								className={`flex w-full flex-1 flex-col gap-0.5 rounded-lg px-2 py-1.5 text-start outline-none transition-colors hover:bg-muted ${
-									i === menuIdx ? "bg-accent/40 ring-1 ring-inset ring-border" : ""
-								}${isSelected(item) && i !== menuIdx ? " bg-muted/60" : ""}`}
+								className={`flex w-full flex-1 flex-col gap-0.5 rounded-lg px-2.5 py-2 text-start outline-none transition-colors hover:bg-accent ${
+									i === menuIdx ? "bg-accent" : ""
+								}${isSelected(item) && i !== menuIdx ? " bg-primary/10" : ""}`}
 							>{renderItem(item)}</button>
 							{renderTrailing?.(item)}
 						</li>;

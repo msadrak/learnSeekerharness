@@ -77,7 +77,7 @@ export function VisualOutputCard({
 	const natural = result && typeof result.svg === "string" ? svgNaturalWidth(result.svg) : null;
 	if (!result || typeof result.svg !== "string") {
 		return (
-			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground shadow-soft">
 				{t.cards.figure.unreadable}
 			</div>
 		);
@@ -89,10 +89,10 @@ export function VisualOutputCard({
 	const shownInverted = invertible && inverted;
 	if (failed) {
 		return (
-			<div className="rounded-xl border bg-card p-4 text-card-foreground" data-testid="visual-card-failed">
-				<div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+			<div className="rounded-xl border bg-card p-4 text-card-foreground shadow-soft" data-testid="visual-card-failed">
+				<div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
 					{t.cards.figure.label}
-					<span className="rounded bg-danger/15 px-1.5 py-0.5 text-danger">{t.cards.status.failed}</span>
+					<span className="rounded-full bg-danger/15 px-2 py-0.5 text-xs font-medium text-danger">{t.cards.status.failed}</span>
 				</div>
 				{result.notes != null ? (
 					<p dir={textDirection(result.notes)} className="mt-2 text-sm text-muted-foreground">{result.notes}</p>
@@ -149,7 +149,7 @@ export function VisualOutputCard({
 					? "mt-2 flex w-0 min-w-full flex-wrap items-center justify-between gap-2"
 					: "mt-2 flex items-center justify-between gap-2"
 			}>
-				<div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t.cards.figure.label}</div>
+				<div className="text-xs font-medium text-muted-foreground">{t.cards.figure.label}</div>
 				<div className={!invertible ? "ms-auto flex items-center gap-1.5" : "flex items-center gap-1.5"}>
 					{/* The invert affordance (owner round, 2026-10-07): the disc IS
 					    the half-filled contrast circle; the tooltip names it. */}
@@ -168,7 +168,7 @@ export function VisualOutputCard({
 						title={t.cards.figure.downloadTitle}
 						onClick={() => downloadFile("figure.svg", svg, "image/svg+xml")}
 						data-testid="visual-download"
-						className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						<DownloadIcon className="size-3.5" />
 					</button>
@@ -179,7 +179,7 @@ export function VisualOutputCard({
 							title={t.cards.figure.openTitle}
 							onClick={() => overlay.openFigure(svg, shownInverted)}
 							data-testid="visual-open"
-							className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+							className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						>
 							<MaximizeIcon className="size-3.5" />
 						</button>

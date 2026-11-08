@@ -145,7 +145,7 @@ export function StatsBar({
 				onClick={() => setOpen((o) => !o)}
 				aria-expanded={open}
 				data-testid="stats-summary"
-				className="flex items-center gap-1.5 tabular-nums transition-colors hover:text-foreground"
+				className="flex items-center gap-1.5 rounded-full px-2.5 py-1 tabular-nums transition-colors duration-150 hover:bg-muted hover:text-foreground"
 			>
 				<span data-testid="stats-context">
 					{contextLabel}
@@ -156,9 +156,9 @@ export function StatsBar({
 				{open && (
 					<div
 						data-testid="stats-detail"
-						className="absolute bottom-full left-1/2 z-40 mb-1.5 w-72 -translate-x-1/2 rounded-xl border bg-card p-3 text-xs shadow-xl"
+						className="absolute bottom-full start-1/2 z-40 mb-1.5 w-72 -translate-x-1/2 rounded-xl border bg-card p-4 text-xs shadow-float rtl:translate-x-1/2"
 					>
-						<div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+						<div className="mb-2 text-xs font-medium text-muted-foreground">
 							{s.title}
 						</div>
 						<div className="flex flex-col gap-1 text-muted-foreground">
@@ -191,7 +191,7 @@ export function StatsBar({
 						</div>
 						{turns.length > 0 && (
 							<>
-								<div className="mb-1 mt-2.5 border-t pt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+								<div className="mb-1 mt-2.5 border-t pt-2 text-xs font-medium text-muted-foreground">
 									{s.turns}
 								</div>
 								<ul className="flex max-h-56 flex-col gap-1 overflow-y-auto">

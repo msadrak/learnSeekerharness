@@ -181,30 +181,30 @@ function CheatSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
 	return (
 		<div
 			data-testid="cheat-sheet"
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+			className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-[2px]"
 			{...backdropDismiss}
 		>
 			<div
-				className="max-h-[80vh] w-full max-w-[36rem] overflow-y-auto rounded-xl border bg-card p-5 shadow-2xl"
+				className="max-h-[80vh] w-full max-w-[36rem] overflow-y-auto rounded-xl border bg-popover p-6 shadow-float"
 				onClick={(e) => e.stopPropagation()}
 			>
-				<div className="mb-4 flex items-baseline justify-between">
-					<span className="text-sm font-medium text-card-foreground">{k.title}</span>
+				<div className="mb-5 flex items-baseline justify-between">
+					<span className="text-base font-medium text-popover-foreground">{k.title}</span>
 					<span className="text-xs text-muted-foreground">{k.escToClose}</span>
 				</div>
 				{scopes.map((scope) => {
 					const actions = KEYBOARD_ACTIONS.filter((a) => a.scope === scope);
 					if (actions.length === 0) return null;
 					return (
-						<div key={scope} className="mb-4">
-							<div className="mb-1.5 text-xs uppercase tracking-widest text-muted-foreground/70">
+						<div key={scope} className="mb-5">
+							<div className="mb-2 text-xs font-medium text-muted-foreground">
 								{k.scopes[scope]}
 							</div>
-							<div className="flex flex-col gap-1">
+							<div className="flex flex-col gap-1.5">
 								{actions.map((a) => (
 									<div key={a.id} className="flex items-center justify-between gap-4 text-sm">
 										<span className="text-muted-foreground">{k.actions[a.id]}</span>
-										<kbd className="rounded-md border border-border bg-background px-1.5 py-0.5 font-mono text-xs text-card-foreground">
+										<kbd className="rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-xs text-popover-foreground">
 											{formatBinding(bindingForAction(a.id))}
 										</kbd>
 									</div>

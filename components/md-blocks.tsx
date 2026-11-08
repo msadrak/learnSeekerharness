@@ -353,7 +353,7 @@ export function MarkdownBlockquote(props: ComponentProps<"blockquote"> & ExtraPr
 		return (
 			<blockquote
 				{...rest}
-				className="my-4 border-s-4 border-muted-foreground/30 ps-4 text-muted-foreground italic"
+				className="my-4 rounded-e-xl border-s-4 border-primary/40 bg-muted/40 py-2 pe-4 ps-4 text-muted-foreground italic"
 				data-streamdown="blockquote"
 			>
 				{children}
@@ -365,7 +365,7 @@ export function MarkdownBlockquote(props: ComponentProps<"blockquote"> & ExtraPr
 			data-testid="md-callout"
 			data-alert-kind={alert.kind}
 			dir={rest.dir}
-			className="my-4 w-fit max-w-full border border-foreground px-4 py-3 [&> :first-child]:mt-0 [&> :last-child]:mb-0"
+			className="my-4 w-fit max-w-full rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 [&> :first-child]:mt-0 [&> :last-child]:mb-0"
 		>
 			{alert.children}
 		</div>

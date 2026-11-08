@@ -139,7 +139,7 @@ describe("plan block layout (pure)", () => {
 });
 
 describe("plan block render", () => {
-	it("full block: borderless, column-filling, statuses AS CARRIED (never re-derived)", () => {
+	it("full block: a card-framed, column-filling, statuses AS CARRIED (never re-derived)", () => {
 		const data: PlanBlockData = {
 			kind: "full",
 			at: "2026-09-09T12:00:00Z",
@@ -152,8 +152,8 @@ describe("plan block render", () => {
 		};
 		const html = renderToStaticMarkup(<PlanBlock data={data} onOpen={() => {}} />);
 		assert.match(html, /data-testid="plan-block-full"/);
-		// Borderless: the wrapper carries no border/rounded chrome.
-		assert.ok(!/data-testid="plan-block-full"[^>]*border/.test(html), "no wrapping chrome");
+		// The trigger is the app's card: rounded-xl, hairline border, soft surface.
+		assert.match(html, /data-testid="plan-block-full"[^>]*class="[^"]*rounded-xl border bg-card/, "card chrome");
 		// Fills the column UP TO the chat-font cap: the svg is w-full +
 		// mx-auto with maxWidth = extent × TEXT_CAP_SCALE, so node text never
 		// renders past the 16px prose size (owner, plan-graph round 1; the

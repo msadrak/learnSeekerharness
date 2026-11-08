@@ -49,7 +49,7 @@ export function DispatchCard({ toolCallId, kind }: { toolCallId: string; kind: J
 			data-testid="dispatch-settled"
 		>
 			{failed ? <XIcon className="size-3.5 text-danger" /> : <CheckIcon className="size-3.5" />}
-			<span className="font-medium uppercase tracking-wide">{label}</span>
+			<span className="font-medium">{label}</span>
 			<span>{failed ? t.cards.status.failed : t.cards.dispatch.finished}</span>
 		</div>
 	);
@@ -64,14 +64,14 @@ function DispatchRefusedCard({ label, line, button }: { label: string; line: str
 			data-testid="dispatch-refused"
 		>
 			<SettingsIcon className="size-3.5" />
-			<span className="font-medium uppercase tracking-wide">{label}</span>
+			<span className="font-medium">{label}</span>
 			<span>{line}</span>
 			{ctx && (
 				<button
 					type="button"
 					data-testid="dispatch-setup-link"
 					onClick={ctx.openSetup}
-					className="ms-1 rounded-sm border border-border bg-card px-2 py-0.5 font-ui normal-case tracking-normal text-foreground transition-colors hover:border-muted-foreground/50"
+					className="ms-1 rounded-full border border-border bg-card px-2.5 py-0.5 font-ui text-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				>
 					{button}
 				</button>
@@ -88,10 +88,10 @@ function DispatchActivityCard({ job, label }: { job: JobRecord | null; label: st
 		job && job.createdAt ? Math.max(0, Math.round((Date.now() - Date.parse(job.createdAt)) / 1000)) : null;
 	return (
 		<div
-			className="rounded-xl border bg-card p-4 text-card-foreground"
+			className="rounded-xl border bg-card p-4 text-card-foreground shadow-soft"
 			data-testid="dispatch-card"
 		>
-			<div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+			<div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
 				{/* The working-state grammar (owner, streaming round 2026-10-01):
 				    the Braille spinner replaces the pulsing dot — one indicator
 				    everywhere. This is the ONLY dispatch-card change; the card's

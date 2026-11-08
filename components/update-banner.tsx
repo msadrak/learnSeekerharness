@@ -24,7 +24,7 @@ export default function UpdateBanner() {
 	return (
 		<div
 			data-testid="update-banner"
-			className="fixed inset-e-4 bottom-4 z-50 flex items-center gap-3 rounded-lg border border-border bg-popover px-4 py-3 shadow-lg"
+			className="fixed inset-e-4 bottom-4 z-50 flex items-center gap-3 rounded-xl border border-border bg-popover px-4 py-3 shadow-float"
 		>
 			<div className="text-sm">
 				<span className="font-medium">{t.shell.updateBanner.ready(ready.version)}</span>
@@ -33,7 +33,7 @@ export default function UpdateBanner() {
 			<button
 				type="button"
 				onClick={() => window.lh?.installUpdate?.()}
-				className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent/80"
+				className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors duration-150 motion-reduce:transition-none hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
 			>
 				{t.shell.updateBanner.restart}
 			</button>
@@ -41,7 +41,7 @@ export default function UpdateBanner() {
 				type="button"
 				aria-label={t.shell.updateBanner.dismiss}
 				onClick={() => setDismissedVersion(ready.version)}
-				className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+				className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
 			>
 				<XIcon className="size-4" aria-hidden="true" />
 			</button>

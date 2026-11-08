@@ -24,7 +24,7 @@ export function CacheRetentionMenu({ value, onPick }: {
 }) {
 	const c = useT().settings.cacheRetention;
 	return <>
-		<div className="border-b border-border px-2 pb-2">
+		<div className="border-b border-border/60 px-2.5 pb-2">
 			<p className="text-card-foreground">{c.title}</p>
 			<p className="mt-1 text-muted-foreground">{c.description}</p>
 		</div>
@@ -34,7 +34,7 @@ export function CacheRetentionMenu({ value, onPick }: {
 			data-testid={`cache-retention-option-${option.value ?? "default"}`}
 			aria-pressed={value === option.value}
 			onClick={() => onPick(option.value)}
-			className={`rounded-lg px-2 py-2 text-start transition-colors hover:bg-muted ${value === option.value ? "bg-muted/60" : ""}`}
+			className={`rounded-lg px-2.5 py-2 text-start transition-colors hover:bg-accent ${value === option.value ? "bg-primary/10" : ""}`}
 		>
 			<span className="flex justify-between gap-2 text-card-foreground"><span>{c[option.label]}</span>{value === option.value && <span aria-hidden>✓</span>}</span>
 			<span className="mt-1 block text-muted-foreground">{c[option.description]}</span>

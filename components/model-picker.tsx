@@ -289,7 +289,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				// view's floating top-right buttons (import notes, gear,
 				// coverage) — blurred, fuller opacity, shadowed — so the
 				// graph no longer bleeds through these pills.
-				className="flex items-center gap-1.5 rounded-full border bg-card/85 px-2.5 py-1 shadow-lg backdrop-blur transition-colors hover:border-border hover:bg-muted"
+				className="flex items-center gap-1.5 rounded-full border bg-card/85 px-3 py-1 shadow-soft backdrop-blur transition-colors duration-150 motion-reduce:transition-none hover:border-primary/40 hover:bg-accent"
 			>
 				<span dir={effectiveId ? textDirection(effectiveId) : undefined} className="text-card-foreground">{effectiveId ? prettyModel(effectiveId) : "—"}</span>
 				<span aria-hidden className="text-xs text-muted-foreground">▾</span>
@@ -317,7 +317,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				// view's floating top-right buttons (import notes, gear,
 				// coverage) — blurred, fuller opacity, shadowed — so the
 				// graph no longer bleeds through these pills.
-				className="flex items-center gap-1.5 rounded-full border bg-card/85 px-2.5 py-1 shadow-lg backdrop-blur transition-colors hover:border-border hover:bg-muted"
+				className="flex items-center gap-1.5 rounded-full border bg-card/85 px-3 py-1 shadow-soft backdrop-blur transition-colors duration-150 motion-reduce:transition-none hover:border-primary/40 hover:bg-accent"
 			>
 				{/* Just the level — the button reads like the model button reads
 				   the model name (owner, stats-control round 1). */}
@@ -336,7 +336,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 					anchorRef={containerRef}
 					testid="model-menu"
 					preferredSide="up"
-					menuClass="flex w-[22rem] flex-col rounded-xl border bg-card p-2 text-xs shadow-xl"
+					menuClass="flex w-[22rem] flex-col rounded-xl border bg-popover p-2 text-xs shadow-float"
 				>
 					<ModelMenuList
 						models={catalog?.models}
@@ -359,7 +359,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 					anchorRef={containerRef}
 					testid="thinking-menu"
 					preferredSide="up"
-					menuClass="flex w-44 flex-col gap-0.5 rounded-xl border bg-card p-2 text-xs shadow-xl"
+					menuClass="flex w-44 flex-col gap-0.5 rounded-xl border bg-popover p-2 text-xs shadow-float"
 				>
 					<ThinkingMenuList
 						levels={catalog ? levels : []}

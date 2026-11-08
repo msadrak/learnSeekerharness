@@ -53,7 +53,7 @@ export function ImageCard({ part }: ArtifactPartProps) {
 	const image = part.output;
 	if (!isShowImageDetails(image)) {
 		return (
-			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground shadow-soft">
 				{t.cards.image.unreadable}
 			</div>
 		);
@@ -95,7 +95,7 @@ export function ImagePresentation({ image }: { image: ImageSnapshot & Pick<ShowI
 			</div>
 			<figcaption className="mt-2 flex w-0 min-w-full items-start justify-between gap-2">
 				<div className="flex min-w-0 items-baseline gap-2">
-					<span className="shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t.cards.image.label}</span>
+					<span className="shrink-0 text-xs font-medium text-muted-foreground">{t.cards.image.label}</span>
 					{image.caption && (
 						<span className="text-sm text-muted-foreground" data-testid="image-caption">
 							{image.caption}
@@ -109,7 +109,7 @@ export function ImagePresentation({ image }: { image: ImageSnapshot & Pick<ShowI
 						title={t.common.markdown.downloadImage}
 						onClick={save}
 						data-testid="image-download"
-						className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						<DownloadIcon className="size-3.5" />
 					</button>
@@ -120,7 +120,7 @@ export function ImagePresentation({ image }: { image: ImageSnapshot & Pick<ShowI
 							title={t.cards.figure.openTitle}
 							onClick={() => overlay.openFigure(imageSvgDocument(image), false)}
 							data-testid="image-open"
-							className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+							className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						>
 							<MaximizeIcon className="size-3.5" />
 						</button>

@@ -161,7 +161,7 @@ export const ReasoningTrigger = memo(
           /* The heading register (owner round 4, 2026-10-05): the small
              mono caps of the card eyebrows — matching YOUR THINKING, whose
              rail offsets it by exactly the one-character difference. */
-          "flex w-full items-center gap-2 text-muted-foreground text-xs font-medium uppercase tracking-wide transition-colors hover:text-foreground",
+          "flex w-fit max-w-full items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 text-muted-foreground text-xs font-medium transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           className
         )}
         {...props}
@@ -186,7 +186,7 @@ export const ReasoningTrigger = memo(
               : defaultGetThinkingMessage(isStreaming, t.chat.reasoning)}
             <ChevronDownIcon
               className={cn(
-                "size-4 transition-transform",
+                "size-3.5 shrink-0 transition-transform duration-150 motion-reduce:transition-none",
                 isOpen ? "rotate-180" : "rotate-0"
               )}
             />
@@ -212,7 +212,7 @@ export const ReasoningContent = memo(
     return (
       <CollapsibleContent
         className={cn(
-          "mt-4 text-sm",
+          "mt-3 rounded-xl border border-border bg-card/50 px-4 py-3 text-sm",
           "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-muted-foreground outline-none data-[state=closed]:animate-out motion-reduce:animate-none data-[state=open]:animate-in",
           className
         )}

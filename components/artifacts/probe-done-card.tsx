@@ -43,9 +43,9 @@ export function ProbeDoneCard({ part }: { part: { input?: unknown; output?: unkn
 	const strands = assessment && Array.isArray(assessment.strands) ? assessment.strands : null;
 
 	return (
-		<div data-testid="probe-done-card" className="my-3 rounded-xl border bg-card/60 p-3">
-			<div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-				<ClipboardCheckIcon className="size-3.5 text-primary" />
+		<div data-testid="probe-done-card" className="my-3 rounded-xl border bg-card p-4 shadow-soft">
+			<div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+				<ClipboardCheckIcon className="size-3.5 text-brand" />
 				{t.cards.probeDone.title}
 			</div>
 			{output && !output.ok ? (
@@ -60,7 +60,7 @@ export function ProbeDoneCard({ part }: { part: { input?: unknown; output?: unkn
 			) : strands ? (
 				<div className="space-y-2">
 					{strands.map((s, i) => (
-						<div key={i} className="rounded-lg bg-background/60 px-3 py-2">
+						<div key={i} className="rounded-lg bg-muted/50 px-3 py-2">
 							<div dir={textDirection(s.strand)} className="lh-align-page text-sm font-medium">{s.strand}</div>
 							<div dir={textDirection(s.assessment)} className="mt-0.5 text-sm text-muted-foreground">{s.assessment}</div>
 						</div>

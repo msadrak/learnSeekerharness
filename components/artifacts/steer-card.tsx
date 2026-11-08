@@ -40,7 +40,7 @@ export function SubagentSteerCard({ message }: { message: LhViewMessage }) {
 			| undefined;
 		if (aborted?.data) return <AbortedBadge kind={aborted.data.kind ?? "job"} />;
 		return (
-				<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+				<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground shadow-soft">
 				{t.cards.steer.unreadable}
 			</div>
 		);
@@ -74,7 +74,7 @@ function AbortedBadge({ kind }: { kind: string }) {
 	return (
 		<div data-testid="job-aborted-badge" className="flex items-center gap-2 text-xs text-muted-foreground">
 			<CircleX className="size-3.5" />
-			<span dir={kinds[kind] ? undefined : textDirection(kind)} className="font-medium uppercase tracking-wide">{kinds[kind] ?? kind}</span>
+			<span dir={kinds[kind] ? undefined : textDirection(kind)} className="font-medium">{kinds[kind] ?? kind}</span>
 			<span>{t.cards.steer.abortedByLearner}</span>
 		</div>
 	);
@@ -93,7 +93,7 @@ function PdfCompleteBadge({ result }: { result: PdfResult }) {
 		<details data-testid="pdf-complete-badge" className="group w-full text-xs text-muted-foreground">
 			<summary className="flex cursor-pointer select-none list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
 				<CheckIcon className="size-3.5" />
-				<span className="font-medium uppercase tracking-wide">{t.cards.steer.pdf}</span>
+				<span className="font-medium">{t.cards.steer.pdf}</span>
 				<span>{t.cards.steer.readingComplete}</span>
 				{readPages.length > 0 && <span>{t.cards.steer.pagesRead(readPages.length)}</span>}
 				<span className="ms-1 text-xs text-muted-foreground/70 group-open:hidden">{t.cards.steer.viewBrief}</span>
@@ -117,7 +117,7 @@ function ResearchCompleteBadge({ result }: { result: ResearchResult }) {
 		<details data-testid="research-complete-badge" className="group w-full text-xs text-muted-foreground">
 			<summary className="flex cursor-pointer select-none list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
 				<CheckIcon className="size-3.5" />
-				<span className="font-medium uppercase tracking-wide">{t.cards.steer.research}</span>
+				<span className="font-medium">{t.cards.steer.research}</span>
 				<span>{t.cards.steer.complete}</span>
 				{result.sources.length > 0 && <span>{t.cards.steer.sourceCount(result.sources.length)}</span>}
 				<span className="ms-1 text-xs text-muted-foreground/70 group-open:hidden">{t.cards.steer.viewBrief}</span>

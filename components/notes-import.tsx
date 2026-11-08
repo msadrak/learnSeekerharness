@@ -102,21 +102,21 @@ export function NotesImportControl({ importing, onImportFiles }: { importing: bo
 	};
 	const choices = [[t.graph.import.files, filesRef], [t.graph.import.folder, folderRef]] as const;
 	return (
-		<div className="relative shrink-0 rounded-xl border bg-card/85 px-1 py-[3px] shadow-lg backdrop-blur"
+		<div className="relative shrink-0 rounded-full border bg-card/85 px-1 py-[3px] shadow-soft backdrop-blur"
 			onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}
 			onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }}>
 			<input ref={filesRef} type="file" multiple accept=".md,.markdown,.txt,.pdf" className="hidden" onChange={onChange} />
 			<input ref={folderRef} type="file" {...{ webkitdirectory: "" }} className="hidden" onChange={onChange} />
 			<Hint label={t.graph.import.extractIntoGraph} side="bottom">
 				<button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="menu" data-testid="import-notes"
-					className="flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-xs text-muted-foreground transition-colors hover:bg-accent">
+					className="flex h-7 items-center gap-1.5 rounded-full px-3 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground">
 					<WaypointsIcon className="size-3" />{importing ? t.graph.import.extracting : t.graph.import.extractFiles}
 				</button>
 			</Hint>
 			{open && (
-				<div role="menu" aria-label={t.graph.import.extractIntoGraph} aria-describedby={hintId} className="absolute inset-e-0 top-full z-50 mt-1 w-52 rounded-lg border bg-card p-1 shadow-lg">
+				<div role="menu" aria-label={t.graph.import.extractIntoGraph} aria-describedby={hintId} className="absolute inset-e-0 top-full z-50 mt-1.5 w-52 rounded-xl border bg-card p-1.5 shadow-float">
 					<div role="none"><p id={hintId} className="px-2 py-1.5 text-xs leading-relaxed text-muted-foreground">{t.graph.import.lessonHint}</p></div>
-					{choices.map(([label, input]) => <button key={label} type="button" role="menuitem" className="block w-full rounded px-2 py-1 text-start text-xs hover:bg-accent"
+					{choices.map(([label, input]) => <button key={label} type="button" role="menuitem" className="block w-full rounded-lg px-2.5 py-1.5 text-start text-xs transition-colors hover:bg-accent/50"
 						onClick={() => { setOpen(false); input.current?.click(); }}>{label}</button>)}
 				</div>
 			)}

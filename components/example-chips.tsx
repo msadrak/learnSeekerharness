@@ -20,7 +20,7 @@ export function ExampleChips({ onPick }: { onPick: (text: string) => void }) {
 					type="button"
 					dir={textDirection(ex)}
 					onClick={() => onPick(ex)}
-					className="rounded-full border border-border px-3 py-1 font-ui text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+					className="rounded-full border border-border bg-card px-3 py-1.5 font-ui text-xs text-muted-foreground shadow-soft transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				>
 					{ex}
 				</button>

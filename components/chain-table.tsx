@@ -324,7 +324,7 @@ export function ChainTableBody({
 					{c.counts(chains.length, nodes.length)}
 				</span>
 				{onOrganizationChange && <button type="button" aria-label={t.graph.sources.addFolder} data-testid="add-source-folder"
-					onClick={() => setCreatingFolder(true)} className="lh-no-drag rounded-lg p-2 text-muted-foreground hover:bg-accent"><FolderPlusIcon className="size-4" /></button>}
+					onClick={() => setCreatingFolder(true)} className="lh-no-drag rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"><FolderPlusIcon className="size-4" /></button>}
 				<div className="relative shrink-0">
 					<SearchIcon className="absolute inset-s-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
 					<input
@@ -336,7 +336,7 @@ export function ChainTableBody({
 						aria-label={t.graph.chrome.searchNodes}
 						dir={inputDirection(query)}
 						spellCheck={false}
-						className="lh-no-drag h-8 w-56 rounded-lg border bg-background ps-8 pe-3 text-xs outline-none placeholder:text-muted-foreground focus:border-ring"
+						className="lh-no-drag h-8 w-56 rounded-lg border bg-background ps-8 pe-3 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
 					/>
 				</div>
 			<button
@@ -344,7 +344,7 @@ export function ChainTableBody({
 					data-testid="chain-table-close"
 					onClick={onClose}
 					aria-label={c.close}
-					className="lh-no-drag flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-card/80 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+					className="lh-no-drag flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-card/80 text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
 				>
 					<XIcon className="size-4" />
 				</button>
@@ -359,7 +359,7 @@ export function ChainTableBody({
 			<div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
 				{/* The TOP rule (owner round 5: the table is framed — a line under
 			    the header, a line under the last group, lines between groups). */}
-				<div className="sticky top-0 z-10 flex shrink-0 items-center gap-1 border-b border-border/60 bg-background/80 px-3 py-1.5 text-[11px] uppercase tracking-widest text-muted-foreground/70 backdrop-blur">
+				<div className="sticky top-0 z-10 flex shrink-0 items-center gap-1 border-b border-border/60 bg-background/80 px-3 py-1.5 text-[11px] text-muted-foreground/70 backdrop-blur">
 					<button
 						type="button"
 						data-testid="sort-name"
@@ -434,7 +434,7 @@ export function ChainTableBody({
 								/>
 							)}
 							{/* The cluster row: birth-session group header. */}
-							<SourceDragRow {...chainRow(["source", group.key], depth, open)} kind="source" id={group.key} name={group.label ?? c.unlabeled} enabled={Boolean(onOrganizationChange && group.birth)} className="flex items-center gap-1 px-3 py-1.5">
+							<SourceDragRow {...chainRow(["source", group.key], depth, open)} kind="source" id={group.key} name={group.label ?? c.unlabeled} enabled={Boolean(onOrganizationChange && group.birth)} className="flex items-center gap-1 rounded-lg px-3 py-1.5 transition-colors hover:bg-accent/50">
 								<RowCheckbox
 									disabled={selectMode ? group.nodeIds.length === 0 : !directory?.sources.some((s) => s.id === group.birth)}
 									checked={selectMode ? selectedCount === group.nodeIds.length && group.nodeIds.length > 0 : group.birth !== null && selectedSources.has(group.birth)}
@@ -451,7 +451,7 @@ export function ChainTableBody({
 								{onOrganizationChange && group.birth && group.kind !== null
 									? <EditableSourceName name={group.label ?? ""} muted={empty} onSave={(name) => onOrganizationChange({ action: "rename-source", id: group.birth!, name })} />
 									: <span dir={group.label ? textDirection(group.label) : undefined} className={`min-w-0 flex-1 truncate lh-align-page text-sm font-medium${empty ? " text-muted-foreground/60" : ""}`}>{group.label ?? <span className="text-muted-foreground/60">{c.unlabeled}</span>}</span>}
-								{group.kind === "notes" && <span className="text-[11px] uppercase tracking-widest text-muted-foreground/60">{c.notes}</span>}
+								{group.kind === "notes" && <span className="text-[11px] text-muted-foreground/60">{c.notes}</span>}
 								<span className="w-14 shrink-0 text-end text-xs tabular-nums text-muted-foreground">
 									{group.nodeIds.length}
 								</span>
@@ -526,7 +526,7 @@ export function ChainTableBody({
 																<span
 																	data-testid={`prop-chip-${id}`}
 																	dir={textDirection(nameOf(id))}
-																	className="rounded border border-border/70 bg-muted/30 px-1.5 py-0.5"
+																	className="rounded-full border border-border bg-muted/30 px-2 py-0.5"
 																>
 																	{nameOf(id)}
 																</span>
@@ -588,7 +588,7 @@ export function ChainTableBody({
 				<div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center pb-4">
 					<div
 						data-testid="chain-selection-bar"
-						className="pointer-events-auto flex items-center gap-3 rounded-full border bg-card py-2 ps-4 pe-2 shadow-lg"
+						className="pointer-events-auto flex items-center gap-3 rounded-full border bg-card/90 py-2 ps-4 pe-2 shadow-float backdrop-blur"
 					>
 						<span data-testid="chain-selected-summary" className="text-xs font-medium">
 							{selectMode ? c.selectedSummary(selection.size, derived.length)
@@ -598,7 +598,7 @@ export function ChainTableBody({
 							type="button"
 							data-testid="chain-clear"
 							onClick={onClear}
-							className="rounded-full px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+							className="rounded-full px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
 						>
 							{c.clear}
 						</button>
@@ -608,7 +608,7 @@ export function ChainTableBody({
 								data-testid="chain-practice-done"
 								onClick={onSelect}
 								aria-label={c.donePicking(selection.size)}
-								className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+								className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
 							>
 								<DumbbellIcon aria-hidden="true" className="size-3.5" />
 								{c.done}
@@ -625,7 +625,7 @@ export function ChainTableBody({
 								data-testid="chain-delete"
 								onClick={onDelete}
 								aria-label={t.graph.sources.deleteSelected}
-								className="flex items-center gap-1.5 rounded-full border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
+								className="flex items-center gap-1.5 rounded-full bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
 							>
 								<Trash2Icon aria-hidden="true" className="size-3.5" />
 								{t.common.actions.delete}

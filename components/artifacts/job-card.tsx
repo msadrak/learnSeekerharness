@@ -41,7 +41,7 @@ export function PdfBriefCard({ output }: { output: unknown }) {
 	const result = output as PdfResult | undefined;
 	if (!result || typeof result.brief !== "string") {
 		return (
-			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground shadow-soft">
 				{t.cards.jobs.pdfUnreadable}
 			</div>
 		);
@@ -53,10 +53,10 @@ export function PdfBriefCard({ output }: { output: unknown }) {
 	const readList = result.pagesRead ?? result.pagesConsulted ?? [];
 	const consultedList = result.pagesConsulted ?? [];
 	return (
-		<div className="rounded-xl border bg-card p-4 text-card-foreground" data-testid="pdf-brief-card">
-			<div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+		<div className="rounded-xl border bg-card p-4 text-card-foreground shadow-soft" data-testid="pdf-brief-card">
+			<div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted-foreground">
 				{t.cards.jobs.pdfBrief}
-				{failed && <span className="rounded bg-danger/15 px-1.5 py-0.5 text-danger">{t.cards.status.failed}</span>}
+				{failed && <span className="rounded-full bg-danger/15 px-2 py-0.5 text-xs font-medium text-danger">{t.cards.status.failed}</span>}
 			</div>
 			<div className="text-sm [&_p:first-child]:mt-0 [&_p:last-child]:mb-0">
 				<MessageResponse>{result.brief}</MessageResponse>
@@ -84,24 +84,24 @@ export function ResearchBriefCard({ output }: { output: unknown }) {
 	const result = output as ResearchResult | undefined;
 	if (!result || typeof result.brief !== "string") {
 		return (
-			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground shadow-soft">
 				{t.cards.jobs.researchUnreadable}
 			</div>
 		);
 	}
 	const failed = result.brief.startsWith("Research failed");
 	return (
-		<div className="rounded-xl border bg-card p-4 text-card-foreground" data-testid="research-brief-card">
-			<div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+		<div className="rounded-xl border bg-card p-4 text-card-foreground shadow-soft" data-testid="research-brief-card">
+			<div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted-foreground">
 				{t.cards.jobs.researchBrief}
-				{failed && <span className="rounded bg-danger/15 px-1.5 py-0.5 text-danger">{t.cards.status.failed}</span>}
+				{failed && <span className="rounded-full bg-danger/15 px-2 py-0.5 text-xs font-medium text-danger">{t.cards.status.failed}</span>}
 			</div>
 			<div className="text-sm [&_p:first-child]:mt-0 [&_p:last-child]:mb-0">
 				<MessageResponse>{result.brief}</MessageResponse>
 			</div>
 			{result.sources.length > 0 && (
 				<div className="mt-3 border-t pt-2">
-					<div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t.cards.jobs.sources}</div>
+					<div className="mb-1 text-xs font-medium text-muted-foreground">{t.cards.jobs.sources}</div>
 					<ul className="flex flex-col gap-0.5 text-xs">
 						{result.sources.map((s) => (
 							<li key={s.url} dir={textDirection(s.title)} className="lh-align-page truncate">
@@ -109,7 +109,7 @@ export function ResearchBriefCard({ output }: { output: unknown }) {
 									href={s.url}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="text-primary underline-offset-2 hover:underline"
+									className="text-brand underline-offset-2 hover:underline"
 								>
 									{s.title}
 								</a>

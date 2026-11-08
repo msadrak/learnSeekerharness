@@ -20,9 +20,9 @@ import type { ChatListItem, GraphNode, GraphSnapshot } from "@/src/core";
 const SETTINGS_SECTION_IDS = ["keys", "dictation", "search", "agent", "appearance", "graph", "keyboard", "general"] as const;
 
 const ITEM_CLASS =
-	"flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm data-[selected=true]:bg-accent";
+	"flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150 motion-reduce:transition-none data-[selected=true]:bg-accent";
 const GROUP_CLASS =
-	"[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wide [&_[cmdk-group-heading]]:text-muted-foreground";
+	"[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground";
 
 interface PropositionEntry {
 	node: GraphNode;
@@ -96,18 +96,18 @@ export function CommandPalette({
 			onOpenChange={onOpenChange}
 			label={p.title}
 			dir={dir}
-			overlayClassName="fixed inset-0 z-50 bg-black/50"
-			contentClassName="fixed start-1/2 top-[15vh] z-50 w-[min(36rem,calc(100vw-2rem))] -translate-x-1/2 rtl:translate-x-1/2 rounded-xl border bg-card p-2 shadow-2xl"
+			overlayClassName="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]"
+			contentClassName="fixed start-1/2 top-[15vh] z-50 w-[min(36rem,calc(100vw-2rem))] -translate-x-1/2 rtl:translate-x-1/2 rounded-xl border bg-popover p-2 shadow-float"
 		>
 			<Command.Input
 				placeholder={p.placeholder}
-				className="lh-input w-full rounded-lg border bg-background px-2 py-1.5 font-ui text-sm outline-none"
+				className="lh-input mb-1 w-full rounded-lg border bg-card/50 px-3 py-2 font-ui text-sm outline-none focus-visible:border-ring/60 focus-visible:ring-2 focus-visible:ring-ring/40"
 			/>
 			<Command.List className="max-h-80 overflow-y-auto">
-				<Command.Empty className="px-2 py-3 text-center text-xs text-muted-foreground">{p.empty}</Command.Empty>
+				<Command.Empty className="px-3 py-4 text-center text-xs text-muted-foreground">{p.empty}</Command.Empty>
 				{loading && (
 					<Command.Loading>
-						<div className="px-2 py-1.5 text-xs text-muted-foreground">{t.common.states.loading}</div>
+						<div className="px-3 py-2 text-xs text-muted-foreground">{t.common.states.loading}</div>
 					</Command.Loading>
 				)}
 				<Command.Group heading={p.groups.actions} className={GROUP_CLASS}>

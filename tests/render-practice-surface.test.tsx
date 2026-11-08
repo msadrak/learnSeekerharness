@@ -179,13 +179,12 @@ describe("the practice transcript cards", () => {
 	it("ThinkingCard: one label, right side, expanded arrival (owner round, 2026-10-07)", () => {
 		const trace = renderToStaticMarkup(<ThinkingCard data={{ problemCallId: "c", commit: false, text: "stuck at step two" }} />);
 		assert.match(trace, /YOUR THINKING/);
-		// Transcript rows arrive EXPANDED (clearly conveyed as sent) as
-		// full-width card-color bands with the 6px rail (the document,
-		// all-in — owner round two, 2026-10-07).
+		// Transcript rows arrive EXPANDED (clearly conveyed as sent) as a
+		// soft pill trigger with the quote rail on the text.
 		assert.match(trace, /aria-expanded="true"/);
 		assert.ok(trace.includes("stuck at step two"), "the text is visible on arrival");
-		assert.ok(trace.includes("bg-card"), "the card-color band");
-		assert.ok(trace.includes("border-s-[calc(3ch-14px)]"), "narrow rail inside the 3ch inset");
+		assert.ok(trace.includes("bg-muted/60"), "the soft pill trigger");
+		assert.ok(trace.includes("border-s-2"), "inline-start quote rail on the text");
 		const legacy = renderToStaticMarkup(<ThinkingCard data={{ problemCallId: "c", commit: true, text: "It is 42." }} />);
 		assert.match(legacy, /YOUR THINKING/);
 		assert.doesNotMatch(legacy, /Your solution/);

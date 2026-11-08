@@ -191,7 +191,7 @@ export function DraftShell({
 									setup={setupCta}
 								/>
 								{startError && <p role="alert" className="pointer-events-auto mb-2 text-sm text-destructive">{t.chat.errors.openSessionFailed}</p>}
-								<div data-attachment-composer="" className="pointer-events-auto overflow-hidden rounded-2xl border bg-card shadow-lg">
+								<div data-attachment-composer="" className="pointer-events-auto overflow-hidden rounded-2xl border bg-card shadow-soft transition-shadow duration-150 motion-reduce:transition-none focus-within:border-ring/40 focus-within:ring-2 focus-within:ring-ring/30">
 									<Composer
 										busy={busy}
 										value={text}
@@ -375,7 +375,7 @@ export function NewSession({ initialConfigured, mode = "teach" }: { initialConfi
 								type="button"
 								data-testid="setup-cta"
 								onClick={() => setSetupOpen(true)}
-								className="rounded-sm border border-border bg-card px-3 py-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50 hover:bg-accent cursor-pointer"
+								className="rounded-lg border border-border bg-card px-3 py-1.5 font-ui text-xs text-foreground transition-colors duration-150 motion-reduce:transition-none hover:border-primary/40 hover:bg-accent cursor-pointer"
 							>
 								{t.shell.home.setUpModels}
 							</button>

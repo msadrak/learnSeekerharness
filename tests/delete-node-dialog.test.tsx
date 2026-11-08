@@ -72,7 +72,7 @@ describe("DeleteNodeBody — the minimal screen (owner, 2026-09-30)", () => {
 		assert.match(html, /data-testid="node-delete-cancel"/);
 		assert.match(html, /data-testid="node-delete-confirm"/);
 		// the Delete button carries the destructive red (owner, polish round)
-		assert.match(html, /border-destructive\/50[^>]*text-destructive/);
+		assert.match(html, /bg-destructive[^>]*text-background/);
 	});
 
 	it("NO impact facts, NO loading line, NO sessions join — the pre-flight read is dead", () => {

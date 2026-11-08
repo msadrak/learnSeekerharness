@@ -53,9 +53,8 @@ describe("derivedPalette — the dark curve keeps today's relationships", () => 
 			"--secondary": "#1c1c1c",
 			"--muted": "#1c1c1c",
 			"--accent": "#2a2a2a",
-			"--border": "#434343",
-			"--input": "#434343",
-			"--primary-foreground": "#141414",
+			"--border": "#2e2e2e",
+			"--input": "#2e2e2e",
 		});
 	});
 
@@ -63,7 +62,7 @@ describe("derivedPalette — the dark curve keeps today's relationships", () => 
 		const p = derivedPalette("#f0f0f0");
 		assert.equal(p["--background"], "#f0f0f0");
 		assert.equal(p["--card"], "#f8f8f8"); // 240 + 8 per channel
-		assert.equal(p["--border"], "#ffffff", "240 + 47 clamps to 255 on every channel");
+		assert.equal(p["--border"], "#ffffff", "240 + 26 clamps to 255 on every channel");
 	});
 
 	it("3-digit hex expands", () => {

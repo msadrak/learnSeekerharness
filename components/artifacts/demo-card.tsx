@@ -106,7 +106,7 @@ export function DemoOutputCard({
 	const result = output as DemoResult | undefined;
 	if (!result || typeof result.html !== "string" || typeof result.title !== "string") {
 		return (
-			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground shadow-soft">
 				{t.cards.demo.unreadable}
 			</div>
 		);
@@ -114,10 +114,10 @@ export function DemoOutputCard({
 	const failed = result.html.length === 0;
 	if (failed) {
 		return (
-			<div className="rounded-xl border bg-card p-4 text-card-foreground" data-testid="demo-card-failed">
-				<div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+			<div className="rounded-xl border bg-card p-4 text-card-foreground shadow-soft" data-testid="demo-card-failed">
+				<div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
 					{t.cards.demo.label}
-					<span className="rounded bg-danger/15 px-1.5 py-0.5 text-danger">{t.cards.status.failed}</span>
+					<span className="rounded-full bg-danger/15 px-2 py-0.5 text-xs font-medium text-danger">{t.cards.status.failed}</span>
 				</div>
 				{result.notes != null ? (
 					<p dir={textDirection(result.notes)} className="mt-2 text-sm text-muted-foreground">{result.notes}</p>
@@ -178,16 +178,16 @@ function DemoFrame({
 	}, []);
 
 	return (
-		<div className="rounded-xl border bg-card p-4 text-card-foreground" data-testid="demo-card">
+		<div className="rounded-xl border bg-card p-4 text-card-foreground shadow-soft" data-testid="demo-card">
 			{/* Caption header (owner, 2026-10-07): kind label + title in the
 			   label's size/tracking (title normal-case, foreground) — the
 			   figure card's grammar plus a name. Switch + download far right. */}
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex min-w-0 items-baseline gap-2">
-					<span className="shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+					<span className="shrink-0 text-xs font-medium text-muted-foreground">
 						{t.cards.demo.captionLabel}
 					</span>
-					<span dir={textDirection(title)} className="truncate text-xs font-medium tracking-wide text-foreground">{title}</span>
+					<span dir={textDirection(title)} className="truncate text-xs font-medium text-foreground">{title}</span>
 				</div>
 				<div className="flex shrink-0 items-center gap-1.5">
 					<Toggle
@@ -203,7 +203,7 @@ function DemoFrame({
 						title={t.cards.demo.downloadTitle}
 						onClick={() => downloadFile(`${slugFilename(title)}.html`, html, "text/html")}
 						data-testid="demo-download"
-						className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						<DownloadIcon className="size-3.5" />
 					</button>
@@ -269,7 +269,7 @@ export function DemoErrorChip({
 				<button
 					type="button"
 					onClick={onSend}
-					className="rounded-md border border-danger/40 px-2 py-1 text-xs font-medium hover:bg-danger/15"
+					className="rounded-lg border border-danger/40 px-2 py-1 text-xs font-medium hover:bg-danger/15"
 					data-testid="demo-error-send"
 				>
 					{t.cards.demo.sendToTeacher}

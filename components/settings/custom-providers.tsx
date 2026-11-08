@@ -120,14 +120,15 @@ function draftToBody(d: Draft): { provider: CustomProviderDef; apiKey?: string |
 }
 
 const inputClass =
-	"h-7 min-w-0 rounded-sm border border-border bg-background px-1.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-muted-foreground/50";
-const linkButton = "shrink-0 text-xs text-foreground underline-offset-2 hover:underline disabled:text-muted-foreground/40 disabled:no-underline";
-const mutedButton = "shrink-0 text-xs text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline";
+	"h-8 min-w-0 rounded-lg border border-input bg-background px-3 font-mono text-xs text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-ring";
+const linkButton = "shrink-0 rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground/60";
+const dangerButton = "shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-danger/10 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+const mutedButton = "shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
 	return (
 		<label className="flex flex-col gap-1">
-			<span className="font-ui text-[11px] text-muted-foreground">{label}</span>
+			<span className="font-ui text-xs text-muted-foreground">{label}</span>
 			{children}
 		</label>
 	);
@@ -158,7 +159,7 @@ function ProviderEditor({
 	const patchModel = (i: number, p: Partial<DraftModel>) =>
 		patch({ models: draft.models.map((m, j) => (j === i ? { ...m, ...p } : m)) });
 	return (
-		<div className="flex flex-col gap-3 rounded-sm border border-border/60 px-2 py-2" data-testid="custom-provider-editor">
+		<div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/50 p-3" data-testid="custom-provider-editor">
 			<div className="grid grid-cols-2 gap-3">
 				<Field label={c.name}>
 					<input
@@ -227,7 +228,7 @@ function ProviderEditor({
 					</ThinSelect>
 				</Field>
 			</div>
-			{protocol && <p className="text-[11px] text-muted-foreground/70">{c.protocolHints[protocol.id]}</p>}
+			{protocol && <p className="text-xs text-muted-foreground">{c.protocolHints[protocol.id]}</p>}
 			{draft.hasKey && (
 				<button type="button" className={`${mutedButton} self-start`} disabled={busy} onClick={() => patch({ clearKey: !draft.clearKey, apiKey: "" })}>
 					{draft.clearKey ? c.keepKey : c.removeKey}
@@ -235,18 +236,18 @@ function ProviderEditor({
 			)}
 
 			<div className="flex flex-col gap-1.5" data-testid="custom-provider-models">
-				<span className="font-ui text-[11px] text-muted-foreground">{c.models}</span>
+				<span className="font-ui text-xs text-muted-foreground">{c.models}</span>
 				{draft.models.map((m, i) => (
 					<div key={i} className="flex flex-wrap items-center gap-2">
 						<input className={`${inputClass} w-44`} dir="ltr" value={m.id} placeholder={c.modelIdPlaceholder} aria-label={c.modelIdAria(i + 1)} data-testid={`custom-model-${i}-id`} disabled={busy} onChange={(e) => patchModel(i, { id: e.target.value })} />
 						<input className={`${inputClass} w-32`} dir={inputDirection(m.name)} value={m.name} placeholder={c.displayNamePlaceholder} aria-label={c.modelNameAria(i + 1)} disabled={busy} onChange={(e) => patchModel(i, { name: e.target.value })} />
 						<input className={`${inputClass} w-24`} dir="ltr" value={m.contextWindow} inputMode="numeric" placeholder={c.ctxPlaceholder(CUSTOM_MODEL_DEFAULTS.contextWindow / 1000)} aria-label={c.modelCtxAria(i + 1)} disabled={busy} onChange={(e) => patchModel(i, { contextWindow: e.target.value })} />
 						<input className={`${inputClass} w-24`} dir="ltr" value={m.maxTokens} inputMode="numeric" placeholder={c.maxPlaceholder(CUSTOM_MODEL_DEFAULTS.maxTokens / 1000)} aria-label={c.modelMaxAria(i + 1)} disabled={busy} onChange={(e) => patchModel(i, { maxTokens: e.target.value })} />
-						<label className="flex items-center gap-1 text-[11px] text-muted-foreground">
+						<label className="flex items-center gap-1 text-xs text-muted-foreground">
 							<input type="checkbox" checked={m.reasoning} disabled={busy} onChange={(e) => patchModel(i, { reasoning: e.target.checked })} />
 							{c.reasoning}
 						</label>
-						<label className="flex items-center gap-1 text-[11px] text-muted-foreground">
+						<label className="flex items-center gap-1 text-xs text-muted-foreground">
 							<input type="checkbox" checked={m.vision} disabled={busy} onChange={(e) => patchModel(i, { vision: e.target.checked })} />
 							{c.images}
 						</label>
@@ -275,7 +276,7 @@ function ProviderEditor({
 					{t.common.actions.cancel}
 				</button>
 				{onDelete && (
-					<button type="button" className={`${mutedButton} hover:text-danger`} disabled={busy} onClick={onDelete} data-testid="custom-provider-delete">
+					<button type="button" className={dangerButton} disabled={busy} onClick={onDelete} data-testid="custom-provider-delete">
 						{t.common.actions.delete}
 					</button>
 				)}
@@ -340,8 +341,9 @@ export function CustomProvidersGroup() {
 
 	return (
 		<SettingsGroup label={c.group} testid="group-custom-providers">
+			<div className="flex flex-col gap-0.5 rounded-xl border border-border/60 bg-card/50 p-1">
 			{providers === null ? (
-				<p className="px-1 py-1.5 text-xs text-muted-foreground/70">{t.common.states.loading}</p>
+				<p className="px-3 py-2 text-xs text-muted-foreground">{t.common.states.loading}</p>
 			) : (
 				providers.map((p) => (
 					<button
@@ -352,10 +354,10 @@ export function CustomProvidersGroup() {
 							setError(null);
 							setDraft(draftFrom(p));
 						}}
-						className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-sm px-1 py-1.5 text-start transition-colors hover:bg-accent/50"
+						className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-start transition-colors hover:bg-accent/40"
 					>
-						<span className="font-ui text-xs text-foreground" dir={textDirection(p.name)}>{p.name}</span>
-						<span className="truncate font-mono text-[11px] text-muted-foreground">
+						<span className="font-ui text-sm text-foreground" dir={textDirection(p.name)}>{p.name}</span>
+						<span className="truncate font-mono text-xs text-muted-foreground">
 							<bdi>{p.api}</bdi> · {c.modelCount(p.models.length)}
 							{p.hasKey ? c.keySavedSuffix : ""}
 						</span>
@@ -380,11 +382,12 @@ export function CustomProvidersGroup() {
 						setError(null);
 						setDraft(newDraft());
 					}}
-					className="w-full rounded-sm px-1 py-1.5 text-start font-ui text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+					className="w-full rounded-lg px-3 py-2 text-start font-ui text-sm text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
 				>
 					{c.add}
 				</button>
 			)}
+			</div>
 		</SettingsGroup>
 	);
 }

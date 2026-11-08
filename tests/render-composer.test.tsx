@@ -51,10 +51,10 @@ describe("Composer", () => {
 		assert.ok(idleStop.includes('aria-label="Stop"'), "empty composer: stop replaces send while streaming");
 	});
 
-	it("send button radius is 10px = 25% of the 40px button (concentric with the shell)", () => {
+	it("send button is a round 40px pill", () => {
 		const html = render();
-		assert.ok(html.includes("rounded-[10px]"), "send radius = shell radius − row padding");
-		assert.ok(html.includes("size-10"), "40px send button (10px = 25%)");
+		assert.ok(html.includes("rounded-full"), "send button is a round pill");
+		assert.ok(html.includes("size-10"), "40px send button");
 	});
 
 	it("disabled when nothing to send", () => {

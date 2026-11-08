@@ -137,7 +137,7 @@ export function QuestionDock({
 		canonical === "quiz" ? parseQuizInput(input) : canonical === "explain" ? parseExplainInput(input) : parseAskInput(input);
 	if (!parsed) {
 		return (
-			<div data-testid="malformed-question" className="rounded-xl border border-dashed bg-card/60 p-3 text-sm text-muted-foreground">
+			<div data-testid="malformed-question" className="rounded-xl border border-dashed bg-card p-4 text-sm text-muted-foreground">
 				{t.cards.questionDock.malformed}
 			</div>
 		);
@@ -223,16 +223,16 @@ export function QuestionDockBar({
 				type="button"
 				data-testid="teach-check-reveal"
 				onClick={onExpand}
-				className="dock-variant flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-accent/40"
+				className="dock-variant flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
 			>
-				<span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+				<span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-brand">
 					<PlayIcon className="size-3.5" />
 				</span>
 				<span className="min-w-0 flex-1">
 					<span className="block text-sm font-medium">{t.cards.questionDock.checkUnderstanding}</span>
 					<span dir={textDirection(teaser)} className="lh-align-page block truncate text-xs text-muted-foreground">{teaser}</span>
 				</span>
-				<span className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary">
+				<span className="flex shrink-0 items-center gap-1 text-xs font-medium text-brand">
 					{t.common.actions.open} <ChevronRightIcon className="size-3.5 rtl:-scale-x-100" />
 				</span>
 			</button>
@@ -243,9 +243,9 @@ export function QuestionDockBar({
 			type="button"
 			data-testid="question-dock-bar"
 			onClick={onExpand}
-			className="dock-variant flex w-full items-center gap-2.5 px-4 py-2.5 text-start text-sm transition-colors hover:bg-accent/40"
+			className="dock-variant flex w-full items-center gap-2.5 px-4 py-2.5 text-start text-sm transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
 		>
-			<span className="shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+			<span className="shrink-0 text-xs font-medium text-muted-foreground">
 				{label ??
 							toolLabel ??
 							(toolName === "quiz" ? t.cards.kinds.check : toolName === "explain" ? t.cards.kinds.explain : t.cards.kinds.question)}
@@ -574,7 +574,7 @@ function QuestionDockForm({
 			    Capped by the measured column (--dock-max-h; the old fixed 55dvh cut
 			    long questions short — owner round, 2026-10-05). */}
 			<div data-dock-scroll-area="" data-session-find-root="" className="max-h-[var(--dock-max-h,55dvh)] overflow-y-auto px-4 pt-3">
-				<div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+				<div className="mb-1 text-xs font-medium text-muted-foreground">
 					{toolName === "probe"
 						? t.cards.kinds.probe
 						: toolName === "recall"
@@ -610,15 +610,15 @@ function QuestionDockForm({
 									data-kbdrow={i}
 									onClick={() => toggle(i)}
 									className={cn(
-										"flex items-start gap-3 rounded-lg border px-3 py-2 text-start text-sm outline-none transition-colors",
-										isSel ? "border-primary bg-accent" : "hover:bg-accent/50",
-										i === kbdIdx && !isSel && "ring-1 ring-border bg-accent/40",
+										"flex items-start gap-3 rounded-lg border px-3 py-2.5 text-start text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+										isSel ? "border-primary/50 bg-primary/10" : "hover:bg-accent/50",
+										i === kbdIdx && !isSel && "ring-1 ring-ring/60 bg-accent/40",
 									)}
 								>
 									<span
 										className={cn(
 											"mt-0.5 flex size-4 shrink-0 items-center justify-center border",
-											qd.mode === "multi-select" ? "rounded-sm" : "rounded-full",
+											qd.mode === "multi-select" ? "rounded-[5px]" : "rounded-full",
 											isSel ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40",
 										)}
 									>
@@ -658,9 +658,9 @@ function QuestionDockForm({
 								className={cn(
 									// Option-row layout + radio circle (owner); the dashed
 									// outline stays — this is the deliberate non-answer.
-									"flex items-start gap-3 rounded-lg border border-dashed px-3 py-2 text-start text-sm outline-none transition-colors",
-									sel.dontKnow ? "border-primary text-foreground" : "text-muted-foreground",
-									kbdIdx === optionCount && !sel.dontKnow && "ring-1 ring-border bg-accent/40",
+									"flex items-start gap-3 rounded-lg border border-dashed px-3 py-2.5 text-start text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+									sel.dontKnow ? "border-primary/50 bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-accent/50",
+									kbdIdx === optionCount && !sel.dontKnow && "ring-1 ring-ring/60 bg-accent/40",
 								)}
 							>
 								<span
@@ -685,15 +685,15 @@ function QuestionDockForm({
 								data-kbdrow={optionCount}
 								onClick={selectOther}
 								className={cn(
-									"flex items-start gap-3 rounded-lg border px-3 py-2 text-start text-sm outline-none transition-colors",
-									sel.otherSelected ? "border-primary bg-accent" : "border-dashed hover:bg-accent/50",
-									kbdIdx === optionCount && !sel.otherSelected && "ring-1 ring-border bg-accent/40",
+									"flex items-start gap-3 rounded-lg border px-3 py-2.5 text-start text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+									sel.otherSelected ? "border-primary/50 bg-primary/10" : "border-dashed hover:bg-accent/50",
+									kbdIdx === optionCount && !sel.otherSelected && "ring-1 ring-ring/60 bg-accent/40",
 								)}
 							>
 								<span
 									className={cn(
 										"mt-0.5 flex size-4 shrink-0 items-center justify-center border",
-										qd.mode === "multi-select" ? "rounded-sm" : "rounded-full",
+										qd.mode === "multi-select" ? "rounded-[5px]" : "rounded-full",
 										sel.otherSelected
 											? "border-primary bg-primary text-primary-foreground"
 											: "border-muted-foreground/40",
@@ -765,11 +765,11 @@ function QuestionDockForm({
 				GRAYS it out — the layout holds, no value is sent, the IDK
 				signal stands alone. */}
 			{kind === "quiz" && (
-				<div className="border-t border-border/60 px-4 py-2.5">
+				<div className="border-t border-border px-4 py-3">
 					<div className="flex items-center gap-3">
 						<span
 							className={cn(
-								"shrink-0 text-xs font-medium uppercase tracking-wide",
+								"shrink-0 text-xs font-medium",
 								sel.dontKnow ? "text-muted-foreground/50" : "text-muted-foreground",
 							)}
 						>
@@ -836,7 +836,7 @@ function QuestionDockForm({
 						<span
 							data-testid="confidence-value"
 							className={cn(
-								"shrink-0 whitespace-nowrap text-end font-ui text-xs",
+								"shrink-0 whitespace-nowrap rounded-full bg-muted px-2.5 py-0.5 text-center font-ui text-xs",
 								sel.dontKnow && "text-muted-foreground/50",
 							)}
 						>
@@ -852,7 +852,7 @@ function QuestionDockForm({
 			    is for dumping, soon dictated; the button submits); text mode
 			    keeps "Your answer" with Enter-to-submit. */}
 			<form
-				className="border-t border-border/60 p-1.5"
+				className="border-t border-border p-2"
 				onSubmit={(e) => {
 					e.preventDefault();
 					submit();
@@ -860,9 +860,9 @@ function QuestionDockForm({
 			>
 				<div
 					data-testid={qd.mode === "text" ? "answer-field" : "thinking-field"}
-					className="rounded-[10px] border border-border/70 bg-background/60 transition-colors focus-within:border-primary/50"
+					className="rounded-lg border border-border bg-background/60 transition-colors focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-ring/30"
 				>
-					<div className="px-2.5 pt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+					<div className="px-2.5 pt-2 text-xs font-medium text-muted-foreground">
 						{qd.mode === "text" ? t.cards.questionDock.yourAnswer : t.cards.composer.yourThinking}
 					</div>
 					{qd.mode === "text" ? (
@@ -936,7 +936,7 @@ function QuestionDockForm({
 						<Button
 							type="submit"
 							disabled={!canSubmit || compactionRunning}
-							className="ms-auto h-9 rounded-[6px] px-3.5 text-sm font-medium"
+							className="ms-auto h-9 rounded-lg px-4 text-sm font-medium"
 						>
 							{t.cards.questionDock.submit}
 						</Button>

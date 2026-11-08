@@ -281,7 +281,7 @@ describe("ChainTableBody — the floating selection bar (never shifts layout)", 
 		// opening a source-contribution confirmation, not global node deletion.
 		assert.ok(html.includes('data-testid="chain-danger-divider"'));
 		const del = html.match(/<button[^>]*data-testid="chain-delete"[^>]*>/)?.[0] ?? "";
-		assert.match(del, /border-destructive\/50/); // the destructive pair
+		assert.match(del, /bg-destructive\/10[^"]*text-destructive/); // the destructive pair
 		assert.match(del, /aria-label="Delete selected sources and folders"/);
 		assert.ok(html.includes("lucide-trash-2"), "the trash icon");
 		// the fence is before Delete in the DOM (right end of the bar)

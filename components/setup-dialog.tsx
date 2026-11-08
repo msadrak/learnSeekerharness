@@ -160,7 +160,7 @@ export function SetupKeysBody({
 	const s = t.shell.setup;
 	const shown = error ? localizeServerError(error, t) : null;
 	return (
-		<div className="flex flex-col gap-3 px-6 py-5" data-testid="setup-stage-keys">
+		<div className="flex flex-col gap-3 p-6" data-testid="setup-stage-keys">
 			<p className="text-xs text-muted-foreground">
 				{s.keysIntro}
 			</p>
@@ -172,7 +172,7 @@ export function SetupKeysBody({
 						data-testid="setup-key-provider"
 						aria-expanded={menuOpen}
 						onClick={onToggleMenu}
-						className="flex h-7 w-full items-center gap-1 rounded-sm border border-border bg-background px-1.5 text-start font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50"
+						className="flex h-8 w-full items-center gap-1.5 rounded-lg border border-input bg-background px-3 text-start font-ui text-sm text-foreground transition-colors hover:border-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						<span dir={provider ? textDirection(provider.label) : undefined} className="min-w-0 flex-1 truncate lh-align-page">{provider ? provider.label : s.pickProvider}</span>
 						<span aria-hidden className="text-muted-foreground">
@@ -185,7 +185,7 @@ export function SetupKeysBody({
 							testid="setup-key-provider-menu"
 							preferredSide="down"
 							align="left"
-							menuClass="flex w-[22rem] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+							menuClass="flex w-[22rem] flex-col rounded-xl border border-border bg-popover p-2 text-xs shadow-float"
 						>
 							<ProviderMenuList providers={providers ?? []} onPick={onPick} />
 						</MenuShell>
@@ -206,14 +206,14 @@ export function SetupKeysBody({
 								data-testid="setup-key-input"
 								disabled={saving}
 								autoFocus
-								className="h-7 min-w-0 flex-1 rounded-sm border border-border bg-background px-1.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-muted-foreground/50"
+								className="h-8 min-w-0 flex-1 rounded-lg border border-input bg-background px-3 font-mono text-xs text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-ring"
 							/>
 							<button
 								type="button"
 								onClick={onSave}
 								disabled={saving || !value.trim()}
 								data-testid="setup-key-save"
-								className="shrink-0 rounded-sm border border-border bg-background px-3 py-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-40"
+								className="h-8 shrink-0 rounded-lg bg-primary px-4 font-ui text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40"
 							>
 								{saving ? t.common.states.saving : s.saveKey}
 							</button>
@@ -451,7 +451,7 @@ function OpenSetupDialog({ onClose, onDone }: SetupDialogProps) {
 
 	return createPortal(
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-background/80"
+			className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm"
 			data-testid="setup-backdrop"
 			{...backdropDismiss}
 		>
@@ -460,18 +460,18 @@ function OpenSetupDialog({ onClose, onDone }: SetupDialogProps) {
 				aria-modal="true"
 				aria-label={s.title}
 				data-testid="setup-dialog"
-				className="settings-dialog-pop flex max-h-[85vh] w-[640px] max-w-[90vw] flex-col overflow-hidden rounded-md border border-border bg-card shadow-xl"
+				className="settings-dialog-pop flex max-h-[85vh] w-[640px] max-w-[90vw] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-float"
 				onClick={(e) => e.stopPropagation()}
 			>
-				<header className="flex h-15 shrink-0 items-center gap-3 border-b border-border px-5">
-					<h2 className="font-title text-2xl tracking-tight">{s.title}</h2>
+				<header className="flex h-16 shrink-0 items-center gap-3 border-b border-border/60 px-6">
+					<h2 className="font-title text-xl tracking-tight">{s.title}</h2>
 					<Hint label={t.common.actions.close} binding="escape" side="left">
 <button
 						type="button"
 						aria-label={s.closeSetup}
 						data-testid="setup-close"
 						onClick={onClose}
-						className="ms-auto text-muted-foreground transition-colors hover:text-foreground"
+						className="ms-auto flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						✕
 					</button>
@@ -480,15 +480,15 @@ function OpenSetupDialog({ onClose, onDone }: SetupDialogProps) {
 
 				{failed && (
 					<p role="alert" data-testid="setup-catalog-error" className="px-6 py-3 text-sm text-foreground">
-						{s.catalogFailed} <button type="button" data-testid="setup-retry" className="underline" onClick={refresh}>{t.common.actions.retry}</button>
+						{s.catalogFailed} <button type="button" data-testid="setup-retry" className="text-brand underline-offset-2 hover:underline" onClick={refresh}>{t.common.actions.retry}</button>
 					</p>
 				)}
 				{stage === "loading" ? (
-					!failed && <p data-testid="setup-stage-loading" role="status" className="px-6 py-5 text-xs text-muted-foreground">{t.settings.menus.loadingModels}</p>
+					!failed && <p data-testid="setup-stage-loading" role="status" className="p-6 text-xs text-muted-foreground">{t.settings.menus.loadingModels}</p>
 				) : stage === "keys" ? (
-					<div className="flex flex-col px-6 py-5">{keysBody}</div>
+					<div className="flex flex-col p-6">{keysBody}</div>
 				) : (
-					<div className="flex flex-col gap-4 overflow-y-auto px-6 py-5" data-testid="setup-stage-pickers">
+					<div className="flex flex-col gap-4 overflow-y-auto p-6" data-testid="setup-stage-pickers">
 						<p className="text-xs text-muted-foreground">
 							{s.pickersIntro}
 						</p>
@@ -509,13 +509,13 @@ function OpenSetupDialog({ onClose, onDone }: SetupDialogProps) {
 										{!catalog?.slots?.[slot]?.model && !picked[slot] && (
 											<span
 												data-testid={`setup-needed-${slot}`}
-												className="rounded-sm border border-border px-1 py-0.5 text-[10px] font-normal tracking-wide text-muted-foreground"
+												className="rounded-full bg-warning/15 px-2 py-0.5 text-xs font-medium text-warning"
 											>
 												{s.needed}
 											</span>
 										)}
 									</span>
-									<span className="text-xs text-muted-foreground/70">{s.slots[slot].roster}</span>
+									<span className="text-xs text-muted-foreground">{s.slots[slot].roster}</span>
 									{slot !== "strong" && <><ChatGPTBackgroundAccess provider={entry?.provider} /><NativeSubscriptionBackgroundAccess provider={entry?.provider} /></>}
 									<div className="flex items-center gap-2">
 										<div className="relative flex-1">
@@ -526,7 +526,7 @@ function OpenSetupDialog({ onClose, onDone }: SetupDialogProps) {
 												data-testid={`setup-trigger-${slot}`}
 												aria-expanded={openMenu?.slot === slot && openMenu.kind === "model"}
 												onClick={() => setOpenMenu(openMenu?.slot === slot && openMenu.kind === "model" ? null : { slot, kind: "model" })}
-												className="flex h-7 min-w-40 w-full items-center gap-1 rounded-sm border border-border bg-background px-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50"
+												className="flex h-8 w-full min-w-40 items-center gap-1.5 rounded-lg border border-input bg-background px-3 font-ui text-sm text-foreground transition-colors hover:border-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 											>
 												<span dir={entry ? textDirection(entry.id) : undefined} className="min-w-0 flex-1 truncate lh-align-page">{entry ? prettyModel(entry.id) : s.pickModel}</span>
 												<span aria-hidden className="text-muted-foreground">
@@ -549,7 +549,7 @@ function OpenSetupDialog({ onClose, onDone }: SetupDialogProps) {
 													testid={`setup-menu-${slot}`}
 													preferredSide="down"
 													align="left"
-													menuClass="flex w-[22rem] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+													menuClass="flex w-[22rem] flex-col rounded-xl border border-border bg-popover p-2 text-xs shadow-float"
 												>
 													<ModelMenuList
 														models={slotCatalog}
@@ -584,7 +584,7 @@ function OpenSetupDialog({ onClose, onDone }: SetupDialogProps) {
 												aria-expanded={openMenu?.slot === slot && openMenu.kind === "thinking"}
 												disabled={!entry}
 												onClick={() => setOpenMenu(openMenu?.slot === slot && openMenu.kind === "thinking" ? null : { slot, kind: "thinking" })}
-												className="flex h-7 w-24 items-center gap-1 rounded-sm border border-border bg-background px-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-40"
+												className="flex h-8 w-28 items-center gap-1.5 rounded-lg border border-input bg-background px-3 font-ui text-sm text-foreground transition-colors hover:border-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40"
 											>
 												<span className="min-w-0 flex-1 truncate text-start">
 													{entry ? (level ? t.common.thinkingLevels[level] ?? level : "…") : "—"}
@@ -599,7 +599,7 @@ function OpenSetupDialog({ onClose, onDone }: SetupDialogProps) {
 													testid={`setup-thinking-menu-${slot}`}
 													preferredSide="down"
 													align="left"
-													menuClass="flex w-44 flex-col gap-0.5 rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+													menuClass="flex w-44 flex-col gap-0.5 rounded-xl border border-border bg-popover p-2 text-xs shadow-float"
 												>
 													<ThinkingMenuList
 														levels={levelsForEntry.map(String)}
@@ -623,7 +623,7 @@ function OpenSetupDialog({ onClose, onDone }: SetupDialogProps) {
 								data-testid="setup-save"
 								disabled={!allPicked || saving}
 								onClick={() => void save()}
-								className="rounded-sm border border-border bg-background px-3 py-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-40"
+								className="h-9 rounded-lg bg-primary px-5 font-ui text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40"
 							>
 								{saving ? t.common.states.saving : s.saveModels}
 							</button>

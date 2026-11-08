@@ -16,14 +16,14 @@ export function DeleteSourceBody({ sources, folders, deleteSessions, onDeleteSes
 	const chats = sources.filter((s) => s.kind === "chat");
 	const names = [...sources.map((s) => s.label ?? s.id), ...folders.map((f) => f.name)];
 	return <div role="dialog" aria-modal="true" aria-label={s.deleteDialogLabel} data-testid="delete-source-dialog"
-		onClick={(e) => e.stopPropagation()} className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-xl border bg-card p-5 shadow-xl">
+		onClick={(e) => e.stopPropagation()} className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-xl border bg-card p-5 shadow-float">
 		<h2 className="text-sm font-semibold text-destructive">{s.deleteDialogTitle}</h2>
 		<p className="mt-1.5 font-mono text-sm" data-testid="source-deletion-names">{names.slice(0, 8).join(", ")}{names.length > 8 ? t.graph.deleteNode.andMore(names.length - 8) : ""}</p>
 		{sources.length > 0 && <p className="mt-2 text-sm text-muted-foreground" data-testid="source-deletion-contributions">
 			{s.deleteContributions}
 		</p>}
 		<p className="mt-2 text-xs text-muted-foreground">{s.deleteRecords}</p>
-		{chats.length > 0 && <label className="mt-4 flex cursor-pointer items-start gap-2.5 rounded-lg border border-border/60 px-4 py-3">
+		{chats.length > 0 && <label className="mt-4 flex cursor-pointer items-start gap-2.5 rounded-lg border border-border px-4 py-3 transition-colors hover:bg-accent/50">
 			<input type="checkbox" data-testid="delete-source-sessions" checked={deleteSessions} disabled={busy}
 				onChange={(e) => onDeleteSessions(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-primary" />
 			<span className="min-w-0"><span className="block text-sm">{s.deleteSelectedSessions(chats.length)}</span>
@@ -32,8 +32,8 @@ export function DeleteSourceBody({ sources, folders, deleteSessions, onDeleteSes
 		</label>}
 		{failure && <p role="alert" data-testid="source-delete-failure" className="mt-3 text-xs text-foreground">{localizeServerError(failure, t)}</p>}
 		<div className="mt-4 flex justify-end gap-2">
-			<button type="button" data-testid="source-delete-cancel" disabled={busy} onClick={onClose} className="rounded-sm px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40">{t.common.actions.cancel}</button>
-			<button type="button" data-testid="source-delete-confirm" disabled={busy} onClick={onRun} className="rounded-sm border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-xs text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-40">{busy ? t.graph.deleteNode.deleting : failure ? t.graph.deleteNode.tryAgain : t.common.actions.delete}</button>
+			<button type="button" data-testid="source-delete-cancel" disabled={busy} onClick={onClose} className="rounded-lg px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground disabled:opacity-40">{t.common.actions.cancel}</button>
+			<button type="button" data-testid="source-delete-confirm" disabled={busy} onClick={onRun} className="rounded-lg bg-destructive px-3.5 py-2 text-sm font-medium text-background transition-colors hover:bg-destructive/90 disabled:opacity-40">{busy ? t.graph.deleteNode.deleting : failure ? t.graph.deleteNode.tryAgain : t.common.actions.delete}</button>
 		</div>
 	</div>;
 }
@@ -58,7 +58,7 @@ export function DeleteSourceDialog({ open, sources, folders, onDelete, onClose }
 		catch (error) { setFailure(error instanceof Error ? error.message : String(error)); }
 		finally { setBusy(false); }
 	};
-	return createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80" {...backdrop}>
+	return createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" {...backdrop}>
 		<DeleteSourceBody sources={sources} folders={folders} deleteSessions={deleteSessions} onDeleteSessions={setDeleteSessions}
 			busy={busy} failure={failure} onClose={onClose} onRun={() => { void run(); }} />
 	</div>, document.body);

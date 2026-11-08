@@ -36,7 +36,7 @@ describe("PhaseChip (header)", () => {
 		assert.ok(!html.includes("rounded-full"), "no pill curve");
 		assert.ok(!html.includes("border-border"), "no border chrome");
 		assert.ok(!html.includes("px-2"), "no pill padding");
-		assert.match(html, /class="[^"]*text-xs font-medium uppercase/, "the quiet flat label keeps its type treatment");
+		assert.match(html, /class="[^"]*text-xs font-medium text-muted-foreground/, "the quiet flat label keeps its type treatment");
 	});
 
 	it("NEVER shows a working spinner — the pill's curve suits text, not glyph cells (owner, round 2)", () => {
@@ -51,8 +51,8 @@ describe("PhaseDivider (transcript boundary)", () => {
 		const html = renderToStaticMarkup(<PhaseDivider phase="plan" nodeCount={3} />);
 		assert.ok(html.includes('data-testid="phase-divider-plan"'));
 		assert.match(html, /Plan · 3 nodes/);
-		assert.ok(html.includes("border-dotted"), "dotted rule");
-		assert.ok(html.includes("border-border"), "monochrome rule");
+		assert.ok(html.includes("h-px flex-1 bg-border"), "hairline rule");
+		assert.ok(html.includes("rounded-full"), "rounded label chip");
 		assert.ok(!html.includes("border-phase-"), "phase-colored rules are retired");
 	});
 

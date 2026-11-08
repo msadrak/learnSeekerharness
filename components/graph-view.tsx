@@ -117,7 +117,7 @@ import {
 
 /** The "unassessed" node colour (no practice verdict yet; canvas wants hex,
  *  not oklch). Practiced nodes override it per node with a mastery colour. */
-const NODE_COLOR_TOKEN = "--primary";
+const NODE_COLOR_TOKEN = "--foreground";
 
 /** Per-device graph camera persistence (zoom+pan view state). v1 in the
  *  key: the stored shape is the renderer's d3 transform {k, x, y}. */
@@ -364,7 +364,7 @@ export function GraphCostControl({ costs }: { costs: GraphCostSummary }) {
 				type="button"
 				aria-expanded={open}
 				onClick={() => setOpen((o) => !o)}
-				className={`rounded-lg px-2 py-1 text-xs tabular-nums transition-colors hover:bg-accent ${
+				className={`rounded-lg px-2 py-1 text-xs tabular-nums transition-colors hover:bg-accent/50 ${
 					open ? "text-foreground" : "text-muted-foreground hover:text-foreground"
 				}`}
 			>
@@ -400,9 +400,9 @@ function GraphCostPanel({ costs }: { costs: GraphCostSummary }) {
 	// the pill and this panel must agree).
 	const { unpricedRuns } = displayCostTotals(costs);
 	return (
-		<div className="w-80 max-w-[calc(100vw-1.5rem)] rounded-xl border bg-card/95 p-3 text-xs shadow-lg backdrop-blur">
+		<div className="w-80 max-w-[calc(100vw-1.5rem)] rounded-xl border bg-card/90 p-4 text-xs shadow-float backdrop-blur">
 			<div className="mb-2 flex items-baseline justify-between">
-				<span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+				<span className="text-[10px] font-medium text-muted-foreground">
 					{t.graph.cost.title}
 				</span>
 				<span className="text-foreground tabular-nums">
@@ -483,7 +483,7 @@ function GraphSettingsControl({
 				type="button"
 				aria-expanded={open}
 				onClick={() => setOpen((o) => !o)}
-				className={`flex size-9 items-center justify-center rounded-xl border bg-card/85 shadow-lg backdrop-blur transition-colors hover:bg-accent ${
+				className={`flex size-9 items-center justify-center rounded-full border bg-card/85 shadow-soft backdrop-blur transition-colors hover:bg-accent/50 ${
 					open ? "text-foreground" : "text-muted-foreground hover:text-foreground"
 				}`}
 			>
@@ -502,7 +502,7 @@ function GraphSettingsControl({
 				// (pr-2.5) -> scrollbar -> 10px (p-2.5) -> panel edge. The
 				// scrollbar itself does NOT move: it stays pinned at the same
 				// distance from the panel's right border.
-				<div className="absolute inset-e-0 top-full mt-2 flex max-h-[60vh] w-72 flex-col rounded-xl border bg-card/85 p-2.5 shadow-lg backdrop-blur">
+				<div className="absolute inset-e-0 top-full mt-2 flex max-h-[60vh] w-72 flex-col rounded-xl border bg-card/90 p-3 shadow-float backdrop-blur">
 					<div className="flex flex-col gap-2 overflow-y-auto pe-2.5">
 							{/* Size/zoom/region sliders: LADDER-mapped 0-100, step 10 (11
 							    stops, every DEFAULT dead-center at 50, every value a nice
@@ -567,7 +567,7 @@ function GraphSettingsControl({
 						    the whole build (splat/blur/readback/blit), not just
 						    the paint. */}
 						<div className="mt-1.5 flex flex-col gap-1.5 border-t pt-1.5">
-							<span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+							<span className="text-[10px] font-medium text-muted-foreground">
 								{s.regions}
 							</span>
 							<label className="flex cursor-pointer items-center justify-between text-[11px] text-muted-foreground">
@@ -688,7 +688,7 @@ function GraphSettingsControl({
 						    Order (user 2026-09-17): general forces first; depth
 						    anchor + its gray-out-able controls last. */}
 						<div className="mt-1.5 flex flex-col gap-1.5 border-t pt-1.5">
-							<span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+							<span className="text-[10px] font-medium text-muted-foreground">
 								{s.physics}
 							</span>
 							<SettingSlider
@@ -880,7 +880,7 @@ export function GraphChromeRow({
 	return (
 		<>
 			{!isEmpty && (
-				<div className="graph-chrome-fade-in w-56 min-w-0 shrink rounded-xl border bg-card/85 px-1 py-[3px] shadow-lg backdrop-blur">
+				<div className="graph-chrome-fade-in w-56 min-w-0 shrink rounded-full border bg-card/85 px-1 py-[3px] shadow-soft backdrop-blur">
 					<Hint
 						// ⌘F focuses node search (surface-scoped registry action).
 						label={c.searchNodes}
@@ -897,7 +897,7 @@ export function GraphChromeRow({
 							aria-label={c.searchNodes}
 							dir={inputDirection(query)}
 							spellCheck={false}
-							className="h-7 w-full rounded-lg border bg-background ps-8 text-xs outline-none placeholder:text-muted-foreground focus:border-ring"
+							className="h-7 w-full rounded-full border bg-background ps-8 text-xs outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
 						/>
 					</div>
 					</Hint>
@@ -908,13 +908,13 @@ export function GraphChromeRow({
 			)}
 			{/* The chain table (chains overlay, owner plan 2026-09-29). Own
 			    container (36px band), between the search and Import. */}
-			<div className="graph-chrome-fade-in shrink-0 rounded-xl border bg-card/85 px-1 py-[3px] shadow-lg backdrop-blur">
+			<div className="graph-chrome-fade-in shrink-0 rounded-full border bg-card/85 px-1 py-[3px] shadow-soft backdrop-blur">
 					<Hint label={c.chainsHint} side="bottom">
 						<button
 							type="button"
 							onClick={onOpenChains}
 							data-testid="open-chain-table"
-							className="flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-xs text-muted-foreground transition-colors hover:bg-accent"
+							className="flex h-7 items-center gap-1.5 rounded-full px-3 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
 						>
 							<ListTreeIcon className="size-3" />
 							{c.chains}
@@ -943,12 +943,12 @@ function MasteryLegend() {
 	const g = useT().graph.mastery;
 	const items = [
 		{ dot: "bg-success", label: g.understood },
-		{ dot: "bg-warning", label: g.inProgress },
+		{ dot: "bg-info", label: g.inProgress },
 		{ dot: "bg-danger", label: g.needsReview },
-		{ dot: "bg-primary", label: g.unassessed },
+		{ dot: "bg-foreground", label: g.unassessed },
 	];
 	return (
-		<div role="group" aria-label={g.legend} data-testid="mastery-legend" className="flex items-center gap-3 rounded-md border bg-card/80 px-2.5 py-1.5 font-ui text-xs text-muted-foreground">
+		<div role="group" aria-label={g.legend} data-testid="mastery-legend" className="flex items-center gap-3 rounded-full border bg-card/85 px-3.5 py-1.5 font-ui text-xs text-muted-foreground shadow-soft backdrop-blur">
 			{items.map((item) => (
 				<span key={item.dot} className="flex items-center gap-1.5">
 					<span className={`size-2 rounded-full ${item.dot}`} />
@@ -1434,7 +1434,7 @@ export function GraphView({
 		if (!renderer || !snapshot || snapshot.nodes.length === 0 || !positions) return;
 		const masteryHex = {
 			understood: tokenHex("--lh-success"),
-			inProgress: tokenHex("--lh-warning"),
+			inProgress: tokenHex("--lh-info"),
 			needsReview: tokenHex("--lh-danger"),
 		};
 		renderer.setData({
@@ -1454,7 +1454,7 @@ export function GraphView({
 			clusters: snapshot.clusters.map((c) => ({ id: c.id, label: c.label, members: c.members })),
 			colors: {
 				node: tokenHex(NODE_COLOR_TOKEN),
-				edge: tokenHex("--ring"),
+				edge: tokenHex("--muted-foreground"),
 				label: tokenHex("--muted-foreground"),
 				hoverText: tokenHex("--foreground"),
 			},
@@ -1589,7 +1589,7 @@ export function GraphView({
 							setDeletingNode({ id: ctxNode.id, name: ctxNode.name });
 							setCtxNode(null);
 						}}
-						className="flex items-center rounded-lg px-2.5 py-1.5 text-start text-muted-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+						className="flex items-center rounded-lg px-2.5 py-1.5 text-start text-muted-foreground/80 transition-colors hover:bg-accent/50 hover:text-foreground"
 					>
 						{t.common.actions.delete}
 					</button>
@@ -1678,7 +1678,7 @@ export function GraphView({
 			{pipelineRuns.map((run) => (
 				<div
 					key={run.id}
-					className="flex items-center gap-2 rounded-full border bg-card/85 px-3 py-1.5 text-xs text-muted-foreground shadow-lg backdrop-blur"
+					className="flex items-center gap-2 rounded-full border bg-card/85 px-3 py-1.5 text-xs text-muted-foreground shadow-soft backdrop-blur"
 				>
 					<Loader2Icon className="size-3.5 shrink-0 animate-spin motion-reduce:animate-none" />
 					<span className="capitalize">{(t.graph.pipeline.phases as Record<string, string>)[run.phase] ?? run.phase}</span>
@@ -1697,14 +1697,14 @@ export function GraphView({
 					// lh-no-drag: the card is placed anywhere on the canvas —
 					// when it lands in the top strip it must stay interactive
 					// over home.tsx's drag surface (2026-09-17).
-					className="lh-no-drag absolute z-10 w-80 max-w-[calc(100%-1rem)] rounded-xl border bg-card p-4 text-start shadow-lg"
+					className="lh-no-drag absolute z-10 w-80 max-w-[calc(100%-1rem)] rounded-xl border bg-card p-4 text-start shadow-float"
 				>
-					<div dir={textDirection(selected.node.name)} className="text-sm font-medium leading-snug">{selected.node.name}</div>
-					<div dir={textDirection(selected.node.statement)} className="mt-1 text-xs leading-relaxed text-muted-foreground">{selected.node.statement}</div>
+					<div dir={textDirection(selected.node.name)} className="text-base font-semibold leading-snug">{selected.node.name}</div>
+					<div dir={textDirection(selected.node.statement)} className="lh-prose mt-1.5 text-sm leading-relaxed text-muted-foreground">{selected.node.statement}</div>
 					{(() => {
 						const g = t.graph.mastery;
 						const m = snapshot?.mastery?.[selected.node.id];
-						const dot = m ? { understood: "bg-success", inProgress: "bg-warning", needsReview: "bg-danger" }[m.state] : "bg-primary";
+						const dot = m ? { understood: "bg-success", inProgress: "bg-info", needsReview: "bg-danger" }[m.state] : "bg-foreground";
 						return (
 							<div data-testid="node-mastery" className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
 								<span className={`size-2 shrink-0 rounded-full ${dot}`} />
@@ -1735,7 +1735,7 @@ export function GraphView({
 											dir={textDirection(snapshot?.sessions[sourceId] ?? sourceId)}
 											href={propositionSessionHref(selected.node, sourceId)}
 											scroll={false}
-											className="min-w-0 flex-1 truncate rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent lh-align-page"
+											className="min-w-0 flex-1 truncate rounded-lg px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent/50 lh-align-page"
 										>
 											{snapshot?.sessions[sourceId] ?? sourceId}
 										</Link>

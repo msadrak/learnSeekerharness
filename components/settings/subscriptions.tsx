@@ -20,8 +20,9 @@ import { toast } from "sonner";
 
 const POLL_MS = 1000;
 
-const linkButton = "shrink-0 text-xs text-foreground underline-offset-2 hover:underline disabled:text-muted-foreground/40 disabled:no-underline";
-const mutedButton = "shrink-0 text-xs text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline";
+const linkButton = "shrink-0 rounded-lg border border-input bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:text-muted-foreground/40 disabled:hover:bg-background";
+const dangerButton = "shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-danger/10 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+const mutedButton = "shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 /** The latest event of a kind (the UI shows the freshest url/code). */
 function latest<T extends LoginEvent["type"]>(events: LoginEvent[], type: T): Extract<LoginEvent, { type: T }> | undefined {
@@ -51,10 +52,10 @@ function LoginPanel({ session, onAnswer, onCancel }: { session: LoginSessionView
 	}
 
 	return (
-		<div className="flex flex-col gap-2 rounded-sm border border-border/60 px-2 py-2" data-testid="subscription-login-panel">
+		<div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-card/50 p-3" data-testid="subscription-login-panel">
 			{url && (
 				<p className="text-xs text-foreground">
-					<a href={url.url} target="_blank" rel="noreferrer" className="underline underline-offset-2" data-testid="subscription-auth-link">
+					<a href={url.url} target="_blank" rel="noreferrer" className="text-brand underline-offset-2 hover:underline" data-testid="subscription-auth-link">
 						{s.openSignIn}
 					</a>
 					{url.instructions && <span dir={textDirection(url.instructions)} className="ms-2 text-muted-foreground">{url.instructions}</span>}
@@ -63,12 +64,12 @@ function LoginPanel({ session, onAnswer, onCancel }: { session: LoginSessionView
 			{device && (
 				<p className="text-xs text-foreground">
 					{s.enterCodeBefore}<span className="font-mono text-sm" dir="ltr" data-testid="subscription-device-code">{device.userCode}</span>{s.enterCodeMiddle}
-					<a href={device.verificationUri} target="_blank" rel="noreferrer" dir="ltr" className="underline underline-offset-2">
+					<a href={device.verificationUri} target="_blank" rel="noreferrer" dir="ltr" className="text-brand underline-offset-2 hover:underline">
 						{device.verificationUri} ↗
 					</a>{s.enterCodeAfter}
 				</p>
 			)}
-			{note && <p dir={textDirection(note.message)} className="text-[11px] text-muted-foreground lh-align-page">{note.message}</p>}
+			{note && <p dir={textDirection(note.message)} className="text-xs text-muted-foreground lh-align-page">{note.message}</p>}
 			{prompt &&
 				(prompt.type === "select" ? (
 					<div className="flex flex-col gap-1" data-testid="subscription-prompt">
@@ -95,7 +96,7 @@ function LoginPanel({ session, onAnswer, onCancel }: { session: LoginSessionView
 								onKeyDown={(e) => {
 									if (e.key === "Enter" && value.trim()) void send(value.trim());
 								}}
-								className="h-7 min-w-0 flex-1 rounded-sm border border-border bg-background px-1.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-muted-foreground/50"
+								className="h-8 min-w-0 flex-1 rounded-lg border border-input bg-background px-3 font-mono text-xs text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-ring"
 							/>
 							<button type="button" className={linkButton} disabled={sending || !value.trim()} onClick={() => void send(value.trim())} data-testid="subscription-prompt-send">
 								{s.submit}
@@ -103,7 +104,7 @@ function LoginPanel({ session, onAnswer, onCancel }: { session: LoginSessionView
 						</div>
 					</div>
 				))}
-			{!url && !device && !prompt && !note && <p className="text-[11px] text-muted-foreground">{s.starting}</p>}
+			{!url && !device && !prompt && !note && <p className="text-xs text-muted-foreground">{s.starting}</p>}
 			<button type="button" className={`${mutedButton} self-start`} onClick={onCancel} data-testid="subscription-login-cancel">
 				{t.common.actions.cancel}
 			</button>
@@ -237,22 +238,22 @@ export function SubscriptionsList() {
 	}
 	const shown = error ? localizeServerError(error, t) : null;
 
-	if (providers === null) return <p className="px-1 py-1.5 text-xs text-muted-foreground/70">{t.common.states.loading}</p>;
+	if (providers === null) return <p className="px-3 py-2 text-xs text-muted-foreground">{t.common.states.loading}</p>;
 	return (
 		<div data-testid="subscriptions-list" className="flex flex-col">
 			{providers.map((p) => {
 				const active = starting === p.id || (session?.providerId === p.id && session.status === "running");
 				return (
 					<div key={p.id} data-testid={`subscription-${p.id}`} className="flex flex-col gap-1.5">
-						<div className="flex items-center justify-between gap-3 px-1 py-1.5">
+						<div className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent/40">
 							<span className="flex min-w-0 flex-col">
-								<span dir={textDirection(p.name)} className="font-ui text-xs text-foreground lh-align-page">{p.name}</span>
-								{p.caveat && <span dir={textDirection(p.caveat)} className="text-[10px] text-muted-foreground/70 lh-align-page">{p.caveat}</span>}
+								<span dir={textDirection(p.name)} className="font-ui text-sm text-foreground lh-align-page">{p.name}</span>
+								{p.caveat && <span dir={textDirection(p.caveat)} className="text-xs text-muted-foreground lh-align-page">{p.caveat}</span>}
 							</span>
 							<span className="flex shrink-0 items-center gap-3">
-								<span className="font-mono text-[11px] text-muted-foreground">{p.connected ? s.connected : ""}</span>
+								<span className="text-xs font-medium text-success">{p.connected ? s.connected : ""}</span>
 								{p.connected ? (
-									<button type="button" className={`${mutedButton} hover:text-danger`} onClick={() => void disconnect(p.id)} data-testid={`subscription-${p.id}-disconnect`}>
+									<button type="button" className={dangerButton} onClick={() => void disconnect(p.id)} data-testid={`subscription-${p.id}-disconnect`}>
 										{t.common.actions.disconnect}
 									</button>
 								) : (
@@ -262,13 +263,13 @@ export function SubscriptionsList() {
 								)}
 							</span>
 						</div>
-						{starting === p.id && <p className="px-2 pb-1 text-[11px] text-muted-foreground" data-testid="subscription-login-starting">{s.starting}</p>}
+						{starting === p.id && <p className="px-2 pb-1 text-xs text-muted-foreground" data-testid="subscription-login-starting">{s.starting}</p>}
 						{starting !== p.id && active && session && <LoginPanel session={session} onAnswer={answer} onCancel={() => void cancel()} />}
 					</div>
 				);
 			})}
 			{shown && (
-				<p role="alert" dir={textDirection(shown)} data-testid="subscriptions-error" className="px-1 py-1 text-xs text-danger">
+				<p role="alert" dir={textDirection(shown)} data-testid="subscriptions-error" className="px-3 py-1 text-xs text-danger">
 					{shown}
 				</p>
 			)}

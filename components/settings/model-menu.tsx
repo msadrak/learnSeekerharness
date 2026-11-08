@@ -115,7 +115,7 @@ export function ModelMenuList({
 						aria-label={starred ? m.removeFavorite(entry.name) : m.addFavorite(entry.name)}
 						data-testid={`model-star-${entry.id.replace(/[^a-z0-9-]/gi, "_")}`}
 						onClick={(e) => { e.stopPropagation(); toggle(pinKey(entry)); }}
-						className={`shrink-0 rounded-md p-1.5 outline-none transition-colors ${starred ? "text-warning" : "text-muted-foreground/50 hover:text-foreground"}`}
+						className={`shrink-0 rounded-lg p-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${starred ? "text-brand" : "text-muted-foreground/50 hover:text-foreground"}`}
 					><StarIcon className={`size-3.5${starred ? " fill-current" : ""}`} /></button>;
 				}}
 				renderItem={(entry) => <>
@@ -132,7 +132,7 @@ export function ModelMenuList({
 				</>}
 			/>
 			{footer && (
-				<div className="mt-1 border-t px-2 pt-1.5 text-xs text-muted-foreground">{footer}</div>
+				<div className="mt-1 border-t border-border/60 px-2.5 pt-2 text-xs text-muted-foreground">{footer}</div>
 			)}
 		</>
 	);
@@ -167,8 +167,8 @@ export function ThinkingMenuList({
 						type="button"
 						data-testid={`thinking-option-${level}`}
 						onClick={() => onPick(level)}
-						className={`flex items-center justify-between rounded-lg px-2 py-1.5 text-start transition-colors hover:bg-muted ${
-							level === effectiveLevel ? "bg-muted/60 text-card-foreground" : "text-card-foreground"
+						className={`flex items-center justify-between rounded-lg px-2.5 py-2 text-start transition-colors hover:bg-accent ${
+							level === effectiveLevel ? "bg-primary/10 text-card-foreground" : "text-card-foreground"
 						}`}
 					>
 						<span>{t.common.thinkingLevels[level] ?? level}</span>
@@ -177,7 +177,7 @@ export function ThinkingMenuList({
 				))
 			)}
 			{footer && (
-				<div className="mt-1 border-t px-2 pt-1.5 text-xs text-muted-foreground">{footer}</div>
+				<div className="mt-1 border-t border-border/60 px-2.5 pt-2 text-xs text-muted-foreground">{footer}</div>
 			)}
 		</>
 	);
@@ -246,7 +246,7 @@ export function ProviderMenuList({
 					}
 				}}
 				placeholder={m.searchProviders}
-				className="lh-input mb-1.5 w-full rounded-lg border bg-background px-2 py-1.5 text-foreground outline-none focus:ring-1 focus:ring-ring"
+				className="lh-input mb-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
 			/>
 			{results.length === 0 && (
 				<div className="px-2 py-3 text-center text-muted-foreground">{m.noProviders}</div>
@@ -259,12 +259,12 @@ export function ProviderMenuList({
 							data-testid={`provider-option-${p.id.replace(/[^a-z0-9-]/gi, "_")}`}
 							data-idx={i}
 							onClick={() => onPick(p)}
-							className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-start outline-none transition-colors hover:bg-muted ${
-								i === menuIdx ? "bg-accent/40 ring-1 ring-inset ring-border" : ""
+							className={`flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-start outline-none transition-colors hover:bg-accent ${
+								i === menuIdx ? "bg-accent" : ""
 							}`}
 						>
 							<span dir={textDirection(p.label)} className="truncate text-card-foreground lh-align-page">{p.label}</span>
-							<span dir="ltr" className="shrink-0 font-mono text-[11px] text-muted-foreground">{p.envVar}</span>
+							<span dir="ltr" className="shrink-0 font-mono text-xs text-muted-foreground">{p.envVar}</span>
 						</button>
 					</li>
 				))}
@@ -377,7 +377,7 @@ export function FontMenuList({
 					}
 				}}
 				placeholder={m.searchFonts}
-				className="lh-input mb-1.5 w-full rounded-lg border bg-background px-2 py-1.5 text-foreground outline-none focus:ring-1 focus:ring-ring"
+				className="lh-input mb-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
 			/>
 			{!families && <div className="px-2 py-3 text-center text-muted-foreground">{m.loadingFonts}</div>}
 			<ul ref={listRef} data-testid="font-list" className="flex max-h-72 flex-col overflow-y-auto px-1">
@@ -392,9 +392,9 @@ export function FontMenuList({
 									data-testid={isDefault ? "font-option-default" : `font-option-${family.replace(/[^a-z0-9-]/gi, "_")}`}
 									data-idx={i}
 									onClick={() => onPick(family)}
-									className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-start outline-none transition-colors hover:bg-muted ${
-										i === menuIdx ? "bg-accent/40 ring-1 ring-inset ring-border" : ""
-									}${effective && i !== menuIdx ? " bg-muted/60" : ""}`}
+									className={`flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-start outline-none transition-colors hover:bg-accent ${
+										i === menuIdx ? "bg-accent" : ""
+									}${effective && i !== menuIdx ? " bg-primary/10" : ""}`}
 								>
 									<span dir={textDirection(family ?? "Source Sans 3")} className="truncate text-card-foreground lh-align-page">{family ?? "Source Sans 3"}</span>
 									<span className="shrink-0 text-muted-foreground">{isDefault ? m.fontDefault : effective && <span aria-hidden>✓</span>}</span>
@@ -409,8 +409,8 @@ export function FontMenuList({
 							data-testid="font-option-custom"
 							data-idx={0}
 							onClick={() => onPick(customFamily)}
-							className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-start outline-none transition-colors hover:bg-muted ${
-								menuIdx === 0 ? "bg-accent/40 ring-1 ring-inset ring-border" : ""
+							className={`flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-start outline-none transition-colors hover:bg-accent ${
+								menuIdx === 0 ? "bg-accent" : ""
 							}`}
 						>
 							<span className="truncate text-card-foreground">{m.useFamilyBefore}<bdi>{customFamily}</bdi>{m.useFamilyAfter}</span>

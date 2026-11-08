@@ -106,8 +106,8 @@ export function SearchSection({
 			type="button"
 			data-testid={`engine-option-${id}`}
 			onClick={onPick}
-			className={`flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-start transition-colors hover:bg-muted ${
-				active ? "bg-muted/60 text-card-foreground" : "text-card-foreground"
+			className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-start transition-colors hover:bg-accent ${
+				active ? "bg-primary/10 text-card-foreground" : "text-card-foreground"
 			}`}
 		>
 			<span>{label}</span>
@@ -141,7 +141,7 @@ export function SearchSection({
 							preferredSide="down"
 							anchorTestid="search-engine-trigger"
 							testid="search-engine-menu"
-							menuClass="flex w-44 flex-col gap-0.5 rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+							menuClass="flex w-44 flex-col gap-0.5 rounded-xl border border-border bg-popover p-2 text-xs shadow-float"
 						>
 							{engineOption("auto", a.automatic, engine === null, null, () => {
 								onAgentChange(composeSearchEngine(agent, null));
@@ -159,7 +159,7 @@ export function SearchSection({
 			</SettingsRow>
 			<SettingsGroup label={k.search} testid="group-search">
 				{statuses === null ? (
-					<p className="text-xs text-muted-foreground/70">{k.loading}</p>
+					<p className="text-xs text-muted-foreground">{k.loading}</p>
 				) : (
 					<ToolKeyRows
 						statuses={classifyKeys(statuses, ks.providers).toolRows.filter((status) => status.id !== "DEEPGRAM_API_KEY")}

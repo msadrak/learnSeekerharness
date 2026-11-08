@@ -71,7 +71,7 @@ async function startup(child, getLogs, marker, timeout = 120000) {
 		inspect();
 	});
 }
-// The CSS pipeline minifies #ffffff to #fff; compare the colour, not the spelling.
+// The CSS pipeline may minify hex colours (#ffffff -> #fff); compare the colour, not the spelling.
 const expandHex = (value) => (/^#[0-9a-f]{3}$/i.test(value) ? `#${[...value.slice(1)].map((c) => c + c).join("")}` : value).toLowerCase();
 async function put(pathname, body) {
 	const res = await fetch(origin + pathname, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -105,7 +105,7 @@ try {
 	const { getFontAxes } = require("next/dist/compiled/@next/font/dist/google/get-font-axes.js");
 	const { getGoogleFontsUrl } = require("next/dist/compiled/@next/font/dist/google/get-google-fonts-url.js");
 	const fonts = Object.fromEntries(
-		["JetBrains Mono", "Source Sans 3"].map((family) => [getGoogleFontsUrl(family, getFontAxes(family, ["variable"], ["normal"]), "swap"), `@font-face { font-family: '${family}'; src: local('Arial'); font-weight: 100 900; }`]),
+		["Inter", "JetBrains Mono", "Source Sans 3"].map((family) => [getGoogleFontsUrl(family, getFontAxes(family, ["variable"], ["normal"]), "swap"), `@font-face { font-family: '${family}'; src: local('Arial'); font-weight: 100 900; }`]),
 	);
 	// Vazirmatn is a single-axis arabic-subset family; mock it the same way.
 	const vazir = getGoogleFontsUrl("Vazirmatn", getFontAxes("Vazirmatn", ["variable"], ["normal"]), "swap");
@@ -182,7 +182,7 @@ try {
 			});
 			assert.equal(facts.dir, language === "fa" ? "rtl" : "ltr", `${tag}: html dir`);
 			assert.ok(facts.classes.includes(mode), `${tag}: html class ${mode}`);
-			assert.equal(expandHex(facts.background), mode === "light" ? "#ffffff" : "#141414", `${tag}: --background`);
+			assert.equal(expandHex(facts.background), mode === "light" ? "#fafaf9" : "#141414", `${tag}: --background`);
 			if (language === "fa") assert.ok(facts.asideCenter > facts.innerWidth / 2, `${tag}: sidebar on the right`);
 			else assert.ok(facts.asideCenter < facts.innerWidth / 2, `${tag}: sidebar on the left`);
 			await shot(page, `${tag}-home`);

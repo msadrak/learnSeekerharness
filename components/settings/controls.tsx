@@ -27,10 +27,10 @@ export function SettingsSection({
 	testid?: string;
 }) {
 	return (
-		<section data-testid={testid} className="px-6 py-5">
-			<h2 className="text-sm uppercase tracking-widest text-foreground">{title}</h2>
+		<section data-testid={testid} className="p-6">
+			<h2 className="text-sm font-semibold text-foreground">{title}</h2>
 			{hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
-			<div className="mt-4 flex flex-col gap-3">{children}</div>
+			<div className="mt-4 flex flex-col gap-1">{children}</div>
 		</section>
 	);
 }
@@ -47,9 +47,9 @@ export function SettingsGroup({
 	testid?: string;
 }) {
 	return (
-		<div data-testid={testid} className="mt-5 border-t border-border/60 pt-4 first:mt-0 first:border-t-0 first:pt-0">
-			<p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
-			<div className="flex flex-col gap-2">{children}</div>
+		<div data-testid={testid} className="mt-5 border-t border-border/60 pt-5 first:mt-0 first:border-t-0 first:pt-0">
+			<p className="mb-2 text-xs font-medium text-muted-foreground">{label}</p>
+			<div className="flex flex-col gap-1">{children}</div>
 		</div>
 	);
 }
@@ -72,12 +72,12 @@ export function SettingsRow({
 	dimmed?: boolean;
 }) {
 	return (
-		<div data-testid={testid} className={cn("flex items-center justify-between gap-4 py-1", dimmed && "opacity-40")}>
+		<div data-testid={testid} className={cn("flex items-center justify-between gap-4 border-b border-border/60 px-3 py-3 last:border-b-0", dimmed && "opacity-40")}>
 			<span className="min-w-0">
 				{/* Labels/hints may carry non-dictionary text (prompt paths, the
 				    server's search reason) — each gets its own direction. */}
-				<span dir={textDirection(label)} className="block font-prose text-(length:--lh-prose-size) lh-align-page">{label}</span>
-				{hint && <span dir={typeof hint === "string" ? textDirection(hint) : undefined} className="block text-xs text-muted-foreground/70 lh-align-page">{hint}</span>}
+				<span dir={textDirection(label)} className="block font-ui text-sm font-medium text-foreground lh-align-page">{label}</span>
+				{hint && <span dir={typeof hint === "string" ? textDirection(hint) : undefined} className="mt-0.5 block text-xs text-muted-foreground lh-align-page">{hint}</span>}
 			</span>
 			{children}
 		</div>
@@ -98,7 +98,7 @@ export function SettingsMenuTrigger({
 		{...props}
 		disabled={disabled}
 		className={cn(
-			"flex h-7 items-center gap-1 rounded-sm border border-border bg-background px-1.5 font-ui text-xs text-foreground transition-colors",
+			"flex h-8 items-center gap-1.5 rounded-lg border border-input bg-background px-3 font-ui text-sm text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
 			disabled || unavailable ? "cursor-not-allowed" : "hover:border-muted-foreground/50",
 			className,
 		)}
@@ -140,10 +140,10 @@ export function Toggle({
 			data-testid={`toggle-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
 			onClick={() => onChange(!checked)}
 			className={cn(
-				"relative h-4.5 w-8 shrink-0 rounded-full border border-border transition-colors",
-				// Owner (2026-09-20): on is a gray track with a WHITE disc (a full-white
-				// track was too loud); off stays the muted track.
-				checked ? "bg-muted-foreground" : "bg-muted",
+				"relative h-5 w-9 shrink-0 rounded-full ring-1 ring-inset ring-border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none",
+				// ON = amber primary track, white thumb with a soft shadow; OFF = the
+				// muted track (ring-inset hairline keeps it legible in light theme).
+				checked ? "bg-primary" : "bg-muted",
 				disabled && "cursor-not-allowed",
 			)}
 		>
@@ -152,8 +152,8 @@ export function Toggle({
 				// only the knob's face changes (the invert affordance).
 				<span
 					className={cn(
-						"absolute inset-s-0 top-0.5 flex size-3 items-center justify-center rounded-full transition-transform",
-						checked ? "translate-x-4 rtl:-translate-x-4 text-foreground" : "translate-x-0.5 rtl:-translate-x-0.5 text-muted-foreground",
+						"absolute inset-s-0 top-0.5 flex size-4 items-center justify-center rounded-full transition-transform motion-reduce:transition-none",
+						checked ? "translate-x-4.5 rtl:-translate-x-4.5 text-primary-foreground" : "translate-x-0.5 rtl:-translate-x-0.5 text-muted-foreground",
 					)}
 				>
 					{discIcon}
@@ -161,10 +161,9 @@ export function Toggle({
 			) : (
 				<span
 					className={cn(
-						"absolute inset-s-0 top-0.5 size-3 rounded-full transition-transform",
-						// 2px inset from each inner edge, both states (owner round: the on
-						// disc used to touch the pill's right edge).
-						checked ? "translate-x-4 rtl:-translate-x-4 bg-foreground" : "translate-x-0.5 rtl:-translate-x-0.5 bg-muted-foreground",
+						"absolute inset-s-0 top-0.5 size-4 rounded-full bg-white shadow-soft transition-transform motion-reduce:transition-none",
+						// 2px inset from each inner edge, both states.
+						checked ? "translate-x-4.5 rtl:-translate-x-4.5" : "translate-x-0.5 rtl:-translate-x-0.5",
 					)}
 				/>
 			)}
@@ -196,7 +195,7 @@ export function ThinSelect({
 			disabled={disabled}
 			onChange={(e) => onChange(e.target.value)}
 			className={cn(
-				"h-7 rounded-sm border border-border bg-background px-1.5 font-ui text-xs text-foreground outline-none",
+				"h-8 rounded-lg border border-input bg-background px-3 font-ui text-sm text-foreground outline-none transition-colors hover:border-muted-foreground/50 focus-visible:ring-2 focus-visible:ring-ring",
 				disabled && "cursor-not-allowed",
 			)}
 		>
@@ -260,7 +259,7 @@ export function CommitInput({
 			}}
 			disabled={disabled}
 			className={cn(
-				"h-7 w-40 rounded-sm border border-border bg-background px-2 font-ui text-xs text-foreground outline-none placeholder:text-muted-foreground/60",
+				"h-8 w-40 rounded-lg border border-input bg-background px-3 font-ui text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 hover:border-muted-foreground/50 focus-visible:ring-2 focus-visible:ring-ring",
 				disabled && "cursor-not-allowed",
 			)}
 		/>

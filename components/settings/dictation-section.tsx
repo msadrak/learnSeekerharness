@@ -17,19 +17,19 @@ export function DictationSection({ initialRow }: { initialRow?: string }) {
 	const k = useT().settings.keys;
 	const ks = useKeyStatuses();
 	if (ks.statuses === null) {
-		return <p className="px-6 py-5 text-xs text-muted-foreground/70">{k.loading}</p>;
+		return <p className="p-6 text-xs text-muted-foreground">{k.loading}</p>;
 	}
 	const { toolRows } = classifyKeys(ks.statuses, ks.providers);
 	return (
 		<SettingsGroup label={k.dictation} testid="group-dictation">
 			<ToolKeyRows statuses={toolRows.filter((status) => status.id === "DEEPGRAM_API_KEY")} ks={ks} initialRow={initialRow} />
 			<DictationLanguageSetting />
-			<p data-testid="dictation-setup-hint" className="px-1 text-[11px] leading-relaxed text-muted-foreground/70">
+			<p data-testid="dictation-setup-hint" className="px-3 text-xs leading-relaxed text-muted-foreground">
 				{k.deepgramHintBefore}<a
 					href="https://console.deepgram.com/"
 					target="_blank"
 					rel="noreferrer"
-					className="underline underline-offset-2 hover:text-foreground"
+					className="text-brand underline-offset-2 hover:underline"
 				>{k.deepgramHintLink}</a>{k.deepgramHintAfter}
 			</p>
 		</SettingsGroup>

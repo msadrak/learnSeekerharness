@@ -63,7 +63,7 @@ export function DeleteNodeBody({
 			aria-label={d.ariaLabel}
 			data-testid="delete-node-dialog"
 			onClick={(e) => e.stopPropagation()}
-			className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-xl border bg-card p-5 shadow-xl"
+			className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-xl border bg-card p-5 shadow-float"
 		>
 			<h2 className="text-sm font-semibold text-destructive">
 				{folders.length > 0 ? (nodes.length > 0 ? d.nodesAndFoldersTitle : d.foldersTitle) : nodes.length === 1 ? d.titleOne : d.titleMany(nodes.length)}
@@ -100,7 +100,7 @@ export function DeleteNodeBody({
 				<div
 					role="alert"
 					data-testid="node-delete-failure"
-					className="mt-3 rounded-sm border border-border/60 px-3 py-2 text-xs"
+					className="mt-3 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs"
 				>
 					<span dir={textDirection(shownFailure)} className="text-foreground">
 						{shownFailure}
@@ -122,7 +122,7 @@ export function DeleteNodeBody({
 					data-testid="node-delete-cancel"
 					onClick={onClose}
 					disabled={busy}
-					className="rounded-sm px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+					className="rounded-lg px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground disabled:opacity-40"
 				>
 					{t.common.actions.cancel}
 				</button>
@@ -134,7 +134,7 @@ export function DeleteNodeBody({
 					// Destructive red (owner, polish round) — the
 					// app's established destructive pair (chat's
 					// refusal banner): border + text, fill on hover.
-					className="rounded-sm border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-xs text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-40"
+					className="rounded-lg bg-destructive px-3.5 py-2 text-sm font-medium text-background transition-colors hover:bg-destructive/90 disabled:opacity-40"
 				>
 					{busy ? d.deleting : t.common.actions.delete}
 				</button>
@@ -246,7 +246,7 @@ export function DeleteNodeDialog({
 
 	return createPortal(
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-background/80"
+			className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
 			{...backdropDismiss}
 		>
 			<DeleteNodeBody

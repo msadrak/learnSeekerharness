@@ -1410,9 +1410,9 @@ export function Chat({
 								blurAfterPointerClick(e);
 								setPlanOpen(true);
 							}}
-							className="lh-no-drag flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border/80 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+							className="lh-no-drag flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border/80 px-2 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:text-foreground"
 						>
-							<WaypointsIcon className="size-3.5 text-primary" aria-hidden />
+							<WaypointsIcon className="size-3.5 text-brand" aria-hidden />
 							{tr.chat.header.plan}
 						</button>
 </Hint>
@@ -1432,7 +1432,7 @@ export function Chat({
 							data-testid="phase-chip"
 							data-phase="practice"
 							aria-hidden="true"
-							className="pointer-events-none flex shrink-0 select-none items-center gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+							className="pointer-events-none flex shrink-0 select-none items-center gap-1 text-xs font-medium text-muted-foreground"
 						>
 							<DumbbellIcon className="size-3" />
 							{tr.chat.header.practice}
@@ -1500,7 +1500,7 @@ export function Chat({
 													<div
 														key={pi}
 														data-testid="practice-next-line"
-														className="my-4 flex items-center justify-center gap-1.5 font-ui text-xs font-medium uppercase tracking-wide text-muted-foreground"
+														className="my-4 flex items-center justify-center gap-1.5 font-ui text-xs font-medium text-muted-foreground"
 													>
 														<ArrowRightIcon className="size-3 rtl:-scale-x-100" />
 														{tr.chat.composer.nextProblem}
@@ -1557,12 +1557,12 @@ export function Chat({
 										    inset (the band is the authorship mark against the agent's
 										    transparent prose). The "You" label stays — one register
 										    with the thinking labels. */
-										className="my-2 w-full border-s-[calc(3ch-14px)] border-muted-foreground/30 bg-card py-1 ps-[14px] pe-4 font-ui text-xs"
+										className="lh-card-enter my-2 w-fit min-w-0 max-w-[85%] self-start rounded-2xl bg-bubble px-4 py-2.5 font-ui text-sm text-foreground"
 									>
 												{/* The rail GROUPS (owner round 4, 2026-10-05): the YOU heading
 												    sits INSIDE the rail, same mono-xs register and same 1ch
 												    rail as the thinking rows — one quote geometry. */}
-												<div className="font-medium uppercase tracking-wide text-muted-foreground">{tr.chat.transcript.you}</div>
+												<div className="sr-only">{tr.chat.transcript.you}</div>
 												<div dir={textDirection(m.parts.filter((p) => p.type === "text").map((p) => p.text).join("\n"))} className="lh-prose whitespace-pre-wrap text-foreground">
 													<BidiText text={m.parts.filter((p) => p.type === "text").map((p) => p.text).join("\n")} />
 												</div>
@@ -1698,22 +1698,22 @@ export function Chat({
 						    the THINKING placeholder by construction (the gate sits
 						    BEFORE beginTurn; the settle kick runs after endTurn). */}
 							{compacting && (
-								<span className="flex items-center gap-2 font-ui text-xs font-medium uppercase tracking-wide text-muted-foreground">
+								<span className="flex items-center gap-2 font-ui text-xs font-medium text-muted-foreground">
 									<BrailleSpinner label={tr.chat.transcript.compactingSpinner} />
 									<Shimmer duration={1}>{tr.chat.transcript.compacting}</Shimmer>
 								</span>
 							)}
 							{(status === "submitted" || turnInFlight) && (
-								<span className="flex items-center gap-2 font-ui text-xs font-medium uppercase tracking-wide text-muted-foreground">
+								<span className="flex items-center gap-2 font-ui text-xs font-medium text-muted-foreground">
 									<BrailleSpinner label={tr.chat.reasoning.spinner} />
 									<Shimmer duration={1}>
 										{tr.chat.transcript.thinking}
 									</Shimmer>
 								</span>
 							)}
-							{openingError && <p role="alert" className="text-sm text-destructive">{tr.chat.errors.openSessionFailed}</p>}
+							{openingError && <p role="alert" className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">{tr.chat.errors.openSessionFailed}</p>}
 							{error && (
-								<div role="alert" className="flex items-center justify-between gap-3 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm">
+								<div role="alert" className="flex items-center justify-between gap-3 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm">
 									<div className="min-w-0 flex-1">
 										<span>{tr.chat.transcript.errorPrefix}<bdi>{errorSummary}</bdi></span>
 										{errorRaw && (
@@ -2467,7 +2467,7 @@ function DockOverlay({
 							claim={revealPending}
 						/>
 					)}
-					<div ref={shellRef} data-attachment-composer="" className="pointer-events-auto overflow-hidden rounded-2xl border bg-card shadow-lg">
+					<div ref={shellRef} data-attachment-composer="" className="pointer-events-auto overflow-hidden rounded-2xl border bg-card shadow-soft transition-shadow duration-150 motion-reduce:transition-none focus-within:border-ring/40 focus-within:ring-2 focus-within:ring-ring/30">
 						{/* Include descendant margins (notably practice thinking's
 						    bottom margin) in the natural content measurement. */}
 						<div

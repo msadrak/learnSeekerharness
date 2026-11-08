@@ -212,7 +212,7 @@ export function CoverageMenuBody({
 				data-testid="ctx-extract"
 				onClick={onExtract}
 				disabled={busy || complete}
-				className="flex items-center justify-center rounded-lg border px-2 py-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+				className="flex items-center justify-center rounded-lg border px-2 py-1 text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
 			>
 				{busy ? c.running : c.extract}
 			</button>
@@ -323,7 +323,7 @@ export function CoverageRing({ chatId, refreshKey = 0 }: { chatId: string; refre
 			{open && (
 				<div
 					data-testid="coverage-ring-popover"
-					className="absolute top-full inset-e-0 z-40 mt-1.5 w-64 rounded-xl border bg-card p-3 text-xs shadow-xl"
+					className="absolute top-full inset-e-0 z-40 mt-1.5 w-64 rounded-xl border bg-card p-4 text-xs shadow-float"
 				>
 					<CoverageRingDetail coverage={coverage} chunkTokens={graph.chunkTokens} />
 				</div>
@@ -350,7 +350,7 @@ export function CoverageRingGlyph({ fill, running }: { fill: number; running: bo
 				r="6"
 				fill="none"
 				strokeWidth="2.5"
-				className="stroke-foreground/70"
+				className="stroke-primary"
 				strokeDasharray={`${fill * C} ${C}`}
 				strokeLinecap="round"
 				transform="rotate(-90 8 8)"
@@ -367,7 +367,7 @@ export function CoverageRingDetail({ coverage, chunkTokens }: { coverage: Sessio
 	const c = t.graph.coverage;
 	return (
 		<>
-			<div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+			<div className="mb-2 text-xs font-medium text-muted-foreground">
 				{c.title}
 			</div>
 			<div className="flex flex-col gap-1 text-muted-foreground">

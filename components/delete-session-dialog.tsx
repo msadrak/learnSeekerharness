@@ -125,7 +125,7 @@ export function DeleteSessionDialog({
 
 	return createPortal(
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-background/80"
+			className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
 			{...backdropDismiss}
 		>
 			<DeleteSessionBody
@@ -173,7 +173,7 @@ export function DeleteSessionBody({
 			aria-label={s.ariaLabel}
 			data-testid="delete-session-dialog"
 			onClick={(e) => e.stopPropagation()}
-			className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-xl border bg-card p-5 shadow-xl"
+			className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-xl border bg-card p-5 shadow-float"
 		>
 			<h2 className="text-sm font-semibold text-destructive">{s.title}</h2>
 			{/* The session name below the title in JetBrains Mono (owner,
@@ -191,7 +191,7 @@ export function DeleteSessionBody({
 			</p>
 			<label
 				data-testid={TRACES_COPY.testid}
-				className="mt-4 flex cursor-pointer items-start gap-2.5 rounded-lg border border-border/60 px-4 py-3"
+				className="mt-4 flex cursor-pointer items-start gap-2.5 rounded-lg border border-border px-4 py-3 transition-colors hover:bg-accent/50"
 			>
 				<input
 					type="checkbox"
@@ -210,7 +210,7 @@ export function DeleteSessionBody({
 				<div
 					role="alert"
 					data-testid="delete-failure"
-					className="mt-3 rounded-sm border border-border/60 px-3 py-2 text-xs"
+					className="mt-3 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs"
 				>
 					<span dir={textDirection(shownFailure)} className="text-foreground">{shownFailure}</span>
 					<button
@@ -233,7 +233,7 @@ export function DeleteSessionBody({
 					data-testid="delete-cancel"
 					onClick={onClose}
 					disabled={busy}
-					className="rounded-sm px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+					className="rounded-lg px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground disabled:opacity-40"
 				>
 					{t.common.actions.cancel}
 				</button>
@@ -242,7 +242,7 @@ export function DeleteSessionBody({
 					data-testid="delete-confirm"
 					onClick={onRun}
 					disabled={busy}
-					className="rounded-sm border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-xs text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-40"
+					className="rounded-lg bg-destructive px-3.5 py-2 text-sm font-medium text-background transition-colors hover:bg-destructive/90 disabled:opacity-40"
 				>
 					{busy ? s.deleting : t.common.actions.delete}
 				</button>

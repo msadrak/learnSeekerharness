@@ -281,7 +281,7 @@ export function ChatGPTUIProvider({ children }: { children: React.ReactNode }) {
 		{dialog && <AccountDialog key={`${dialog.kind}:${dialog.kind === "manage" && !!dialog.confirm}`} onClose={close} busy={busy && operation.current !== "login"}>
 			<h2 className="text-sm font-semibold text-foreground">{c.label}</h2>
 			{dialog.kind === "warning" ? <>
-				<p role="alert" className="rounded-sm border border-border px-3 py-2 text-xs text-foreground" data-testid="chatgpt-revocation-warning">{c.revocationWarning}</p>
+				<p role="alert" className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-foreground" data-testid="chatgpt-revocation-warning">{c.revocationWarning}</p>
 				<div className="mt-4 flex justify-end"><Button variant="outline" size="sm" onClick={() => { context.dismissWarning(); showDialog(null); }}>{t.common.actions.dismiss}</Button></div>
 			</> : dialog.kind === "manage" && dialog.confirm ? <div data-testid="chatgpt-disconnect-confirmation">
 				<p className="mt-3 text-sm font-semibold text-danger">{c.disconnectTitle}</p>
@@ -295,7 +295,7 @@ export function ChatGPTUIProvider({ children }: { children: React.ReactNode }) {
 			</div> : <>
 				{dialog.kind === "connect" ? <>
 					{status.accounts.length > 0 && <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-						<select aria-label={c.savedAccountAria} value={registration} onChange={(event) => setRegistration(event.target.value)} disabled={busy || status.pending} className="min-w-0 rounded-sm border border-border bg-background px-2 py-1.5 text-foreground">
+						<select aria-label={c.savedAccountAria} value={registration} onChange={(event) => setRegistration(event.target.value)} disabled={busy || status.pending} className="min-w-0 rounded-lg border border-input bg-background px-3 py-1.5 text-foreground">
 							<option value="">{c.addAnother}</option>
 							{status.accounts.map((a) => <option key={a.id} value={a.id} dir={textDirection(a.email || c.account)}>{a.email || c.account}</option>)}
 						</select>
@@ -311,15 +311,15 @@ export function ChatGPTUIProvider({ children }: { children: React.ReactNode }) {
 					<span>{c.backgroundLabel}<span className="mt-1 block leading-relaxed text-muted-foreground">{c.backgroundHint}</span></span>
 				</div>
 				<div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-					<a href="https://openai.com/policies/privacy-policy/" target="_blank" rel="noreferrer" className="underline underline-offset-2">{c.privacy}</a>
-					<a href="https://chatgpt.com/settings/usage" target="_blank" rel="noreferrer" className="underline underline-offset-2">{c.manageUsage}</a>
+					<a href="https://openai.com/policies/privacy-policy/" target="_blank" rel="noreferrer" className="text-brand underline-offset-2 hover:underline">{c.privacy}</a>
+					<a href="https://chatgpt.com/settings/usage" target="_blank" rel="noreferrer" className="text-brand underline-offset-2 hover:underline">{c.manageUsage}</a>
 				</div>
 				{!status.available && <p className="mt-3 text-xs text-muted-foreground">{c.desktopOnly}</p>}
 				{status.pending && <p role="status" className="mt-3 text-xs text-muted-foreground">{c.waiting}</p>}
 				{context.error && <p role="alert" dir={textDirection(shownError(context.error, t))} className="mt-3 text-xs text-danger">{shownError(context.error, t)}</p>}
 				{dialog.kind === "manage" && managed && <div className="mt-4 flex flex-wrap items-center justify-between gap-3" data-testid="chatgpt-account-strip">
 					<div data-testid="chatgpt-managed-identity" className="flex min-w-0 items-center gap-2 text-xs text-foreground">
-						{status.accounts.length > 1 && managedPresent && !busy ? <select aria-label={c.manageAccountAria} value={managed.id} onChange={(event) => context.manage(event.target.value)} className="min-w-0 rounded-sm border border-border bg-background px-2 py-1.5">
+						{status.accounts.length > 1 && managedPresent && !busy ? <select aria-label={c.manageAccountAria} value={managed.id} onChange={(event) => context.manage(event.target.value)} className="min-w-0 rounded-lg border border-input bg-background px-3 py-1.5">
 							{status.accounts.map((a) => <option key={a.id} value={a.id} dir={textDirection(a.email || c.account)}>{a.email || c.account}</option>)}
 						</select> : <span className="break-all" dir="ltr">{managed.email || c.account}</span>}
 					</div>
@@ -361,12 +361,12 @@ export function ChatGPTConnection({ labelClassName }: { setup?: boolean; labelCl
 	const accounts = ui.status.accounts.filter((a) => a.connected);
 	return <div className="flex flex-col gap-2" data-testid="chatgpt-connection">
 		<ConnectionRow label={c.label} labelClassName={labelClassName} actionTestid={active ? undefined : "chatgpt-login"} action={active ? c.manage : t.common.actions.connect} disabled={!ui.status.available || ui.busy || ui.status.pending} onAction={() => active ? ui.manage(active.id) : ui.connect()}>
-			{active && <select aria-label={c.accountAria} value={active.id} disabled={ui.busy || ui.status.pending} onChange={(event) => ui.select(event.target.value)} className="min-w-0 rounded-sm border border-border bg-background px-2 py-1 text-xs text-foreground">
+			{active && <select aria-label={c.accountAria} value={active.id} disabled={ui.busy || ui.status.pending} onChange={(event) => ui.select(event.target.value)} className="min-w-0 rounded-lg border border-input bg-background px-3 py-1 text-xs text-foreground">
 				{accounts.map((a) => <option key={a.id} value={a.id} dir={textDirection(a.email || c.account)}>{a.email || c.account}</option>)}
 			</select>}
 		</ConnectionRow>
 		{ui.inlineError && <p role="alert" dir={textDirection(shownError(ui.inlineError, t))} className="text-xs text-danger">{shownError(ui.inlineError, t)}</p>}
-		{ui.warning && <div role="alert" dir={textDirection(shownError(ui.warning, t))} data-testid="chatgpt-revocation-warning" className="rounded-sm border border-border px-3 py-2 text-xs text-muted-foreground">{shownError(ui.warning, t)}<button type="button" className="ms-2 cursor-pointer underline underline-offset-2" onClick={ui.dismissWarning}>{t.common.actions.dismiss}</button></div>}
+		{ui.warning && <div role="alert" dir={textDirection(shownError(ui.warning, t))} data-testid="chatgpt-revocation-warning" className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">{shownError(ui.warning, t)}<button type="button" className="ms-2 cursor-pointer text-brand underline-offset-2 hover:underline" onClick={ui.dismissWarning}>{t.common.actions.dismiss}</button></div>}
 	</div>;
 }
 

@@ -292,6 +292,7 @@ export const LABELS_FADE_RATIO = 0.5;
 
 const GLOW_SCALE = 1.7; // halo outer radius = node radius x this (proportional, like blurring a copy of the disc)
 const GLOW_ALPHA = 0.3; // halo opacity at the disc edge, fading outward
+const EDGE_SOFTNESS = 0.75; // edges recede behind nodes (set once per frame, no allocation)
 const HOVER_FADE_MS = 180; // hover halo opacity fade length
 const ZOOM_EASE_MS = 45; // wheel-zoom glide: exponential-ease time constant (~250ms per notch)
 
@@ -1670,10 +1671,12 @@ export class GraphCanvasRenderer {
 		if (settings.edgeWidth > 0) {
 			ctx.strokeStyle = data.colors.edge;
 			ctx.fillStyle = data.colors.edge;
+			ctx.globalAlpha = EDGE_SOFTNESS; // quieter edges; reset below
 			ctx.lineWidth = settings.edgeWidth / k;
 			ctx.lineCap = "round";
 			ctx.stroke(this.shaftsPath);
 			ctx.fill(this.headsPath);
+			ctx.globalAlpha = 1;
 		}
 
 		// 4. Nodes: one cached Path2D per colour, one fill each.

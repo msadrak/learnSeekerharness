@@ -163,13 +163,13 @@ export function SessionFind({ scopeRef, scrollContextRef }: {
 
 	if (!open) return null;
 	const f = t.chat.find;
-	const buttonClass = "flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-40";
+	const buttonClass = "flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40";
 	return (
 		<div
 			role="search"
 			aria-label={f.region}
 			data-testid="session-find"
-			className="lh-no-drag flex h-10 shrink-0 items-center gap-2 border-b border-border px-6 font-ui text-sm"
+			className="lh-no-drag flex h-11 shrink-0 items-center gap-2 border-b border-border bg-card px-6 font-ui text-sm"
 			onKeyDown={(event) => {
 				if (event.key === "Enter") {
 					event.stopPropagation(); // NEVER reach question/global Enter submits.

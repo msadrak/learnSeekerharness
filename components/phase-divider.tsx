@@ -41,7 +41,7 @@ export function PhaseChip({ phase }: { phase: Phase3 }) {
 			data-testid="phase-chip"
 			data-phase={phase}
 			aria-hidden="true"
-			className="pointer-events-none flex shrink-0 select-none items-center text-xs font-medium uppercase tracking-wide text-muted-foreground"
+			className="pointer-events-none flex shrink-0 select-none items-center text-xs font-medium text-muted-foreground"
 		>
 			{t.chat.phase.chip[phase]}
 		</span>
@@ -65,11 +65,11 @@ export function PhaseDivider({ phase, nodeCount }: { phase: Phase3; nodeCount?: 
 			: t.chat.phase.chip[phase];
 	return (
 		<div className="my-4 flex w-full items-center gap-3" data-testid={`phase-divider-${phase}`}>
-			<span className="h-0 flex-1 border-t-2 border-dotted border-border/50" aria-hidden />
-			<span className="rounded-full border border-border/80 px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+			<span className="h-px flex-1 bg-border" aria-hidden />
+			<span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
 				{label}
 			</span>
-			<span className="h-0 flex-1 border-t-2 border-dotted border-border/50" aria-hidden />
+			<span className="h-px flex-1 bg-border" aria-hidden />
 		</div>
 	);
 }

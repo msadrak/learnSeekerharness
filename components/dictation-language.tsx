@@ -87,7 +87,7 @@ function DictationLanguagePicker({ preference, disabled }: {
 			anchorRef={triggerRef}
 			testid="dictation-language-menu"
 			preferredSide="down"
-			menuClass="flex w-72 max-w-[calc(100vw-1rem)] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+			menuClass="flex w-72 max-w-[calc(100vw-1rem)] flex-col rounded-xl border border-border bg-popover p-2 text-xs shadow-float"
 		>
 			<div onKeyDown={(event) => {
 				closeOnEscape(event);

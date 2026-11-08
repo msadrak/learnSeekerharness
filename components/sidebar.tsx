@@ -312,8 +312,9 @@ export function SessionRow({
 			onContextMenu={onContextMenu}
 			data-testid={kbdSelected ? "session-row-kbd" : "session-row"}
 			className={cn(
-				"relative mb-0.5 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-start transition-colors hover:bg-accent",
-				active && "bg-accent",
+				"relative mb-0.5 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-start transition-colors duration-150 motion-reduce:transition-none hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+				active &&
+					"bg-accent hover:bg-accent before:absolute before:inset-y-2 before:start-0 before:w-0.5 before:rounded-full before:bg-primary",
 				kbdSelected && !active && "bg-accent/60 ring-1 ring-border",
 			)}
 		>
@@ -355,7 +356,7 @@ export function RenameRow({ chat, onCommit, onCancel }: { chat: ChatListItem; on
 	return (
 		<div
 			data-testid="session-rename-row"
-			className="relative mb-0.5 flex w-full items-center rounded-lg bg-accent px-3 py-2"
+			className="relative mb-0.5 flex w-full items-center rounded-lg bg-accent px-3 py-2 ring-1 ring-ring/40"
 		>
 			{/* NOTHING MOVES (owner, polish round): an idle row renders no
 			    status spacer (SessionStatus is null when not busy), so the
@@ -662,7 +663,7 @@ function SessionsSidebar() {
 				    Merged chrome (2026-09-17): in Electron this band is the
 				    window's drag surface and starts after the traffic lights
 				    (.lh-lights-gutter); in the browser those classes are inert. */}
-				<div className="lh-drag lh-lights-gutter flex items-center justify-between px-4 py-3">
+				<div className="lh-drag lh-lights-gutter flex items-center justify-between px-4 py-4">
 					{/* The owner's mark (2026-09-17) replaces the "LH" text — still the
 					    home link, still vertically centered by the band's items-center.
 					    The 92px .lh-lights-gutter keeps it clear of the traffic lights
@@ -681,7 +682,7 @@ function SessionsSidebar() {
 						<Link
 							href="/"
 							aria-label={t.shell.sidebar.home}
-							className="lh-no-drag flex size-9 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50"
+							className="lh-no-drag flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground"
 						>
 							<LhMark className="size-6" />
 						</Link>
@@ -703,14 +704,14 @@ function SessionsSidebar() {
 				    half/half row): full-width rows read cleaner and give the
 				    labels room; teaching keeps the original draft route,
 				    practice carries its mode. */}
-				<div className="mx-3 mb-2 flex flex-col gap-1.5">
+				<div className="mx-3 mb-3 flex flex-col gap-1">
 					<button
 						type="button"
 						data-testid="new-session"
 						onClick={() => void newSession()}
-						className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 motion-reduce:transition-none hover:bg-accent/60"
 					>
-						<PlusIcon className="size-3" />
+						<PlusIcon className="size-4 text-brand" />
 						{t.shell.sidebar.teaching}
 						<span className="sr-only">{t.shell.sidebar.newTeachingSr}</span>
 					</button>
@@ -718,16 +719,16 @@ function SessionsSidebar() {
 						type="button"
 						data-testid="new-session-practice"
 						onClick={() => router.push("/chat/new?mode=practice")}
-						className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 motion-reduce:transition-none hover:bg-accent/60"
 					>
-						<DumbbellIcon className="size-3" />
+						<DumbbellIcon className="size-4 text-brand" />
 						{t.shell.sidebar.practice}
 						<span className="sr-only">{t.shell.sidebar.newPracticeSr}</span>
 					</button>
 				</div>
 
-				<div className="mx-3 mb-2 flex items-center gap-2">
-					<span className="text-xs uppercase tracking-widest text-muted-foreground/70">{t.shell.sidebar.sessions}</span>
+				<div className="mx-3 mb-3 flex items-center gap-2">
+					<span className="text-xs font-medium text-muted-foreground">{t.shell.sidebar.sessions}</span>
 					<Hint label={t.shell.sidebar.searchSessions} action="sessions-search" side="bottom">
 					<span className="relative flex-1">
 						<Input
@@ -781,9 +782,9 @@ function SessionsSidebar() {
 							placeholder={t.shell.sidebar.searchPlaceholder}
 							aria-label={t.shell.sidebar.searchSessions}
 							dir={query ? textDirection(query) : undefined}
-							className="h-6 rounded-sm border-border bg-background ps-6 text-xs placeholder:text-muted-foreground/60"
+							className="h-8 rounded-lg border-border bg-card/50 ps-8 text-xs placeholder:text-muted-foreground/60"
 						/>
-						<SearchIcon className="pointer-events-none absolute inset-s-1.5 top-1/2 size-3 -translate-y-1/2 text-muted-foreground/70" />
+						<SearchIcon className="pointer-events-none absolute inset-s-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/70" />
 					</span>
 					</Hint>
 				</div>
@@ -795,7 +796,7 @@ function SessionsSidebar() {
 				    Practice / All — the real modes first, "All" as the escape
 				    hatch on the right, mirroring the create-buttons above.
 				    Persisted client-side. */}
-				<div className="mx-3 flex items-center gap-0.5 rounded-md border border-border/60 bg-background p-0.5" data-testid="session-kind-filter">
+				<div className="mx-3 mb-1 flex items-center gap-0.5 rounded-full bg-muted p-0.5" data-testid="session-kind-filter">
 					{(["teach", "practice", "all"] as const).map((f) => (
 						<button
 							key={f}
@@ -803,9 +804,9 @@ function SessionsSidebar() {
 							data-testid={`kind-filter-${f}`}
 							onClick={() => setFilter(f)}
 							className={cn(
-								"flex-1 rounded-sm px-2 py-1 text-[11px] uppercase tracking-wider transition-colors",
+								"flex-1 rounded-full px-2 py-1 text-xs font-medium transition-colors duration-150 motion-reduce:transition-none",
 								kindFilter === f
-									? "bg-accent text-foreground"
+									? "bg-card text-foreground shadow-soft"
 									: "text-muted-foreground hover:text-foreground",
 							)}
 						>
@@ -814,7 +815,7 @@ function SessionsSidebar() {
 					))}
 				</div>
 
-				<div ref={listRef} className="flex-1 overflow-y-auto p-2">
+				<div ref={listRef} className="flex-1 overflow-y-auto px-3 py-2">
 					{shown === null ? (
 						<div className="px-2 py-4 text-xs text-muted-foreground">{t.common.states.loading}</div>
 					) : shown.length === 0 ? (
@@ -863,9 +864,9 @@ function SessionsSidebar() {
 								type="button"
 								onClick={() => openSettings()}
 								data-testid="settings-entry"
-								className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+								className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors duration-150 motion-reduce:transition-none hover:bg-accent/60 hover:text-foreground"
 							>
-								<SettingsIcon className="size-3" />
+								<SettingsIcon className="size-4" />
 								{t.shell.sidebar.settings}
 							</button>
 						</Hint>
@@ -881,7 +882,7 @@ function SessionsSidebar() {
 						anchorRef={ctxAnchorRef}
 						testid="session-context-menu"
 						preferredSide="down"
-						menuClass="flex w-52 flex-col gap-0.5 rounded-xl border bg-card p-2 text-xs shadow-xl"
+						menuClass="flex w-52 flex-col gap-0.5 rounded-xl border bg-popover p-2 text-xs shadow-float"
 					>
 						{/* The two management actions first, then the extraction block
 						    (owner refinement round, 2026-09-24): Rename/Delete stay at the
@@ -930,7 +931,7 @@ function SessionsSidebar() {
 								if (target) setDeleting(target);
 								setCtxChatId(null);
 							}}
-							className="flex items-center rounded-lg px-2.5 py-1.5 text-start text-muted-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+							className="flex items-center rounded-lg px-2.5 py-1.5 text-start text-danger transition-colors hover:bg-accent"
 						>
 							{t.shell.sidebar.deleteEllipsis}
 						</button>

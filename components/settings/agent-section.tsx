@@ -512,31 +512,31 @@ export function AgentSection({
 						setOpenSegment(open ? null : info.path);
 						setSegmentStatus(null);
 					}}
-					className="text-xs text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+					className="rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				>
 					{open ? a.hideText : a.showText}
 				</button>
 				{open && (
 					<div className="mt-1 flex flex-col gap-2">
 						<div>
-							<p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground/70">{a.source}</p>
+							<p className="mb-1 text-xs text-muted-foreground">{a.source}</p>
 							<textarea
 								readOnly
 								dir="ltr"
 								value={info.sourceText}
 								aria-label={a.sourceAria}
-								className="h-24 w-full resize-y rounded-sm border border-border bg-muted p-2 font-ui text-xs text-muted-foreground"
+								className="h-24 w-full resize-y rounded-lg border border-input bg-muted p-3 font-ui text-xs text-muted-foreground"
 							/>
 						</div>
 						<div>
-							<p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground/70">{a.override}</p>
+							<p className="mb-1 text-xs text-muted-foreground">{a.override}</p>
 							<textarea
 								dir="ltr"
 								value={segmentDraft[info.path] ?? info.overrideText ?? ""}
 								onChange={(e) => setSegmentDraft({ ...segmentDraft, [info.path]: e.target.value })}
 								aria-label={a.overrideAria}
 								placeholder={a.overridePlaceholder}
-								className="h-24 w-full resize-y rounded-sm border border-border bg-background p-2 font-ui text-xs text-foreground outline-none"
+								className="h-24 w-full resize-y rounded-lg border border-input bg-background p-3 font-ui text-xs text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
 							/>
 						</div>
 						<div className="flex items-center gap-3">
@@ -546,8 +546,8 @@ export function AgentSection({
 								onClick={() => void saveSegment(info.path, segmentDraft[info.path] ?? "")}
 								className={
 									dirty
-										? "text-xs text-foreground underline-offset-2 hover:underline"
-										: "cursor-not-allowed text-xs text-muted-foreground/40 underline-offset-2"
+										? "shrink-0 rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground/60"
+										: "shrink-0 rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground/60"
 								}
 							>
 								{t.common.actions.save}
@@ -556,7 +556,7 @@ export function AgentSection({
 								<button
 									type="button"
 									onClick={() => void deleteSegment(info.path)}
-									className="text-xs text-muted-foreground/70 underline-offset-2 hover:text-danger hover:underline"
+									className="rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-danger/10 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 								>
 									{t.common.actions.delete}
 								</button>
@@ -568,7 +568,7 @@ export function AgentSection({
 							    open at a time (openSegment), so one shared
 							    status reads unambiguously. */}
 							{segmentStatus && (
-								<p dir={textDirection(segmentStatus)} className="text-xs text-muted-foreground/70" data-testid="segment-status">
+								<p dir={textDirection(segmentStatus)} className="text-xs text-muted-foreground" data-testid="segment-status">
 									{segmentStatus}
 								</p>
 							)}
@@ -607,7 +607,7 @@ export function AgentSection({
 							return next;
 						});
 					}}
-					className="flex items-center gap-1 self-start text-xs text-muted-foreground hover:text-foreground"
+					className="flex items-center gap-1 self-start rounded-lg px-1 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				>
 					<ChevronRightIcon className={cn("size-3", expanded ? "rotate-90" : "rtl:-scale-x-100")} />
 					{a.roles.toggle}
@@ -624,7 +624,7 @@ export function AgentSection({
 										type="button"
 										data-testid={`role-reset-${role}`}
 										onClick={() => onSectionChange(composeRoleModel(agent, role, null))}
-										className="text-xs text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+										className="rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 									>
 										{a.roles.sameAsTier}
 									</button>
@@ -644,7 +644,7 @@ export function AgentSection({
 										preferredSide="down"
 										anchorTestid={`role-model-${role}`}
 										testid={`role-model-menu-${role}`}
-										menuClass="flex w-[22rem] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+										menuClass="flex w-[22rem] flex-col rounded-xl border border-border bg-popover p-2 text-xs shadow-float"
 									>
 										<ModelMenuList
 											models={catalog ?? undefined}
@@ -674,9 +674,9 @@ export function AgentSection({
 					data-testid="models-advanced"
 					aria-expanded={advancedModels}
 					onClick={() => { setAdvancedModels(!advancedModels); setOpenMenu(null); }}
-					className="mb-1 self-start text-xs text-muted-foreground hover:text-foreground"
+					className="mb-1 self-start rounded-lg px-1 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				>{advancedModels ? a.hideAdvanced : a.showAdvanced}</button>
-				{catalogFailed && <p role="alert" className="text-xs text-danger">{a.catalogFailed}<button type="button" className="underline" onClick={refreshCatalog}>{t.common.actions.retry}</button></p>}
+				{catalogFailed && <p role="alert" className="text-xs text-danger">{a.catalogFailed}<button type="button" className="text-brand underline-offset-2 hover:underline" onClick={refreshCatalog}>{t.common.actions.retry}</button></p>}
 				{MODEL_SLOTS.map((slot) => {
 					const override = models?.[slot];
 					const modelId = override?.model?.id ?? "";
@@ -754,7 +754,7 @@ export function AgentSection({
 									preferredSide="down"
 									anchorTestid={`slot-cache-${slot}`}
 									testid={`slot-cache-menu-${slot}`}
-									menuClass="flex w-80 flex-col gap-0.5 rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+									menuClass="flex w-80 flex-col gap-0.5 rounded-xl border border-border bg-popover p-2 text-xs shadow-float"
 								>
 									<CacheRetentionMenu value={override?.cacheRetention} onPick={(value) => {
 										onModelsChange(composeSlotCacheRetention(models, slot, value));
@@ -766,7 +766,7 @@ export function AgentSection({
 										preferredSide="down"
 											anchorTestid={`slot-model-${slot}`}
 										testid={`slot-model-menu-${slot}`}
-										menuClass="flex w-[22rem] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+										menuClass="flex w-[22rem] flex-col rounded-xl border border-border bg-popover p-2 text-xs shadow-float"
 									>
 										<ModelMenuList
 											models={catalog ?? undefined}
@@ -794,7 +794,7 @@ export function AgentSection({
 										preferredSide="down"
 											anchorTestid={`slot-thinking-${slot}`}
 										testid={`slot-thinking-menu-${slot}`}
-										menuClass="flex w-44 flex-col gap-0.5 rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+										menuClass="flex w-44 flex-col gap-0.5 rounded-xl border border-border bg-popover p-2 text-xs shadow-float"
 									>
 										<ThinkingMenuList
 											levels={levels.map(String)}
@@ -871,7 +871,7 @@ export function AgentSection({
 											onClick={() => onSectionChange(composeQuizMechanics(agent, m))}
 											className={cn(
 												"h-8 rounded-md px-3 text-sm font-medium transition-colors",
-												active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+												active ? "bg-background text-foreground shadow-soft" : "text-muted-foreground hover:text-foreground",
 											)}
 										>
 											{m === "choice" ? a.multipleChoice : a.freeRecall}
@@ -923,8 +923,8 @@ export function AgentSection({
 								<input dir="ltr" value={folderInput} aria-label={a.fileAccess.folderAria} data-testid="file-access-add" placeholder={a.fileAccess.folderPlaceholder}
 									onChange={(event) => { setFolderInput(event.target.value); setFolderError(null); }}
 									onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addFolder(); } }}
-									className="min-w-0 flex-1 rounded-sm border border-border bg-background px-2 py-1 font-ui text-xs" />
-								<button type="button" data-testid="file-access-add-button" disabled={!folderInput.trim()} onClick={addFolder} className="rounded-sm border border-border px-2 text-xs disabled:opacity-40">{a.fileAccess.addFolder}</button>
+									className="min-w-0 flex-1 rounded-lg border border-input bg-background px-3 py-1 font-ui text-xs" />
+								<button type="button" data-testid="file-access-add-button" disabled={!folderInput.trim()} onClick={addFolder} className="rounded-lg border border-input bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40">{a.fileAccess.addFolder}</button>
 							</div>
 							{folderError && <p role="alert" data-testid="file-access-input-error" className="ps-3 text-xs text-danger">{folderError}</p>}
 							{folders.map((folder) => (
@@ -932,7 +932,7 @@ export function AgentSection({
 									<span title={folder} dir="ltr" className="min-w-0 truncate font-ui text-muted-foreground">{folder}</span>
 									<button type="button" aria-label={a.fileAccess.removeFolderAria(folder)} data-testid="file-access-remove"
 										onClick={() => onSectionChange(composeRemoveFolder(effectiveAgent, folder))}
-										className="rounded-sm px-1.5 text-muted-foreground hover:text-foreground">{t.common.actions.remove}</button>
+										className="rounded-lg px-2 py-1 font-medium text-muted-foreground transition-colors hover:bg-danger/10 hover:text-danger">{t.common.actions.remove}</button>
 								</div>
 							))}
 						</div>
@@ -975,14 +975,14 @@ export function AgentSection({
 
 			<SettingsGroup label={a.groups.prompts} testid="group-prompts">
 				{prompts === null ? (
-					<p className="text-xs text-muted-foreground/70">{a.loadingPrompts}</p>
+					<p className="text-xs text-muted-foreground">{a.loadingPrompts}</p>
 				) : (
 					<div className="flex flex-col gap-4">
 						{/* Teacher, Prober, Practice, Shared — shared chunks once,
 						    each agent's own section in prompt-assembly order. */}
 						{sectionedSegments(prompts, a).map((section) => (
 							<div key={section.id} data-testid={`prompt-section-${section.id}`}>
-								<p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground/70">
+								<p className="mb-1 text-xs text-muted-foreground">
 									{section.label}
 								</p>
 								<div className="flex flex-col gap-2">

@@ -104,7 +104,7 @@ export function ClaudeCodeInstallationStatus() {
 
 	return <div className="space-y-2" data-testid="claude-code-installation">
 		<div className="flex items-center gap-3">
-			<span className="font-prose text-(length:--lh-prose-size) text-foreground">{c.label}</span>
+			<span className="font-ui text-sm text-foreground">{c.label}</span>
 			<Toggle label={c.label} checked={enabled} disabled={!loaded || saving} onChange={(next) => void save(next)} />
 		</div>
 		{error && <p role="alert" className="text-xs text-danger">{c.loadFailed}</p>}
@@ -114,7 +114,7 @@ export function ClaudeCodeInstallationStatus() {
 				<Button type="button" size="xs" variant="outline" className="cursor-pointer disabled:cursor-not-allowed" disabled={busy} onClick={() => void refresh()} data-testid="claude-code-check-again">{c.checkAgain}</Button>
 			</div>
 			<p className="text-xs leading-relaxed text-muted-foreground"><strong className="font-medium">{c.installHint}</strong>{c.startHint}</p>
-			<p className="text-xs leading-relaxed text-muted-foreground">{c.requirements(CLAUDE_CODE_MINIMUM_VERSION)}{" "}<a href="https://code.claude.com/docs/en/setup" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-foreground">{c.setup}</a></p>
+			<p className="text-xs leading-relaxed text-muted-foreground">{c.requirements(CLAUDE_CODE_MINIMUM_VERSION)}{" "}<a href="https://code.claude.com/docs/en/setup" target="_blank" rel="noreferrer" className="text-brand underline-offset-2 hover:underline">{c.setup}</a></p>
 			<p className="text-xs leading-relaxed text-muted-foreground">{c.verifyWarning}</p>
 		</>}
 	</div>;

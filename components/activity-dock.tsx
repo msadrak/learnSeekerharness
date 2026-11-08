@@ -348,9 +348,9 @@ export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
 	// rows match the session rows' hover. Empty means empty: the header sits
 	// alone (the cost span is population, not decoration).
 	return (
-		<section data-testid="activity-section" className="border-t border-border px-3 pb-3 pt-2">
-			<div className="mb-1 flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground/70">
-				<ActivityIcon className="size-3" />
+		<section data-testid="activity-section" className="border-t border-border px-3 pb-2 pt-3">
+			<div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+				<ActivityIcon className="size-3.5" />
 				{t.shell.activity.title}
 				{blobs.length > 0 && (
 					<span className="ms-auto tabular-nums" data-testid="activity-total-cost" title={t.shell.activity.totalCostTitle}>
@@ -412,7 +412,7 @@ function ActivityBlobRow({
 	return (
 		<div
 			data-testid={`activity-blob-${blob.process}`}
-			className="relative rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-accent"
+			className="relative rounded-lg px-3 py-2 text-xs transition-colors duration-150 motion-reduce:transition-none hover:bg-accent/60"
 		>
 			<button
 				type="button"
@@ -446,7 +446,7 @@ function ActivityBlobRow({
 				disabled={abortState !== undefined}
 				title={abortState === "failed" ? a.abortFailed : a.endProcess}
 				aria-label={a.endAria(label, blob.title)}
-				className="absolute inset-e-1 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground/70 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+				className="absolute inset-e-2 top-3 rounded-md p-1 text-muted-foreground/70 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
 			>
 				<SquareIcon className="size-3" />
 			</button>
@@ -454,7 +454,7 @@ function ActivityBlobRow({
 			{detailOpen && (
 				<div
 					data-testid="activity-blob-detail"
-					className="mt-1 flex flex-col gap-1 rounded-lg bg-accent/40 p-2 text-muted-foreground"
+					className="mt-2 flex flex-col gap-1 rounded-xl border bg-card p-3 text-muted-foreground"
 				>
 					<div className="mb-1.5 flex items-center gap-2">
 						<Icon className="size-3.5 text-muted-foreground" />
@@ -494,7 +494,7 @@ function ActivityBlobRow({
 								<span className="tabular-nums text-card-foreground">{blob.steps}</span>
 							</div>
 						)}
-						<a href={`/chat/${blob.chatId}`} className="text-primary hover:underline">
+						<a href={`/chat/${blob.chatId}`} className="text-brand hover:underline">
 							{a.openSession}
 						</a>
 					</div>

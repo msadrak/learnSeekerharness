@@ -238,7 +238,7 @@ export function Home({
 									type="button"
 									data-testid="setup-cta"
 									onClick={() => setSetupOpen(true)}
-									className="rounded-sm border border-border bg-card px-3 py-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50 hover:bg-accent cursor-pointer"
+									className="rounded-lg border border-border bg-card px-3 py-1.5 font-ui text-xs text-foreground transition-colors duration-150 motion-reduce:transition-none hover:border-primary/40 hover:bg-accent cursor-pointer"
 								>
 									{t.shell.home.setUpModels}
 								</button>
@@ -248,7 +248,7 @@ export function Home({
 					{startError && <p role="alert" className="mb-2 text-sm text-destructive">{t.chat.errors.openSessionFailed}</p>}
 					<form
 						data-attachment-composer=""
-						className="flex items-end gap-1.5 rounded-2xl border bg-card p-1.5 shadow-lg"
+						className="flex items-end gap-1.5 rounded-2xl border bg-card p-2 shadow-soft transition-shadow duration-150 motion-reduce:transition-none focus-within:border-ring/40 focus-within:ring-2 focus-within:ring-ring/30"
 					onSubmit={(e) => {
 						e.preventDefault();
 						void start();
@@ -280,7 +280,7 @@ export function Home({
 						}}
 						placeholder={mode === "practice" ? t.shell.home.placeholderPractice : t.shell.home.placeholderLearn}
 						autoFocus
-						className="field-sizing-content lh-input max-h-48 min-h-10 flex-1 resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground"
+						className="field-sizing-content lh-input max-h-48 min-h-10 flex-1 resize-none bg-transparent px-3 py-2 outline-none placeholder:text-muted-foreground"
 					/>
 					<AttachFilesButton editorRef={topicInputRef} />
 					{/* No tooltip on the start square — the ↵ glyph is the
@@ -289,7 +289,7 @@ export function Home({
 						type="submit"
 						aria-label={t.shell.home.startSession}
 						disabled={(!topic.trim() && !dictation.active) || busy}
-						className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-primary text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-40"
+						className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors duration-150 motion-reduce:transition-none hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 disabled:bg-muted disabled:text-muted-foreground"
 					>
 						<CornerDownLeftIcon className="size-5 rtl:-scale-x-100" />
 					</button>
@@ -311,7 +311,7 @@ export function Home({
 						dictationSlot={<DictationBar dictation={dictation} />}
 						turns={[] as TurnUsage[]}
 						leadingSlot={
-							<div className="flex items-center gap-0.5 rounded-md border border-border/60 bg-background p-0.5" data-testid="home-mode-switch">
+							<div className="flex items-center gap-0.5 rounded-full bg-muted p-0.5" data-testid="home-mode-switch">
 								{(["teach", "practice"] as const).map((m) => (
 									<button
 										key={m}
@@ -319,9 +319,9 @@ export function Home({
 										data-testid={`home-mode-${m}`}
 										onClick={() => setMode(m)}
 										className={
-											"flex items-center gap-1 rounded-sm px-2 py-0.5 text-[11px] uppercase tracking-wider transition-colors " +
+											"flex items-center gap-1 rounded-full px-3 py-0.5 text-xs font-medium transition-colors duration-150 motion-reduce:transition-none " +
 											(mode === m
-												? "bg-accent text-foreground"
+												? "bg-card text-foreground shadow-soft"
 												: "text-muted-foreground hover:text-foreground")
 										}
 									>

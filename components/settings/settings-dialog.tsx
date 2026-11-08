@@ -123,11 +123,11 @@ function SettingsDialog({
 	initialRow: string | null;
 }) {
 	const backdropDismiss = useBackdropDismiss(onClose);
-	// Plain dim backdrop (no blur — nothing decorative); a genuine
-	// backdrop click closes, the dialog body stops propagation.
+	// Dim, softly blurred backdrop; a genuine backdrop click closes, the
+	// dialog body stops propagation.
 	return createPortal(
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-background/80"
+			className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm"
 			data-testid="settings-backdrop"
 			{...backdropDismiss}
 		>
@@ -283,12 +283,12 @@ export function SettingsDialogBody({
 			aria-modal="true"
 			aria-label={t.settings.dialog.title}
 			data-testid="settings-dialog"
-			className="settings-dialog-pop flex h-[620px] max-h-[85vh] w-[920px] max-w-[90vw] flex-col overflow-hidden rounded-md border border-border bg-card shadow-xl"
+			className="settings-dialog-pop flex h-[620px] max-h-[85vh] w-[920px] max-w-[90vw] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-float"
 			onClick={(e) => e.stopPropagation()}
 		>
 			{/* Header — the app's quiet CMU title language. */}
-			<header className="flex h-15 shrink-0 items-center gap-3 border-b border-border px-5">
-				<h2 className="font-title text-2xl tracking-tight">{t.settings.dialog.title}</h2>
+			<header className="flex h-16 shrink-0 items-center gap-3 border-b border-border/60 px-6">
+				<h2 className="font-title text-xl tracking-tight">{t.settings.dialog.title}</h2>
 				<Hint
 						// Esc closes the dialog (its own listener) — surface it.
 						label={t.common.actions.close}
@@ -299,7 +299,7 @@ export function SettingsDialogBody({
 					type="button"
 					aria-label={t.settings.dialog.close}
 					data-testid="settings-close"
-					className="ms-auto size-7 rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+					className="ms-auto flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					onClick={onClose}
 				>
 					<svg
@@ -321,7 +321,7 @@ export function SettingsDialogBody({
 				<nav
 					aria-label={t.settings.dialog.sections}
 					data-testid="settings-nav"
-					className="flex w-44 shrink-0 flex-col gap-1 border-e border-border p-2"
+					className="flex w-48 shrink-0 flex-col gap-0.5 border-e border-border/60 p-3"
 				>
 					{SECTIONS.map((s) => (
 						<button
@@ -329,10 +329,10 @@ export function SettingsDialogBody({
 							type="button"
 							data-testid={`settings-nav-${s.id}`}
 							aria-current={active === s.id}
-							className={`rounded-sm px-3 py-1.5 text-start font-ui text-sm transition-colors ${
+							className={`relative rounded-lg px-3 py-2 text-start font-ui text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
 								active === s.id
-									? "bg-accent text-foreground"
-									: "text-muted-foreground hover:bg-accent hover:text-foreground"
+									? "bg-accent font-medium text-foreground before:absolute before:inset-y-2 before:start-0 before:w-0.5 before:rounded-full before:bg-primary"
+									: "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
 							}`}
 							onClick={() => setActive(s.id)}
 						>
@@ -353,14 +353,14 @@ export function SettingsDialogBody({
 					data-testid="settings-content"
 				>
 					{record === undefined ? (
-						<div className="flex flex-col gap-2 px-6 py-5">
+						<div className="flex flex-col gap-2 p-6">
 							{[0, 1, 2, 3].map((i) => (
 								<Skeleton key={i} className="h-7 w-full" />
 							))}
 							<span className="sr-only">{t.settings.dialog.loading}</span>
 						</div>
 					) : record === null ? (
-						<p className="px-6 py-5 text-xs text-muted-foreground/70">
+						<p className="p-6 text-xs text-muted-foreground">
 							{t.settings.dialog.loadFailed}
 						</p>
 					) : (

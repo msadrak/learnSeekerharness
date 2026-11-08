@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Source_Sans_3, Vazirmatn } from "next/font/google";
+import { Inter, JetBrains_Mono, Source_Sans_3, Vazirmatn } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 import { AppShell, SidebarProvider } from "@/components/sidebar";
@@ -14,10 +14,12 @@ import { MESSAGES } from "@/lib/i18n/messages";
 import { resolveSettings } from "@/src/core";
 import { readSettingsRecord } from "@/src/server";
 
-// Chrome = JetBrains Mono, teaching prose = Source Sans 3, titles = CMU
+// Chrome = Inter, teaching prose = Source Sans 3, titles = CMU, mono =
+// JetBrains Mono (code/keys/numbers only)
 // Serif (the bundled lh-cmu @font-face in globals.css — no CDN). Persian
 // glyphs in all three fall through to Vazirmatn (globals.css stacks);
 // next/font self-hosts it at build time, so the desktop app stays offline.
+const sans = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const ui = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" });
 const prose = Source_Sans_3({ subsets: ["latin"], variable: "--font-sans3" });
 const persian = Vazirmatn({ subsets: ["arabic"], variable: "--font-vazirmatn" });
@@ -47,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 		<html
 			lang={language}
 			dir={languageDirection(language)}
-			className={`${appearance.mode === "light" ? "light" : "dark"} ${ui.variable} ${prose.variable} ${persian.variable}`}
+			className={`${appearance.mode === "light" ? "light" : "dark"} ${sans.variable} ${ui.variable} ${prose.variable} ${persian.variable}`}
 			suppressHydrationWarning
 		>
 			<head>{appearance.mode === "system" && <InlineScript html={SYSTEM_SCHEME_SCRIPT} />}</head>

@@ -110,7 +110,7 @@ test("an initial load failure is visible and opening the menu again can retry", 
 test("the real picker searches by language, chooses with Arrow/Enter, and restores focus", async () => {
 	const f = await fixture();
 	assert.match(trigger().textContent!, /English/);
-	for (const token of ["h-7", "rounded-sm", "border-border", "bg-background", "font-ui", "text-xs"]) {
+	for (const token of ["h-8", "rounded-lg", "border-input", "bg-background", "font-ui", "text-sm"]) {
 		assert.ok(trigger().className.split(" ").includes(token), `shared settings trigger: ${token}`);
 	}
 	await click(trigger());
@@ -234,7 +234,7 @@ for (const source of ["none", "file", "env"] as const) test(`Language is below t
 	assert.equal(byTest("dictation-setup-hint").querySelector("a")!.href, "https://console.deepgram.com/");
 	assert.equal(byTest("dictation-setup-hint").querySelector("a")!.textContent, "Deepgram API key");
 	assert.equal(byTest("dictation-setup-hint").querySelectorAll("a").length, 1);
-	assert.match(rows[1]!.querySelector(".font-prose")!.className, /text-\(length:--lh-prose-size\)/);
+	assert.match(rows[1]!.querySelector("span")!.querySelector("span")!.className, /font-ui text-sm font-medium/);
 	assert.equal(trigger().disabled, false, "language is independent of key ownership");
 	await click(byTest("key-deepgram_api_key-row"));
 	if (source !== "env") assert.ok(byTest("key-deepgram_api_key-editor"));
@@ -263,8 +263,8 @@ test("the shared model menu preserves ranking, provider identity, keyboard clamp
 	assert.match(options()[0]!.textContent!, /p1 · alpha/);
 	assert.match(options()[1]!.textContent!, /p1 · beta/);
 	assert.match(options()[2]!.textContent!, /p2 · alpha/);
-	assert.ok(!options()[0]!.className.includes("bg-muted/60"));
-	assert.ok(options()[2]!.className.includes("bg-muted/60"));
+	assert.ok(!options()[0]!.className.includes("bg-primary/10"));
+	assert.ok(options()[2]!.className.includes("bg-primary/10"));
 	assert.match(options()[0]!.textContent!, /\$1\.00\/\$2\.00/);
 	assert.match(options()[0]!.textContent!, /32k/);
 	assert.match(document.body.textContent!, /Model footer/);

@@ -91,7 +91,7 @@ export function EditableSourceName({ name, onSave, onCancel, initiallyEditing = 
 				if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); cancelled.current = true; setEditing(false); setFailure(""); onCancel?.(); }
 				if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); void commit(); }
 			}} onDragStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-			: <button type="button" className={`block max-w-full truncate rounded-sm text-left text-sm font-medium leading-5 transition-colors hover:bg-accent${muted ? " text-muted-foreground/60" : ""}`} title={t.common.actions.rename}
+			: <button type="button" className={`block max-w-full truncate rounded-md text-left text-sm font-medium leading-5 transition-colors hover:bg-accent/50${muted ? " text-muted-foreground/60" : ""}`} title={t.common.actions.rename}
 				onClick={() => { cancelled.current = false; setDraft(name); setEditing(true); }}>{name}</button>}
 		{failure && <span role="alert" className="block text-xs text-danger">{localizeServerError(failure, t)}</span>}
 	</span>;
@@ -182,7 +182,7 @@ export function SourceFolderTree<T extends TreeSource>({ groups, directory, quer
 			return <div key={folder.id} data-testid={`source-folder-${folder.id}`} className="relative" {...dropProps(folder.id)}>
 				<SourceDragRow {...chainRow(["folder", folder.id], depth, open)} kind="folder" id={folder.id} name={folder.name} enabled={Boolean(onAction)} data-testid={`folder-row-${folder.id}`}
 					data-drop-active={dropTarget === folder.id}
-					className={`flex items-center gap-1 py-1.5 pe-3 transition-colors ${!open || !hasChildren ? "border-b border-transparent" : ""} ${dropTarget === folder.id ? "bg-accent/50" : ""}`}
+					className={`flex items-center gap-1 rounded-lg py-1.5 pe-3 transition-colors hover:bg-accent/50 ${!open || !hasChildren ? "border-b border-transparent" : ""} ${dropTarget === folder.id ? "bg-primary/10" : ""}`}
 					style={{ paddingLeft: 12 + depth * 36 }}>
 					<input type="checkbox" aria-label={t.graph.sources.selectFolder(Boolean(sourceSelection), folder.name)} data-testid={`folder-checkbox-${folder.id}`}
 						className="size-3.5 shrink-0 accent-primary" disabled={entryCheck ? false : empty ? !allowEmptySelection : members.length === 0}
@@ -194,7 +194,7 @@ export function SourceFolderTree<T extends TreeSource>({ groups, directory, quer
 						<ChevronRightIcon className={`size-3.5 ${open ? "rotate-90" : "rtl:-scale-x-100"}`} />
 					</button>
 					<button type="button" data-source-icon data-testid={`folder-icon-${folder.id}`} aria-expanded={open} aria-label={t.graph.sources.expandFolder(folder.name)}
-						onClick={() => onToggleExpanded(folder.id)} className="flex h-5 w-3.5 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+						onClick={() => onToggleExpanded(folder.id)} className="flex h-5 w-3.5 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
 						{open ? <FolderOpenIcon className="size-3.5 shrink-0" /> : <FolderIcon className="size-3.5 shrink-0" />}
 					</button>
 					{onAction ? <EditableSourceName name={folder.name} onSave={(name) => onAction({ action: "rename-folder", id: folder.id, name })} />
@@ -216,6 +216,6 @@ export function SourceFolderTree<T extends TreeSource>({ groups, directory, quer
 	}} onDragEnd={() => { setDropTarget(undefined); setDraggedItem(undefined); }}>
 		<div>{renderLevel(null, 0)}</div>
 		{onAction && <div data-testid="source-root-drop" aria-label={t.graph.sources.moveOutsideFolders} data-drop-active={dropTarget === null}
-			className={`min-h-16 flex-1 transition-colors ${dropTarget === null ? "bg-accent/30" : ""}`} {...dropProps(null)} />}
+			className={`min-h-16 flex-1 rounded-lg transition-colors ${dropTarget === null ? "bg-primary/10" : ""}`} {...dropProps(null)} />}
 	</div>;
 }

@@ -113,8 +113,8 @@ export function ThinkingBlock({
 				// chevron law); the rail narrows (14px gap), padding 4px, pr-4
 				// keeps the text off the band's right edge. In-card rows take
 				// NO band — the accent lift read too light; rail only.
-				"lh-card-enter my-2 w-full border-s-[calc(3ch-14px)] border-muted-foreground/30 py-1 ps-[14px] pe-4 font-ui text-xs",
-				inCard ? "" : "bg-card",
+				"lh-card-enter w-full min-w-0 font-ui text-xs",
+				inCard ? "my-1" : "my-2",
 			)}
 		>
 			<button
@@ -125,13 +125,13 @@ export function ThinkingBlock({
 					blurAfterPointerClick(e);
 				}}
 				aria-expanded={open}
-				className="flex w-full items-center gap-2 font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+				className="flex w-fit max-w-full items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 			>
 				{label ?? t.chat.thinking.yourThinking}
-				<ChevronDownIcon className={cn("size-4 shrink-0 transition-transform", open ? "rotate-180" : "rotate-0")} />
+				<ChevronDownIcon className={cn("size-3.5 shrink-0 transition-transform duration-150 motion-reduce:transition-none", open ? "rotate-180" : "rotate-0")} />
 			</button>
 			{open && (
-				<span dir={textDirection(text)} className="lh-prose mt-1.5 block whitespace-pre-wrap text-[15px] italic text-foreground/50"><BidiText text={text} /></span>
+				<span dir={textDirection(text)} className="lh-prose mt-2 block whitespace-pre-wrap border-s-2 border-primary/30 ps-3 text-[15px] italic text-foreground/60"><BidiText text={text} /></span>
 			)}
 		</div>
 	);

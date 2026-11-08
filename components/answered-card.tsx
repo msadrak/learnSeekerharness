@@ -29,7 +29,7 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 	const [whyOpen, setWhyOpen] = useState(false); // the tucked explanation (predictions, owner 2026-10-03)
 	if (answer.dismissed) {
 		return (
-			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground shadow-soft">
 				<span dir={textDirection(answer.questionText)} className="font-medium">{answer.questionText}</span> — {t.cards.answered.skipped}
 			</div>
 		);
@@ -64,10 +64,10 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 		    p-4 into a 28px void below (12px above); the card's own padding is
 		    the bottom rhythm when a row ends the card. */}
 		<div
-			className="rounded-xl border bg-card p-4 text-card-foreground [&>*:last-child]:mb-0"
+			className="rounded-xl border bg-card p-4 text-card-foreground shadow-soft [&>*:last-child]:mb-0"
 			data-testid="answered-card"
 		>
-			<div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+			<div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted-foreground">
 				{/* The tool's OWN name first (owner 2026-10-09): probe-phase
 			    cards label Probe/Recall — the phase boundary visible in the
 			    transcript. No `tool` on old records: kind labels as before. */}
@@ -84,11 +84,11 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 											: t.cards.kinds.question}
 				{isQuiz &&
 					(answer.dontKnow ? (
-						<span className="rounded bg-muted px-1.5 py-0.5">{t.cards.answered.didntKnow}</span>
+						<span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">{t.cards.answered.didntKnow}</span>
 					) : answer.correct ? (
-						<span className="rounded bg-success/15 px-1.5 py-0.5 text-success">{t.cards.answered.correct}</span>
+						<span className="rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">{t.cards.answered.correct}</span>
 					) : (
-						<span className="rounded bg-danger/15 px-1.5 py-0.5 text-danger">{t.cards.answered.incorrect}</span>
+						<span className="rounded-full bg-danger/15 px-2 py-0.5 text-xs font-medium text-danger">{t.cards.answered.incorrect}</span>
 					))}
 			</div>
 			<div className="mb-3 font-medium">
@@ -111,10 +111,10 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 							<div
 								key={opt.index}
 								className={cn(
-									"flex items-center gap-2 rounded-lg border px-3 py-1.5",
+									"flex items-center gap-2 rounded-lg border px-3 py-2",
 									sel && key && "border-success/60 bg-success/10",
 									sel && !key && isQuiz && "border-danger/60 bg-danger/10",
-									sel && !isQuiz && "border-primary bg-accent",
+									sel && !isQuiz && "border-primary/50 bg-primary/10",
 									!sel && key && "border-success/40",
 								)}
 							>
@@ -156,7 +156,7 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 					{answer.other && (
 						<div
 							data-testid="answered-other"
-							className="flex items-center gap-2 rounded-lg border border-primary bg-accent px-3 py-1.5"
+							className="flex items-center gap-2 rounded-lg border border-primary/50 bg-primary/10 px-3 py-2"
 						>
 							<span dir={textDirection(answer.other)}><BidiText text={t.cards.answered.quote(answer.other)} /></span>
 						</div>
@@ -180,7 +180,7 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 			{isQuiz && answer.confidence != null && (
 				<div className="mt-3 flex items-center gap-3" data-testid="answered-confidence">
 					<ConfidenceRail value={answer.confidence} className="min-w-0 flex-1" />
-					<span className="shrink-0 whitespace-nowrap text-end font-ui text-xs text-muted-foreground">
+					<span className="shrink-0 whitespace-nowrap rounded-full bg-muted px-2.5 py-0.5 text-center font-ui text-xs text-muted-foreground">
 						{t.cards.questionDock.confidenceLabel(answer.confidence)} · <bdi dir="ltr" className="font-mono tabular-nums">{answer.confidence}%</bdi>
 					</span>
 				</div>
@@ -219,7 +219,7 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 						{whyOpen ? t.cards.answered.hideWhy : t.cards.answered.why}
 					</button>
 					{whyOpen && (
-						<div className="mt-1.5 rounded-lg bg-muted py-2 text-sm text-foreground/50">
+						<div className="mt-1.5 rounded-lg bg-muted px-3 py-2 text-sm text-foreground/50">
 							<span className="font-medium text-muted-foreground">{t.cards.answered.whyLabel}</span>
 							{/* Keep the first paragraph beside the label, not every paragraph:
 							   later paragraphs must retain their recovered document structure. */}
@@ -233,7 +233,7 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 			    — one field, reasoning included — shown on submit; no verdict,
 			    the model's next reply IS the grading. */}
 			{isExplain && answer.committed && (
-				<div className="mt-3 rounded-lg bg-muted py-2 text-sm text-muted-foreground">
+				<div className="mt-3 rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
 					<span className="font-medium text-foreground">{t.cards.answered.theAnswer}</span>
 					<ToolContentResponse className="inline [&>p:first-child]:inline [&>p:first-child]:m-0">{answer.committed}</ToolContentResponse>
 				</div>

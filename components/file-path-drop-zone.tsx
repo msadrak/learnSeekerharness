@@ -93,16 +93,16 @@ export function FilePathDropZone({ children, className }: { children: React.Reac
 		>
 			{children}
 			{dragging && (
-				<div data-testid="file-path-drop-indicator" className="pointer-events-none absolute inset-2 z-50 flex items-center justify-center rounded-xl border-2 border-dashed border-primary bg-background/85 p-6 text-center backdrop-blur-sm">
+				<div data-testid="file-path-drop-indicator" className="pointer-events-none absolute inset-2 z-50 flex items-center justify-center rounded-xl border-2 border-dashed border-primary/60 bg-background/85 p-6 text-center backdrop-blur-sm">
 					<div className="flex max-w-md flex-col items-center gap-3">
-						<FileSymlinkIcon className="size-8 text-primary" aria-hidden />
+						<FileSymlinkIcon className="size-8 text-brand" aria-hidden />
 						<span className="font-ui text-sm">{window.lh?.getPathForFile ? t.shell.attach.dropPaths : t.shell.attach.browserNotice}</span>
 					</div>
 				</div>
 			)}
-			{notice && <div role="status" className="absolute bottom-2 left-1/2 z-50 flex max-w-[90%] -translate-x-1/2 items-center gap-2 rounded-md border bg-card px-3 py-2 font-ui text-xs shadow-sm">
+			{notice && <div role="status" className="absolute bottom-2 left-1/2 z-50 flex max-w-[90%] -translate-x-1/2 items-center gap-2 rounded-xl border bg-popover px-3 py-2 font-ui text-xs shadow-float">
 				<span>{notice}</span>
-				<button type="button" aria-label={t.shell.attach.dismissNotice} onClick={() => setNotice("")} className="shrink-0 rounded-sm p-1 hover:bg-accent"><XIcon className="size-3" aria-hidden /></button>
+				<button type="button" aria-label={t.shell.attach.dismissNotice} onClick={() => setNotice("")} className="shrink-0 rounded-md p-1 transition-colors hover:bg-accent"><XIcon className="size-3" aria-hidden /></button>
 			</div>}
 		</main>
 	);

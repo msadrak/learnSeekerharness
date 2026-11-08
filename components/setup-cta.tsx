@@ -86,7 +86,7 @@ export function ZeroKeysPill({ onOpen, inline = false }: { onOpen: () => void; i
 			type="button"
 			data-testid="setup-cta-keys"
 			onClick={onOpen}
-			className="rounded-sm border border-border bg-card px-3 py-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50 hover:bg-accent cursor-pointer"
+			className="cursor-pointer rounded-full border border-primary/40 bg-card px-4 py-1.5 font-ui text-xs font-medium text-foreground shadow-soft transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 		>
 			{t.shell.setupCta.addProviderKey}
 		</button>

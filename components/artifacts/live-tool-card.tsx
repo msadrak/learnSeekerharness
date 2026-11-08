@@ -67,8 +67,8 @@ export function LiveToolCard({ part }: ArtifactPartProps) {
 					<ChevronRight className="size-3 opacity-50 transition-transform group-open:rotate-90" />
 				</span>
 			</summary>
-			<div className="mt-2 rounded-xl border bg-card p-3 text-xs">
-				<div className="mb-1 font-medium uppercase tracking-wide text-muted-foreground">{t.cards.tools.inputStreaming}</div>
+			<div className="mt-2 rounded-xl border bg-card p-3 text-xs shadow-soft">
+				<div className="mb-1 font-medium text-muted-foreground">{t.cards.tools.inputStreaming}</div>
 				<pre className="max-h-32 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] leading-relaxed">
 					{hasInput ? JSON.stringify(p.input, null, 2) : "…"}
 				</pre>

@@ -28,12 +28,12 @@ export function GraphContextCard({ data }: { data: GraphContextData }) {
 	const t = useT();
 	const g = t.graph.contextCard;
 	return (
-		<div data-testid="graph-context-card" className="my-1">
+		<div data-testid="graph-context-card" className="my-2">
 			<button
 				type="button"
 				data-testid="graph-context-toggle"
 				onClick={() => setOpen((v) => !v)}
-				className="flex w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border/70 px-3 py-2 text-start text-xs text-muted-foreground transition-colors hover:text-foreground"
+				className="flex w-full cursor-pointer items-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-start text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
 			>
 				<ChevronRightIcon aria-hidden="true" className={cn("size-3.5 shrink-0 transition-transform", open ? "rotate-90" : "rtl:-scale-x-100")} />
 				<span className="font-medium">{g.title}</span>
@@ -43,7 +43,7 @@ export function GraphContextCard({ data }: { data: GraphContextData }) {
 				</span>
 			</button>
 			{open && (
-				<div data-testid="graph-context-body" className="mt-1 space-y-1 rounded-lg border border-dashed border-border/70 px-4 py-3 text-xs">
+				<div data-testid="graph-context-body" className="mt-1.5 space-y-1 rounded-xl border bg-card px-4 py-3 text-xs">
 					{propositions.map((p) => (
 						<div key={p.id} dir={textDirection(`${p.name}${p.statement}`)} data-testid={`graph-context-prop-${p.id}`} className="leading-relaxed">
 							<span className="font-medium text-foreground/80">{p.name}</span>

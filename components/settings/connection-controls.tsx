@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 
 export function ConnectionRow({ label, action, actionVariant, disabled, onAction, children, testid, actionTestid, labelClassName }: { label: string; action: string; actionVariant?: "outline" | "ghost"; disabled: boolean; onAction: () => void; children?: React.ReactNode; testid?: string; actionTestid?: string; labelClassName?: string }) {
 	const variant = actionVariant ?? (action === "Connect" ? "outline" : "ghost");
-	return <div className="flex flex-wrap items-center gap-3" data-testid={testid}>
-		<span className={labelClassName ?? "font-ui text-xs text-foreground"}>{label}</span>
+	return <div className="flex flex-wrap items-center gap-3 rounded-lg px-3 py-2" data-testid={testid}>
+		<span className={`${labelClassName ?? "font-ui text-sm text-foreground"} me-auto`}>{label}</span>
 		{children}
 		<Button type="button" size="xs" variant={variant} className={`cursor-pointer disabled:cursor-not-allowed ${variant === "outline" ? "" : "text-muted-foreground hover:text-foreground"}`} data-testid={actionTestid} disabled={disabled} onClick={onAction}>{action}</Button>
 	</div>;
@@ -40,7 +40,7 @@ export function ConnectionDialog({ children, onClose, busy, label, testid, backd
 		document.addEventListener("keydown", key, true);
 		return () => { document.removeEventListener("keydown", key, true); if (previous?.isConnected) previous.focus(); };
 	}, []);
-	return createPortal(<div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80" data-testid={backdropTestid} {...backdropDismiss}>
-		<div ref={ref} role="dialog" aria-modal="true" aria-label={label} aria-busy={busy} data-testid={testid} onClick={(event) => event.stopPropagation()} className="settings-dialog-pop mx-4 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-md border border-border bg-card p-5 shadow-xl">{children}</div>
+	return createPortal(<div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/70 backdrop-blur-sm" data-testid={backdropTestid} {...backdropDismiss}>
+		<div ref={ref} role="dialog" aria-modal="true" aria-label={label} aria-busy={busy} data-testid={testid} onClick={(event) => event.stopPropagation()} className="settings-dialog-pop mx-4 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-float">{children}</div>
 	</div>, document.body);
 }

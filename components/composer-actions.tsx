@@ -34,7 +34,7 @@ export function NodePickerControl({ count, onOpen, onClear }: {
 				data-testid="practice-props-chip"
 				onClick={onOpen}
 				className={
-					"flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 font-ui text-xs transition-colors " +
+					"flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 font-ui text-xs transition-colors duration-150 motion-reduce:transition-none " +
 					(count > 0
 						? "border-border bg-card text-foreground hover:bg-accent"
 						: "border-dashed border-border/80 bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground")

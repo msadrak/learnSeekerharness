@@ -143,7 +143,7 @@ export function AttachFilesButton({ editorRef }: { editorRef: React.RefObject<HT
 					aria-expanded={open}
 					data-testid="attach-files"
 					onClick={() => { if (desktop) { setNotice(""); setOpen(!open); } }}
-					className="flex size-10 shrink-0 items-center justify-center rounded-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground aria-disabled:cursor-default aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted-foreground"
+					className="flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors duration-150 motion-reduce:transition-none hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 aria-disabled:cursor-default aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted-foreground"
 				>
 					<PaperclipIcon className="size-4" />
 				</button>
@@ -152,7 +152,7 @@ export function AttachFilesButton({ editorRef }: { editorRef: React.RefObject<HT
 				aria-label={open ? t.shell.attach.filesOrFolder : undefined}
 				data-testid="attachment-popup"
 				style={{ position: "fixed", zIndex: 60, ...(placement ?? { left: 0, top: 0, visibility: "hidden" }), overflowY: "auto" }}
-				className={open ? "w-max rounded-lg border bg-card p-1 shadow-lg" : "w-64 rounded-lg border bg-card p-2 text-xs text-muted-foreground shadow-lg"}
+				className={open ? "w-max rounded-xl border bg-popover p-1.5 shadow-float" : "w-64 rounded-xl border bg-popover p-3 text-xs text-muted-foreground shadow-float"}
 				onKeyDown={(event) => {
 					const buttons = Array.from(popupRef.current?.querySelectorAll<HTMLButtonElement>("button") ?? []);
 					const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
@@ -160,9 +160,9 @@ export function AttachFilesButton({ editorRef }: { editorRef: React.RefObject<HT
 					if (next >= 0) { event.preventDefault(); buttons[next]?.focus(); }
 				}}>
 				{open ? <>
-					<button type="button" role="menuitem" className="block w-full rounded px-2 py-1 text-start text-xs hover:bg-accent"
+					<button type="button" role="menuitem" className="block w-full rounded-lg px-3 py-1.5 text-start text-xs transition-colors hover:bg-accent"
 						onClick={() => { setOpen(false); pickerRef.current?.click(); }}>{t.shell.attach.filesOption}</button>
-					<button type="button" role="menuitem" className="block w-full rounded px-2 py-1 text-start text-xs hover:bg-accent"
+					<button type="button" role="menuitem" className="block w-full rounded-lg px-3 py-1.5 text-start text-xs transition-colors hover:bg-accent"
 						onClick={() => { void chooseFolder(); }}>{t.shell.attach.folderOption}</button>
 				</> : notice}
 			</div>, document.body)}

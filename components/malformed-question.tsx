@@ -14,7 +14,7 @@ export function MalformedQuestion({ onRetry, disabled, reason }: {
 	const t = useT();
 	const m = t.cards.malformed;
 	return (
-		<div data-testid="malformed-question" className="my-2 rounded-xl border border-dashed bg-card/60 p-3 text-sm text-muted-foreground">
+		<div data-testid="malformed-question" className="my-2 rounded-xl border border-dashed bg-card p-4 text-sm text-muted-foreground">
 			<p>{m.message(Boolean(onRetry))}</p>
 			{onRetry && <Button type="button" variant="outline" size="xs" className="mt-2" disabled={disabled}
 				title={reason ?? m.retryTitle} data-testid="retry-malformed-question" onClick={onRetry}>

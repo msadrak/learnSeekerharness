@@ -81,7 +81,7 @@ export function ToolCallCard({ part }: ArtifactPartProps) {
 			className="group my-1 w-full max-w-2xl select-none"
 		>
 			<summary className="flex cursor-pointer list-none items-center gap-2 text-xs text-muted-foreground [&::-webkit-details-marker]:hidden">
-				<span dir={textDirection(tool)} className={`font-medium uppercase tracking-wide ${failed ? "text-danger" : ""}`}>
+				<span dir={textDirection(tool)} className={`font-medium ${failed ? "text-danger" : ""}`}>
 					{tool}
 				</span>
 				{arg && <span dir={textDirection(arg)} className="truncate">{arg}</span>}
@@ -91,10 +91,10 @@ export function ToolCallCard({ part }: ArtifactPartProps) {
 					<ChevronRight className="size-3 opacity-50 transition-transform group-open:rotate-90" />
 				</span>
 			</summary>
-			<div className="mt-2 space-y-2 rounded-xl border bg-card p-3 text-xs">
+			<div className="mt-2 space-y-2 rounded-xl border bg-card p-3 text-xs shadow-soft">
 				{p.input != null && (
 					<div>
-						<div className="mb-1 font-medium uppercase tracking-wide text-muted-foreground">
+						<div className="mb-1 font-medium text-muted-foreground">
 							{t.cards.tools.input}
 						</div>
 						<pre className="max-h-32 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] leading-relaxed">
@@ -104,7 +104,7 @@ export function ToolCallCard({ part }: ArtifactPartProps) {
 				)}
 				{typeof p.errorText === "string" ? (
 					<div>
-						<div className="mb-1 font-medium uppercase tracking-wide text-muted-foreground">
+						<div className="mb-1 font-medium text-muted-foreground">
 							{t.cards.tools.error}
 						</div>
 						<pre className="whitespace-pre-wrap break-all font-mono text-[11px] text-danger">
@@ -113,7 +113,7 @@ export function ToolCallCard({ part }: ArtifactPartProps) {
 					</div>
 				) : out != null ? (
 					<div>
-						<div className="mb-1 font-medium uppercase tracking-wide text-muted-foreground">
+						<div className="mb-1 font-medium text-muted-foreground">
 							{t.cards.tools.output}
 						</div>
 						<pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] leading-relaxed">
