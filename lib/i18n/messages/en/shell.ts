@@ -20,6 +20,11 @@ export const shell = {
 		settings: "Settings",
 		exportMarkdown: "Export as Markdown…",
 		deleteEllipsis: "Delete…",
+		select: "Select",
+		selectedCount: (n: number) => `${n} selected`,
+		selectAll: "Select all",
+		clearSelection: "Clear",
+		selectSession: (title: string) => `Select ${title}`,
 		meta: {
 			compacting: (ago: string) => `Compacting context · ${ago}`,
 			waitingForInput: (ago: string) => `Waiting for input · ${ago}`,
@@ -115,6 +120,19 @@ export const shell = {
 		deleting: "Deleting…",
 		failedStatus: (status: number) => `Delete failed (${status})`,
 		failedNetwork: "Delete failed — network error. Try again.",
+	},
+	deleteSessions: {
+		ariaLabel: "Delete sessions",
+		more: (n: number) => `and ${n} more`,
+		title: (n: number) => `Delete ${n} ${n === 1 ? "session" : "sessions"}?`,
+		description:
+			"This permanently removes the selected sessions — their messages, background jobs, and extraction records. Everything they added to the graph stays unless you check below. This cannot be undone.",
+		tracesTitle: "Also remove their graph traces",
+		tracesBody:
+			"These sessions’ topics, links, and events leave the graph too. Topics other sessions or imported notes also cover survive; topics only these sessions created are removed entirely.",
+		deleting: (done: number, total: number) => `Deleting… ${done}/${total}`,
+		partialFailure: (failed: number, total: number) =>
+			`${failed} of ${total} ${total === 1 ? "session" : "sessions"} couldn’t be deleted and ${failed === 1 ? "stays" : "stay"} selected.`,
 	},
 	keyboard: {
 		title: "Keyboard shortcuts",

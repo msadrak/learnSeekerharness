@@ -5,8 +5,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { MenuShell } from "@/components/menu-shell";
 import { DeleteSessionDialog } from "@/components/delete-session-dialog";
+import { BulkDeleteSessionsDialog, type BulkDeleteResult } from "@/components/bulk-delete-sessions-dialog";
 import type { ChatDeleteMode } from "@/src/core";
-import { DumbbellIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon, SearchIcon, SettingsIcon } from "lucide-react";
+import { CheckIcon, DumbbellIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon, SearchIcon, SettingsIcon } from "lucide-react";
 import { ActivitySection } from "@/components/activity-dock";
 import { CoverageMenuBlock } from "@/components/extraction-coverage";
 import { LhMark } from "@/components/lh-mark";
@@ -294,6 +295,8 @@ export function SessionRow({
 	onOpen,
 	kbdSelected = false,
 	onContextMenu,
+	selectMode = false,
+	selected = false,
 }: {
 	chat: ChatListItem;
 	active: boolean;
@@ -303,6 +306,9 @@ export function SessionRow({
 	kbdSelected?: boolean;
 	/** Right-click opens the context menu (wave 6: Rename / Delete). */
 	onContextMenu?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+	/** Multi-select mode: the row shows a checkbox and toggles instead of opening. */
+	selectMode?: boolean;
+	selected?: boolean;
 }) {
 	const t = useT();
 	return (
@@ -311,13 +317,27 @@ export function SessionRow({
 			onClick={onOpen}
 			onContextMenu={onContextMenu}
 			data-testid={kbdSelected ? "session-row-kbd" : "session-row"}
+			{...(selectMode ? { "aria-pressed": selected, "aria-label": t.shell.sidebar.selectSession(chat.title) } : {})}
 			className={cn(
 				"relative mb-0.5 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-start transition-colors duration-150 motion-reduce:transition-none hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
 				active &&
 					"bg-accent hover:bg-accent before:absolute before:inset-y-2 before:start-0 before:w-0.5 before:rounded-full before:bg-primary",
 				kbdSelected && !active && "bg-accent/60 ring-1 ring-border",
+				selectMode && selected && "bg-primary/10 hover:bg-primary/15",
 			)}
 		>
+			{selectMode && (
+				<span
+					data-testid="session-row-check"
+					aria-hidden="true"
+					className={cn(
+						"flex size-4 shrink-0 items-center justify-center rounded-[5px] border transition-colors",
+						selected ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background",
+					)}
+				>
+					{selected && <CheckIcon className="size-3" strokeWidth={3} />}
+				</span>
+			)}
 			<SessionStatus busy={chat.busy || chat.compacting} />
 			<span className="min-w-0 flex-1">
 				{/* Titles are the learner's/teacher's WORDS — Source Sans 3, the
@@ -628,6 +648,56 @@ function SessionsSidebar() {
 		[pathname, router],
 	);
 
+	// Multi-select (owner ruling: a Select toggle puts the list in selection
+	// mode; one bar deletes the whole selection). Selection applies to the
+	// rows currently SHOWN — a filter/search change never deletes hidden ones.
+	const [selectMode, setSelectMode] = useState(false);
+	const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+	const [bulkDeleting, setBulkDeleting] = useState<ChatListItem[] | null>(null);
+	const exitSelectMode = useCallback(() => {
+		setSelectMode(false);
+		setSelected(new Set());
+	}, []);
+	const toggleSelected = useCallback((id: string) => {
+		setSelected((prev) => {
+			const next = new Set(prev);
+			if (!next.delete(id)) next.add(id);
+			return next;
+		});
+	}, []);
+	const selectedShown = useMemo(() => (shown ?? []).filter((c) => selected.has(c.id)), [shown, selected]);
+	const allShownSelected = (shown?.length ?? 0) > 0 && selectedShown.length === shown?.length;
+	const onBulkDeleted = useCallback(
+		(result: BulkDeleteResult) => {
+			const gone = new Set(result.deleted);
+			setChats((prev) => (prev ? prev.filter((c) => !gone.has(c.id)) : prev));
+			setSelected((prev) => new Set([...prev].filter((id) => !gone.has(id))));
+			if (pathname?.startsWith("/chat/") && gone.has(pathname.slice("/chat/".length))) router.push("/");
+			if (result.graphRevision > 0) {
+				window.dispatchEvent(new CustomEvent("lh:graph-revision", { detail: { revision: result.graphRevision } }));
+			}
+			if (result.failed.length === 0) {
+				setBulkDeleting(null);
+				exitSelectMode();
+			} else {
+				setBulkDeleting((prev) => (prev ? prev.filter((c) => !gone.has(c.id)) : prev));
+			}
+		},
+		[pathname, router, exitSelectMode],
+	);
+	// Esc leaves selection mode (claimed — it must not also abort a turn).
+	useEffect(() => {
+		if (!selectMode || bulkDeleting) return;
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape") {
+				e.stopPropagation();
+				exitSelectMode();
+			}
+		};
+		document.addEventListener("keydown", onKeyDown);
+		return () => document.removeEventListener("keydown", onKeyDown);
+	}, [selectMode, bulkDeleting, exitSelectMode]);
+
 	useEffect(() => {
 		const onFocusSearch = () => {
 			if (!open) toggle();
@@ -787,6 +857,21 @@ function SessionsSidebar() {
 						<SearchIcon className="pointer-events-none absolute inset-s-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/70" />
 					</span>
 					</Hint>
+					<Hint label={selectMode ? t.common.actions.cancel : t.shell.sidebar.select} side="bottom">
+						<button
+							type="button"
+							data-testid="session-select-toggle"
+							aria-pressed={selectMode}
+							aria-label={t.shell.sidebar.select}
+							onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+							className={cn(
+								"flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+								selectMode && "bg-accent text-foreground",
+							)}
+						>
+							<ListChecksIcon className="size-4" />
+						</button>
+					</Hint>
 				</div>
 
 				{/* The three-way filter, HEADING THE LIST (owner round 8b,
@@ -837,11 +922,17 @@ function SessionsSidebar() {
 									chat={c}
 									active={pathname === `/chat/${c.id}`}
 									kbdSelected={i === kbdIndex}
+									selectMode={selectMode}
+									selected={selected.has(c.id)}
 									onOpen={() => {
+										if (selectMode) {
+											toggleSelected(c.id);
+											return;
+										}
 										setKbdIndex(null);
 										router.push(`/chat/${c.id}`);
 									}}
-									onContextMenu={(e) => openContext(e, c)}
+									onContextMenu={selectMode ? undefined : (e) => openContext(e, c)}
 								/>
 							),
 						)
@@ -853,6 +944,44 @@ function SessionsSidebar() {
 					    populates and grows when processes run. The session list is
 					    flex-1, so this pins to the bottom. Sidebar closed = the
 					    learner opted out (no ambient signal, user decision). */}
+					{selectMode && (
+						<div
+							data-testid="session-select-bar"
+							className="mx-3 mb-2 flex items-center gap-2 rounded-xl border bg-card px-3 py-2 shadow-soft"
+						>
+							<span data-testid="session-selected-count" className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
+								{t.shell.sidebar.selectedCount(selectedShown.length)}
+							</span>
+							<button
+								type="button"
+								data-testid="session-select-all"
+								onClick={() =>
+									setSelected(allShownSelected ? new Set() : new Set((shown ?? []).map((c) => c.id)))
+								}
+								className="rounded-md px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+							>
+								{allShownSelected ? t.shell.sidebar.clearSelection : t.shell.sidebar.selectAll}
+							</button>
+							<button
+								type="button"
+								data-testid="session-select-delete"
+								disabled={selectedShown.length === 0}
+								onClick={() => setBulkDeleting(selectedShown)}
+								className="rounded-lg bg-destructive px-2.5 py-1 text-xs font-medium text-background transition-colors hover:bg-destructive/90 disabled:opacity-40"
+							>
+								{t.common.actions.delete}
+							</button>
+							<button
+								type="button"
+								data-testid="session-select-cancel"
+								onClick={exitSelectMode}
+								className="rounded-lg px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+							>
+								{t.common.actions.cancel}
+							</button>
+						</div>
+					)}
+
 					<ActivitySection />
 
 					{/* Settings entry (settings-app wave): same row language as
@@ -946,6 +1075,13 @@ function SessionsSidebar() {
 					chat={deleting}
 					onClose={() => setDeleting(null)}
 					onDeleted={onDeleted}
+				/>
+
+				{/* Multi-select delete: one confirm for the whole selection. */}
+				<BulkDeleteSessionsDialog
+					chats={bulkDeleting}
+					onClose={() => setBulkDeleting(null)}
+					onDeleted={onBulkDeleted}
 				/>
 			</aside>
 	);

@@ -25,6 +25,11 @@ export const shell: typeof en = {
 		settings: "تنظیمات",
 		exportMarkdown: "خروجی Markdown…",
 		deleteEllipsis: "حذف…",
+		select: "انتخاب",
+		selectedCount: (n: number) => `${n} مورد انتخاب‌شده`,
+		selectAll: "انتخاب همه",
+		clearSelection: "پاک‌کردن",
+		selectSession: (title: string) => `انتخاب \u2068${title}\u2069`,
 		meta: {
 			compacting: (ago: string) => `در حال فشرده‌سازی بافت · ${ago}`,
 			waitingForInput: (ago: string) => `در انتظار پاسخ · ${ago}`,
@@ -120,6 +125,19 @@ export const shell: typeof en = {
 		deleting: "در حال حذف…",
 		failedStatus: (status: number) => `حذف ناموفق بود (${status})`,
 		failedNetwork: "حذف ناموفق بود — خطای شبکه. دوباره تلاش کنید.",
+	},
+	deleteSessions: {
+		ariaLabel: "حذف جلسه‌ها",
+		more: (n: number) => `و ${n} مورد دیگر`,
+		title: (n: number) => `${n} جلسه حذف شود؟`,
+		description:
+			"این کار جلسه‌های انتخاب‌شده را برای همیشه حذف می‌کند — پیام‌ها، کارهای پس‌زمینه و سوابق استخراج آن‌ها. هر آنچه به گراف افزوده‌اند باقی می‌ماند، مگر اینکه گزینهٔ زیر را علامت بزنید. این کار بازگشت‌پذیر نیست.",
+		tracesTitle: "ردپاهای آن‌ها در گراف هم حذف شود",
+		tracesBody:
+			"موضوع‌ها، پیوندها و رویدادهای این جلسه‌ها هم از گراف حذف می‌شوند. موضوع‌هایی که جلسه‌های دیگر یا یادداشت‌های واردشده هم پوشش می‌دهند باقی می‌مانند؛ موضوع‌هایی که فقط این جلسه‌ها ساخته‌اند به‌طور کامل حذف می‌شوند.",
+		deleting: (done: number, total: number) => `در حال حذف… ${done}/${total}`,
+		partialFailure: (failed: number, total: number) =>
+			`حذف ${failed} جلسه از ${total} جلسه ممکن نشد و انتخاب‌شده باقی می‌مانند.`,
 	},
 	keyboard: {
 		title: "میان‌برهای صفحه‌کلید",
