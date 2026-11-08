@@ -31,6 +31,8 @@ const browsers = [];
 const screenshots = [];
 const checks = [];
 let serverLogs = "";
+const pageErrors = [];
+const consoleErrors = []; // diagnostics only: benign 404/503s from offline fixtures land here
 let origin;
 let shuttingDown = false;
 
@@ -69,6 +71,8 @@ async function startup(child, getLogs, marker, timeout = 120000) {
 		inspect();
 	});
 }
+// The CSS pipeline minifies #ffffff to #fff; compare the colour, not the spelling.
+const expandHex = (value) => (/^#[0-9a-f]{3}$/i.test(value) ? `#${[...value.slice(1)].map((c) => c + c).join("")}` : value).toLowerCase();
 async function put(pathname, body) {
 	const res = await fetch(origin + pathname, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 	assert.ok(res.ok, `PUT ${pathname} -> ${res.status} ${await res.text()}`);
@@ -144,8 +148,8 @@ try {
 		if (url.protocol === "data:" || url.protocol === "about:" || url.origin === origin) return request.continue();
 		return request.abort();
 	});
-	const pageErrors = [];
 	page.on("pageerror", (error) => { if (!shuttingDown) pageErrors.push(error.message); });
+	page.on("console", (message) => { if (message.type() === "error" && !shuttingDown) consoleErrors.push(message.text()); });
 
 	for (const language of ["en", "fa"]) {
 		for (const mode of ["dark", "light"]) {
@@ -155,6 +159,15 @@ try {
 			await page.goto(`${origin}/`, { waitUntil: "domcontentloaded", timeout: 120000 });
 			await page.waitForSelector("aside");
 			await page.waitForSelector('[data-testid="mastery-legend"]', { timeout: 60000 });
+			// The canvas paints after layout settles: some pixel must be non-transparent.
+			await page.waitForFunction(() => {
+				const canvas = document.querySelector("canvas");
+				const ctx = canvas?.getContext("2d");
+				if (!canvas || !ctx || canvas.width === 0) return false;
+				const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+				for (let i = 3; i < data.length; i += 4) if (data[i] !== 0) return true;
+				return false;
+			}, { timeout: 30000 });
 			await settle(page);
 			const facts = await page.evaluate(() => {
 				const aside = document.querySelector("aside").getBoundingClientRect();
@@ -169,7 +182,7 @@ try {
 			});
 			assert.equal(facts.dir, language === "fa" ? "rtl" : "ltr", `${tag}: html dir`);
 			assert.ok(facts.classes.includes(mode), `${tag}: html class ${mode}`);
-			assert.equal(facts.background, mode === "light" ? "#ffffff" : "#141414", `${tag}: --background`);
+			assert.equal(expandHex(facts.background), mode === "light" ? "#ffffff" : "#141414", `${tag}: --background`);
 			if (language === "fa") assert.ok(facts.asideCenter > facts.innerWidth / 2, `${tag}: sidebar on the right`);
 			else assert.ok(facts.asideCenter < facts.innerWidth / 2, `${tag}: sidebar on the left`);
 			await shot(page, `${tag}-home`);
@@ -194,11 +207,11 @@ try {
 
 			await chord(page, "KeyP");
 			await page.waitForSelector("[cmdk-root]");
-			await page.waitForFunction(() => document.querySelectorAll("[cmdk-group]").length >= 2);
+			await page.waitForFunction(() => !document.querySelector("[cmdk-loading]") && document.querySelectorAll("[cmdk-group]").length >= 4, { timeout: 30000 });
 			await settle(page);
 			await shot(page, `${tag}-palette`);
 			await page.keyboard.press("Escape");
-			checks.push(`${tag}: dir/class/--background/sidebar side/mastery legend`);
+			checks.push(`${tag}: dir/class/--background/sidebar side/mastery legend/graph painted/palette 4 groups`);
 		}
 	}
 	assert.deepEqual(pageErrors, [], `page errors: ${pageErrors.join(" | ")}`);
@@ -212,6 +225,8 @@ try {
 } catch (error) {
 	console.error(error);
 	console.error(serverLogs.slice(-4000));
+	if (pageErrors.length) console.error(`page errors:\n${pageErrors.join("\n")}`);
+	if (consoleErrors.length) console.error(`console errors:\n${consoleErrors.join("\n")}`);
 	await cleanup();
 	console.error(`temp dir kept for inspection: ${home}`);
 	process.exit(1);

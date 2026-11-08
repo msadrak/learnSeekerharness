@@ -12,17 +12,22 @@ if (!process.env.LH_DATA_DIR) throw new Error("seed-visual: LH_DATA_DIR must poi
 
 const createdAt = new Date("2026-10-28T00:00:00.000Z").toISOString();
 const names = ["Addition", "Subtraction", "Multiplication"];
+// The chat exists first so every proposition can carry provenance pointing at
+// it — that is what gives the command palette a session per proposition.
+const chat = chatStore.createChat("Practice fixture", "practice");
 const nodes = names.map((name, i) => ({
 	id: `n_visual_${i}`,
 	name,
 	statement: `${name} is a basic arithmetic operation.`,
 	aliases: [],
 	createdAt,
-	provenance: [],
+	provenance: [{ chatId: chat.id, messageId: "m_problem" }],
 }));
 for (const node of nodes) graphStore.appendNode(node);
 
-const chat = chatStore.createChat("Practice fixture", "practice");
+// The graph view draws only nodes that have a persisted position (normally
+// written by the layout settle after an extraction run).
+graphStore.writePositions(Object.fromEntries(nodes.map((node, i) => [node.id, { x: (i - 1) * 140, y: i % 2 === 0 ? 0 : 90 }])));
 const usage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } };
 const assistant = (id: string, toolCallId: string, name: string, args: Record<string, unknown>, timestamp: number) => ({
 	id,
