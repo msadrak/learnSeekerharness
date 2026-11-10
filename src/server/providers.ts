@@ -18,6 +18,7 @@ import { registerProviderSource, reservedProviderIds } from "../agent/models.ts"
 import { validateCustomProvider, type CustomProviderDef } from "../core/custom-providers.ts";
 import { credentialStore } from "../store/credentials.ts";
 import { customProviderStore } from "../store/custom-providers.ts";
+import { modelListingStore } from "../store/model-listings.ts";
 
 /** A definition plus whether a key is stored (never the key). */
 export interface CustomProviderView extends CustomProviderDef {
@@ -90,4 +91,5 @@ registerProviderSource({
 	credentials: credentialStore,
 	stamp: () => customProviderStore.stamp(),
 	providers: () => customProviderDefs().map(buildCustomProvider),
+	listings: modelListingStore,
 });

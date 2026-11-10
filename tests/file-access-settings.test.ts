@@ -4,6 +4,7 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { after, beforeEach, describe, it } from "node:test";
+import { NO_FILE_SYMLINKS } from "./helpers/symlink.ts";
 
 // Every store, route and composition-root import sees only these synthetic
 // locations. No real settings, credential files or learning records are used.
@@ -86,7 +87,7 @@ describe("strict persisted file-access policy", () => {
 		assert.equal(readFileAccessSettings().ok, false);
 		assert.throws(() => resolveSourcePath(path.join(a, "notes.md")), blocked);
 	});
-	it("directories, dangling settings symlinks and dangling data-directory symlinks are not first boot", async () => {
+	it("directories, dangling settings symlinks and dangling data-directory symlinks are not first boot", { skip: NO_FILE_SYMLINKS }, async () => {
 		await fs.mkdir(SETTINGS_FILE);
 		assert.equal(readFileAccessSettings().ok, false);
 		await fs.rmdir(SETTINGS_FILE);

@@ -18,14 +18,19 @@ from typing import Any
 from _data import DataError, add_common_arguments, data_root, print_json, read_chat, safe_path
 
 QUESTION_TOOLS = {"quiz", "probe", "ask_user_question", "explain", "recall"}
-LEARNING_TOOLS = QUESTION_TOOLS | {"problem", "conclude", "probe_done", "plan_init", "research", "pdf", "visual", "demo"}
+LEARNING_TOOLS = QUESTION_TOOLS | {
+    "problem", "conclude", "probe_done", "plan_init", "research", "pdf", "visual", "demo",
+    "assign_reading", "open_document", "point_to_passage", "propose_annotation",
+}
 OPERATION_TOOLS = {
     "read", "ls", "grep", "find", "bash", "write", "edit", "list_sessions",
     "list_propositions", "get_session", "get_proposition", "search", "web_search", "web_fetch",
+    "read_document",
 }
 MARKERS = {
     "graph-context", "probe-handoff", "subagent-steer", "subagent-abort", "plan-block",
     "practice-thinking", "practice-next", "problem-dismissed", "compaction",
+    "document-excerpt", "document-viewer",
 }
 ACCOUNTING = {
     "provider", "api", "model", "usage", "stopReason", "thinkingSignature",

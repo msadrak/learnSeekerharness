@@ -13,3 +13,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 All design authority belongs to the human. **Never guess a design or implementation decision.** If anything is ambiguous — naming, behavior, data shapes, UX, defaults, scope boundaries, prompt wording — STOP and ask with the ask-user-question tool before proceeding. If you are "a little unsure," you are unsure: ask. A wrong guess is far more expensive than a question. Ask early, ask specific, one question per call.
 
 Concretely: first investigate and plan rigorously (asking the user design questions along the way), get the plan approved by the user, and only then implement. Implementation should be mechanical execution of an approved plan — not interpretation.
+
+# Where things are
+
+Setup, check commands (including the direct-node forms for Windows Git Bash), configuration and debugging: `docs/development.md`. Runtime boundaries, storage and the code map: `docs/architecture.md`. Prompt fragments: `src/agent/prompts/README.md`.

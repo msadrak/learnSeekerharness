@@ -318,6 +318,7 @@ export const settings: typeof en = {
 				extractor: "استخراج‌کننده",
 				auditor: "بازبین",
 				visualMaker: "سازندهٔ شکل",
+				scanReader: "خوانندهٔ اسکن",
 			},
 			modelAria: (role) => `مدل \u2068${role}\u2069`,
 		},

@@ -456,6 +456,20 @@ function projectMarker(marker: LhMarkerMessage, out: LhViewMessage[]): void {
 			// UI-only (the ask-style dismissal): the synthesized conclude
 			// pair — which rides the NEXT input — carries the record's face.
 			return;
+		case "document-excerpt": {
+			// The learner's selected passage(s): a user-side card keyed on the
+			// structured details (action, excerpts, text) — the model reads the
+			// marker's content, the transcript never re-parses it.
+			out.push({
+				id: marker.id,
+				role: "user",
+				parts: [{ type: "data-document-excerpt", id: `dx_${marker.id}`, data: marker.details }],
+			});
+			return;
+		}
+		case "document-viewer":
+			// Model-visible scaffolding (reading position, annotation decisions): invisible.
+			return;
 		case "compaction": {
 			// THE MOMENT DIVIDER (owner round 14): minimal centered small
 			// text at the compaction moment — where the user currently is

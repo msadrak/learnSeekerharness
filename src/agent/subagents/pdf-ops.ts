@@ -52,14 +52,20 @@ async function loadPdfjs() {
  *  pdfjs checks endsWith("/") even on Windows: use a literal trailing slash,
  *  NOT path.sep ("\\" on Windows). Node fs accepts this path on every OS. */
 export function standardFontsDir(): string {
-	return path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "node_modules", "pdfjs-dist", "standard_fonts") + "/";
+	return pdfjsDistDir() + "/standard_fonts/";
+}
+
+/** The installed pdfjs-dist package directory (served to the browser viewer by
+ *  /pdfjs and read for the node-side standard fonts). */
+export function pdfjsDistDir(): string {
+	return path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "node_modules", "pdfjs-dist");
 }
 
 async function openDocument(filePath: string) {
-	return openBytes(new Uint8Array(await fs.readFile(filePath)));
+	return openPdfBytes(new Uint8Array(await fs.readFile(filePath)));
 }
 
-async function openBytes(data: Uint8Array) {
+export async function openPdfBytes(data: Uint8Array) {
 	const pdfjs = await loadPdfjs();
 	// The legacy build in plain node runs on a main-thread fake worker (no
 	// workerSrc needed); teardown is the loading task's destroy().
@@ -173,9 +179,9 @@ export type PdfConversion =
 /** An uploaded PDF's pages as Markdown (the notes import's door). The page
  *  cap is checked before any page is read. */
 export async function convertPdf(data: Uint8Array, maxPages: number): Promise<PdfConversion> {
-	let opened: Awaited<ReturnType<typeof openBytes>>;
+	let opened: Awaited<ReturnType<typeof openPdfBytes>>;
 	try {
-		opened = await openBytes(data);
+		opened = await openPdfBytes(data);
 	} catch {
 		return { kind: "unreadable" };
 	}

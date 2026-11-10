@@ -4,6 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { standardFontsDir } from "./pdf-ops";
+import type { PageRegion } from "../../core/documents.ts";
 
 /**
  * Verification engines for sub-agents: demos use the app's own Electron
@@ -569,6 +570,61 @@ async function renderPdfPages(
 			});
 		}
 		return out;
+	} finally {
+		await loadingTask.destroy().catch(() => {});
+	}
+}
+
+export interface RenderedPdfRegion {
+	png: Buffer;
+	width: number;
+	height: number;
+}
+
+/** Render one rectangle of a PDF page (fractions of the displayed page from its
+ *  top-left, rotation applied — the viewer's coordinates) to a PNG. Only the crop
+ *  is painted, so a scanned page's one big image never allocates a full-page
+ *  canvas. The long side is capped at `maxSide` px; `dpi` bounds the scale below it. */
+export async function renderPdfRegion(
+	pdfPath: string,
+	pageNo: number,
+	region: PageRegion,
+	opts: { dpi?: number; maxSide?: number } = {},
+): Promise<RenderedPdfRegion> {
+	const dpi = opts.dpi ?? 300;
+	const maxSide = opts.maxSide ?? 2400;
+	// Dynamic like renderPdfPages: @napi-rs/canvas is a native optionalDependency and
+	// the pdfjs legacy build must not load at module evaluation (server import graph).
+	const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+	const { createCanvas } = await import("@napi-rs/canvas");
+	const data = new Uint8Array(fs.readFileSync(path.resolve(pdfPath)));
+	const loadingTask = pdfjs.getDocument({ data, standardFontDataUrl: standardFontsDir(), verbosity: 0 });
+	const doc = await loadingTask.promise;
+	try {
+		if (!Number.isInteger(pageNo) || pageNo < 1 || pageNo > doc.numPages) {
+			throw new RangeError(`Page ${pageNo} is outside 1–${doc.numPages}`);
+		}
+		const pg = await doc.getPage(pageNo);
+		const base = pg.getViewport({ scale: 1 });
+		const cropWidth = base.width * region.w;
+		const cropHeight = base.height * region.h;
+		const planned = pdfCanvasGeometry(cropWidth, cropHeight, dpi);
+		const scale = Math.min(planned.scale, maxSide / Math.max(cropWidth, cropHeight));
+		const width = Math.max(1, Math.round(cropWidth * scale));
+		const height = Math.max(1, Math.round(cropHeight * scale));
+		const viewport = pg.getViewport({
+			scale,
+			offsetX: -region.x * base.width * scale,
+			offsetY: -region.y * base.height * scale,
+		});
+		const canvas = createCanvas(width, height);
+		const ctx = canvas.getContext("2d");
+		await pg.render({
+			canvasContext: ctx as unknown as CanvasRenderingContext2D,
+			canvas: canvas as unknown as HTMLCanvasElement,
+			viewport,
+		}).promise;
+		return { png: providerSafePng(canvas.toBuffer("image/png")), width, height };
 	} finally {
 		await loadingTask.destroy().catch(() => {});
 	}

@@ -56,6 +56,9 @@ export const QUESTION_TOOLS = [
 	"ask_user_question",
 	"explain",
 	"recall",
+	// A reading assignment: the dock shows Go to passage / Done reading and
+	// the learner's completion or skip is the call's result.
+	"assign_reading",
 ] as const;
 
 /** The tool→kind map (the dock's own fold, named once — the dismissal
@@ -170,6 +173,11 @@ const ACTIVITY_LABELS: Record<string, string> = {
 	pdf: "Reading a PDF…",
 	plan_init: "Drawing up the plan…",
 	probe_done: "Concluding the assessment…",
+	read_document: "Reading a document…",
+	read_scanned_section: "Reading a scanned section…",
+	open_document: "Opening a document…",
+	point_to_passage: "Pointing to a passage…",
+	propose_annotation: "Proposing an annotation…",
 };
 
 /** The activity label for ONE running tool (owner, streaming round
@@ -178,6 +186,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
  *  bottom line. Question tools are excluded here: their input-streaming
  *  part renders in the dock, never a live card. */
 export function toolActivityLabel(tool: string): string {
+	if (tool === "assign_reading") return "Assigning a reading…";
 	if ((QUESTION_TOOLS as readonly string[]).includes(tool)) return "Writing a question…";
 	return ACTIVITY_LABELS[tool] ?? "Working…";
 }

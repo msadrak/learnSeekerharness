@@ -34,7 +34,7 @@ import { dockStateKey } from "@/components/dock-state-key";
 import { clearOpeningPrompt, readOpeningPromptEntry, stashOpeningPrompt } from "@/components/opening-prompt";
 import { forwardDockWheel, useDockHeight } from "@/components/dock-height";
 import { QueuedSteersBody, type QueuedSteerLine } from "@/components/queued-steers";
-import { DictationBar, finishDictation, joinDictation, useDictation } from "@/components/dictation";
+import { appendToPrimaryInput, DictationBar, finishDictation, joinDictation, useDictation } from "@/components/dictation";
 import { useFieldCycle } from "@/components/field-cycle";
 import { JobsContext } from "@/components/jobs-context";
 import { StatsBar } from "@/components/stats-bar";
@@ -55,7 +55,15 @@ import { PlanBlock, PlanPopup, latestTree } from "@/components/plan-block";
 import { PlanMarginalia, planExists } from "@/components/plan-window";
 import { MermaidOverlay, SessionMermaidContext } from "@/components/session-overlay";
 import { AbortTurnDialog, type AbortMode } from "@/components/abort-turn-dialog";
-import { ArrowRightIcon, DumbbellIcon, WaypointsIcon } from "lucide-react";
+import { ArrowRightIcon, BookOpenIcon, DumbbellIcon, WaypointsIcon } from "lucide-react";
+import { toast } from "sonner";
+import { DocumentViewerPanel } from "@/components/document-viewer/viewer-panel";
+import { clampPanelFraction, VIEWER_OVERLAY_BELOW_PX, ViewerSplitter } from "@/components/document-viewer/split";
+import { useViewerState } from "@/components/document-viewer/use-viewer-state";
+import { DocumentViewerContext, type DocumentViewerApi } from "@/components/document-viewer/viewer-context";
+import { QuoteTray } from "@/components/document-viewer/quote-tray";
+import { DocumentExcerptCard, type DocumentExcerptData } from "@/components/document-excerpt-card";
+import { ReadingCompletedCard, ReadingDock } from "@/components/reading-dock";
 import type { PlanBlockData } from "@/src/core";
 import { QuestionDock } from "@/components/question-dock";
 import { SessionFind } from "@/components/session-find";
@@ -64,7 +72,20 @@ import { PracticeDock } from "@/components/practice-dock";
 import { ThinkingCard, type PracticeThinkingData } from "@/components/practice-cards";
 import { GraphContextCard, type GraphContextData } from "@/components/graph-context-card";
 import { TopBar } from "@/components/top-bar";
-import type { ArtifactPartProps, JobRecord, Phase3, QuestionAnswerData, QuestionFormDraft, TurnUsage, SessionPricing } from "@/src/core";
+import type {
+	ArtifactPartProps,
+	AssignReadingInput,
+	ChatViewerState,
+	ClientAnswerData,
+	DocumentExcerpt,
+	JobRecord,
+	Phase3,
+	QuestionAnswerData,
+	QuestionFormDraft,
+	ReadingAnswerData,
+	TurnUsage,
+	SessionPricing,
+} from "@/src/core";
 import type { LhViewMessage } from "@/src/core";
 import { PhaseChip, PhaseDivider } from "@/components/phase-divider";
 import { useT, type Messages } from "@/components/i18n";
@@ -89,6 +110,11 @@ import {
 	teachStepIndex,
 	toolQuestionKind,
 	questionNeedsReveal,
+	dismissedReading,
+	documentLocus,
+	MAX_EXCERPTS_PER_MESSAGE,
+	parseReadingAnswer,
+	parseReadingInput,
 } from "@/src/core";
 import { ReadingThinkingField } from "@/components/reading-thinking";
 import { currentUserThinkingOpen, setAllUserThinkingOpen } from "@/components/thinking-block";
@@ -218,10 +244,21 @@ function isSubagentSteer(m: LhViewMessage): boolean {
  * never overlapping the transcript at rest, never covering the scrollbar —
  * and DockOverlay animates its height on variant changes.
  */
+/** Every tool call id in a loaded history — viewer cards for these never announce or refresh. */
+function toolCallIdsOf(messages: readonly LhMessage[]): Set<string> {
+	const ids = new Set<string>();
+	for (const m of messages) {
+		if (m.role !== "assistant") continue;
+		for (const block of m.content) if (block.type === "toolCall") ids.add(block.id);
+	}
+	return ids;
+}
+
 export function Chat({
 	chatId,
 	title,
 	initialMessages,
+	initialViewer = null,
 	initialError,
 	initialPrompt,
 	initiallyInFlight,
@@ -232,6 +269,8 @@ export function Chat({
 	chatId: string;
 	title: string;
 	initialMessages: LhMessage[];
+	/** The session's document viewer state (documents, tabs, positions, annotation proposals). */
+	initialViewer?: ChatViewerState | null;
 	/** Memory-only settlement notice supplied on reopening. */
 	initialError?: string;
 	/** The session kind (practice sessions, owner 2026-10-04): practice
@@ -266,6 +305,43 @@ export function Chat({
 	const { messages, nativeMessages, hasConfirmedConversation, contextTokens, send, continueIfOwed, steer, steerQueue, submitAnswer, dismissQuestion, dismissProblem, questionDraft, saveQuestionDraft, setMessages, adoptRecord, status, error, stop, clearError, resumeStream, setReattachSettled } =
 		useChatSession({ chatId, initialMessages, initialError, initiallyInFlight });
 	const tr = useT();
+
+	// THE DOCUMENT VIEWER (side panel beside the transcript). Tool cards that
+	// already sit in the loaded history never announce or refresh: only calls
+	// that arrive live do.
+	const initialToolCallIdsRef = useRef<Set<string> | null>(null);
+	if (initialToolCallIdsRef.current === null) initialToolCallIdsRef.current = toolCallIdsOf(initialMessages);
+	const viewerState = useViewerState({ chatId, initial: initialViewer, ignoreToolCallIds: initialToolCallIdsRef.current });
+	const viewerPanelOpenRef = useRef(viewerState.panelOpen);
+	viewerPanelOpenRef.current = viewerState.panelOpen;
+	const refreshViewerRef = useRef(viewerState.refresh);
+	refreshViewerRef.current = viewerState.refresh;
+	// Passages attached to the next message (Quote in message).
+	const [quotes, setQuotes] = useState<DocumentExcerpt[]>([]);
+	const quotesRef = useRef(quotes);
+	quotesRef.current = quotes;
+	const quotesDraftRef = useRef<DocumentExcerpt[] | null>(null);
+	// The session area (everything right of the sidebar): the panel splits it
+	// side by side, or overlays the transcript when it is too narrow.
+	const sessionAreaRef = useRef<HTMLDivElement | null>(null);
+	const [areaWidth, setAreaWidth] = useState(0);
+	useEffect(() => {
+		const el = sessionAreaRef.current;
+		if (!el) return;
+		setAreaWidth(el.getBoundingClientRect().width);
+		const observer = new ResizeObserver((entries) => {
+			const width = entries[0]?.contentRect.width;
+			if (width !== undefined) setAreaWidth(width);
+		});
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, []);
+	// ⌘⇧E (toggle-document-viewer): open or close the viewer panel.
+	useEffect(() => {
+		const onToggle = () => viewerState.setPanelOpen(!viewerPanelOpenRef.current);
+		window.addEventListener(kbdEventForChat("toggle-document-viewer"), onToggle);
+		return () => window.removeEventListener(kbdEventForChat("toggle-document-viewer"), onToggle);
+	}, [viewerState.setPanelOpen]);
 
 	const sessionFindScopeRef = useRef<HTMLDivElement | null>(null);
 	const scrollContextRef = useRef<StickToBottomContext | null>(null);
@@ -393,7 +469,7 @@ export function Chat({
 				problem: activeProblemRef.current !== null,
 				busy: busyRef.current,
 			});
-			if (target === "question") setAbortAsk("question");
+			if (target === "question") setAbortAsk(pendingRef.current?.tool === "assign_reading" ? "reading" : "question");
 			else if (target === "problem") setAbortAsk("problem");
 			else if (target === "turn") setAbortAsk("turn");
 			else if (target === "mermaid") setMermaidFocus(null);
@@ -417,6 +493,13 @@ export function Chat({
 			// turn is STILL RUNNING, so the discard ALSO kills that turn; the
 			// route parks the dismissal (202) and the settle applies it.
 			const p = pendingRef.current;
+			if (p?.tool === "assign_reading") {
+				// A skipped reading carries nothing but the skip: the reading-thinking
+				// field belongs to checks, never to an assignment.
+				void dismissQuestion(p.toolCallId, dismissedReading(), p.key);
+				if (busyRef.current) abortInFlightTurn();
+				return;
+			}
 			if (p) {
 				const question = (p.input as { question?: string } | null)?.question ?? "";
 				const reading = readingThinkingRef.current.trim() || undefined;
@@ -504,7 +587,9 @@ export function Chat({
 	useEffect(() => {
 		const was = prevDockKeyRef.current;
 		prevDockKeyRef.current = dockKey;
-		if (dockKey !== null && dockKey !== was) announce(tr.chat.announce.questionReady);
+		if (dockKey !== null && dockKey !== was) {
+			announce(pendingRef.current?.tool === "assign_reading" ? tr.chat.announce.readingReady : tr.chat.announce.questionReady);
+		}
 	}, [dockKey, announce, tr]);
 	const prevErrorAnnounceRef = useRef(error);
 	useEffect(() => {
@@ -719,6 +804,11 @@ export function Chat({
 			if (draftRef.current !== null) {
 				applyText(draftRef.current);
 				draftRef.current = null;
+				// Quotes ride the same refused send: they go home with the draft.
+				if (quotesDraftRef.current) {
+					setQuotes(quotesDraftRef.current);
+					quotesDraftRef.current = null;
+				}
 			}
 			clearError();
 			if (keyRefused && catalogRef.current?.providers.some((p) => p.keyPresent)) openModelPicker();
@@ -744,6 +834,7 @@ export function Chat({
 		return [
 			...pick('[data-testid="reading-thinking-field"] [data-file-path-input]'),
 			...pick('[data-testid="question-dock"] [data-file-path-input]'),
+			...pick('[data-testid="reading-dock"] [data-file-path-input]'),
 			...pick('[data-testid="practice-dock"] [data-file-path-input]'),
 			...pick('[data-testid="composer"] [data-file-path-input]'),
 		];
@@ -836,6 +927,8 @@ export function Chat({
 		if (Array.isArray(record.turns)) setTurns(record.turns);
 		setPricing(record.pricing);
 		if (!Array.isArray(record.messages)) return;
+		// The viewer's proposals and tabs move with the record (decisions, agent opens).
+		void refreshViewerRef.current();
 		setMessages(record.messages, record.turnError);
 		// The continuation seam (contracts.ts protocol §4): a job result
 		// landing in the record leaves the agent owing a continuation — the
@@ -1238,6 +1331,7 @@ export function Chat({
 		// server's). Busy states ignore it: a running turn owns the view,
 		// and the write is 409-guarded against exactly that anyway.
 		if (p.chatId !== chatId) return;
+		void refreshViewerRef.current();
 		if (localStreamRef.current || turnInFlightRef.current) return;
 		void syncFromServer();
 	});
@@ -1254,10 +1348,29 @@ export function Chat({
 		}
 		void dictation.finish().then(doSteerOrSend);
 	};
+	/** Run a send once the viewer's pending layout PUT has landed, so the server's
+	 *  reading-position note describes where the learner is now. Sessions with no
+	 *  document send synchronously, exactly as before. */
+	const afterViewerFlush = (run: () => void) => {
+		if (viewerState.state.documents.length === 0) run();
+		else void viewerState.flush().then(run);
+	};
+	/** One excerpt event: the layout PUT goes first so the server's reading-position
+	 *  note describes what the learner saw when he selected. */
+	const sendExcerptInput = async (
+		action: "explain" | "quiz" | "quote",
+		excerpts: DocumentExcerpt[],
+		text?: string,
+		onAccepted?: () => void,
+	) => {
+		await viewerState.flush();
+		void send({ type: "excerpt", action, excerpts, ...(text ? { text } : {}) }, onAccepted);
+	};
 	const doSend = () => {
 		if (busy || pending || compacting) return;
 		const t = textRef.current.trim();
-		if (!t) return;
+		const attached = quotesRef.current;
+		if (!t && attached.length === 0) return;
 		if (zeroKeys) {
 			setSetupOpen(true);
 			return;
@@ -1266,13 +1379,25 @@ export function Chat({
 			openModelPicker();
 			return; // No optimistic send and no change to the learner's draft.
 		}
+		if (attached.length > 0) {
+			// Quote in message: the chips (and any typed text) ride one excerpt event.
+			draftRef.current = t; // the refusal flow restores the text AND the chips
+			quotesDraftRef.current = attached;
+			applyText("");
+			setQuotes([]);
+			void sendExcerptInput("quote", attached, t || undefined, () => {
+				quotesDraftRef.current = null;
+			});
+			return;
+		}
 		if (openingDraftRef.current !== null) {
 			deliverOpeningPrompt(t);
 			return;
 		}
+		quotesDraftRef.current = null;
 		draftRef.current = t; // the refusal flow's preserve-and-replay seam
 		applyText("");
-		void send({ type: "text", text: t });
+		afterViewerFlush(() => void send({ type: "text", text: t }));
 	};
 
 	/* STEER VS SEND (owner arc 2026-10-03): a send while a turn runs steers
@@ -1287,14 +1412,63 @@ export function Chat({
 	const doSteerOrSend = () => {
 		if (pending || compacting) return;
 		const t = textRef.current.trim();
-		if (!t) return;
+		const hasQuotes = quotesRef.current.length > 0;
+		if (!t && !hasQuotes) return;
 		if (busy) {
+			// Quotes ride a message, never a steer: keep the draft and the chips.
+			if (hasQuotes) {
+				toast(tr.chat.viewer.quotes.waitForTurn);
+				return;
+			}
 			applyText("");
 			void steer(t);
 			return;
 		}
 		doSend();
 	};
+
+	// ── The document viewer's actions (Chat owns the send paths) ──
+	/** Explain / Quiz me: sent at once. The selection menu already disables
+	 *  these while a turn runs or a question / reading / problem owns the dock. */
+	const sendExcerpt = async (action: "explain" | "quiz", excerpt: DocumentExcerpt) => {
+		if (busy || pending || activeProblem || compacting) return;
+		if (zeroKeys) {
+			setSetupOpen(true);
+			return;
+		}
+		if (selectedModelUnavailable(catalog, selectedModel)) {
+			openModelPicker();
+			return;
+		}
+		draftRef.current = null; // nothing to restore into the composer on a refusal
+		quotesDraftRef.current = null;
+		await sendExcerptInput(action, [excerpt]);
+	};
+	/** Quote: a chip on the next message — or, while a question / reading /
+	 *  problem owns the dock, the passage goes into the dock's own field. */
+	const quoteExcerpt = (excerpt: DocumentExcerpt) => {
+		if (pending || activeProblem) {
+			appendToPrimaryInput(`> ${excerpt.quote}\n— ${excerpt.name}${documentLocus(excerpt)}\n`);
+			return;
+		}
+		setQuotes((current) => (current.length >= MAX_EXCERPTS_PER_MESSAGE ? current : [...current, excerpt]));
+	};
+	const viewerActionsRef = useRef({ sendExcerpt, quoteExcerpt, openSetup: () => setSetupOpen(true) });
+	viewerActionsRef.current = { sendExcerpt, quoteExcerpt, openSetup: () => setSetupOpen(true) };
+	const viewerApi = useMemo<DocumentViewerApi>(
+		() => ({
+			...viewerState,
+			quotes,
+			removeQuote: (index) => setQuotes((current) => current.filter((_, i) => i !== index)),
+			selectionGate: { busy, pendingQuestion: pending !== null, activeProblem: activeProblem !== null },
+			sendExcerpt: (action, excerpt) => viewerActionsRef.current.sendExcerpt(action, excerpt),
+			quoteExcerpt: (excerpt) => viewerActionsRef.current.quoteExcerpt(excerpt),
+			openSetup: () => viewerActionsRef.current.openSetup(),
+		}),
+		[viewerState, quotes, busy, pending !== null, activeProblem !== null],
+	);
+	const panelFraction = clampPanelFraction(viewerState.width, areaWidth);
+	const viewerOverlay = areaWidth > 0 && areaWidth < VIEWER_OVERLAY_BELOW_PX;
 
 	return (
 		<ChatActionsContext.Provider
@@ -1314,13 +1488,14 @@ export function Chat({
 			}}
 		>
 		<JobsContext.Provider value={jobs}>
+		<DocumentViewerContext.Provider value={viewerApi}>
 		{/* The session surface: the transcript column (header + scroller) and
 		    the plan-tree panel as full-height SIBLINGS — the panel spans top to
 		    bottom exactly like the left sidebar, and the header (name + phase
 		    chip) spans from the left sidebar's edge to the panel's edge. The
 		    dock overlays the column bottom (outside the scroller); a spacer in
 		    the transcript reserves its height. */}
-		<div className="flex h-dvh">
+		<div ref={sessionAreaRef} className="relative flex h-dvh">
 			<div className="flex min-w-0 flex-1 flex-col">
 				{/* The top bar is its own block (owner, top-fade round 4): in flow
 				    above the scroller on the plain page background — no gradient. Its
@@ -1398,6 +1573,29 @@ export function Chat({
 							<div className="min-w-4 flex-1" aria-hidden="true" />
 					</>
 					)}
+					{/* The document viewer toggle (⌘⇧E): a dot says the agent pointed at
+					    something while the panel was hidden. */}
+					<Hint label={tr.chat.viewer.toggle} action="toggle-document-viewer" side="bottom">
+						<button
+							type="button"
+							data-testid="viewer-toggle"
+							aria-label={tr.chat.viewer.toggle}
+							aria-pressed={viewerState.panelOpen}
+							onClick={(e) => {
+								blurAfterPointerClick(e);
+								viewerState.setPanelOpen(!viewerState.panelOpen);
+							}}
+							className={cn(
+								"lh-no-drag relative grid size-8 shrink-0 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+								viewerState.panelOpen && "bg-accent text-foreground",
+							)}
+						>
+							<BookOpenIcon className="size-4" aria-hidden />
+							{viewerState.attention && !viewerState.panelOpen && (
+								<span data-testid="viewer-attention" className="absolute end-1 top-1 size-2 rounded-full bg-brand" />
+							)}
+						</button>
+					</Hint>
 					{/* The plan chip (owner, plan-placement round): session-level
 					    structure beside the phase chip — access to the full-DAG popup
 					    at every width; the marginalia is the wide-screen glance view. */}
@@ -1493,6 +1691,8 @@ export function Chat({
 												return <CompactionCutDivider key={pi} data={part.data as CompactionDividerData} />;
 											case "data-practice-thinking":
 												return <ThinkingCard key={pi} data={part.data as PracticeThinkingData} />;
+											case "data-document-excerpt":
+												return <DocumentExcerptCard key={pi} data={part.data as DocumentExcerptData} />;
 											case "data-practice-next":
 												// The learner's move-on signal (owner round 16): a compact
 												// centered mono-caps line — chrome, the dismissal register.
@@ -1634,7 +1834,8 @@ export function Chat({
 													case "tool-probe":
 													case "tool-ask_user_question":
 													case "tool-explain":
-													case "tool-recall": {
+													case "tool-recall":
+													case "tool-assign_reading": {
 														const malformed = !busy && malformedQuestions.find(call => call.messageId === part.sourceMessageId && call.contentIndex === part.sourceContentIndex && call.toolCallId === part.toolCallId);
 														if (malformed) return <MalformedQuestion key={pi} disabled={!!pending || compacting}
 															reason={pending ? tr.chat.errors.answerRemainingQuestion : undefined}
@@ -1645,6 +1846,13 @@ export function Chat({
 														// Pending/streaming questions live in the dock, not the
 														// transcript; answered ones render as graded records.
 														if (part.state === "output-available") {
+															if (part.type === "tool-assign_reading") {
+																// A reading's answer is its completion (or skip), not a graded record.
+																const answer = parseReadingAnswer(part.output);
+																return answer ? (
+																	<ReadingCompletedCard key={pi} answer={answer} input={parseReadingInput(part.input)} />
+																) : null;
+															}
 															return (
 																<AnsweredCard key={pi} answer={part.output as QuestionAnswerData} input={part.input} />
 															);
@@ -1788,6 +1996,8 @@ export function Chat({
 						)
 					}
 					composer={
+						<>
+						<QuoteTray />
 						<ChatSessionComposer
 							// Stop aborts ANY in-flight turn (stream-reattach wave): the
 							// square renders while a reattached/wake turn runs too — the
@@ -1809,10 +2019,22 @@ export function Chat({
 							nextProblem={nextReady}
 							onNext={sendNext}
 							placeholder={nextReady ? tr.chat.composer.nextPlaceholder : undefined}
+							hasQuotes={quotes.length > 0}
 						/>
+						</>
 					}
+					onRevealReading={(input) =>
+						viewerState.reveal({ documentId: input.document, quote: input.quote, page: input.page, endPage: input.endPage })
+					}
+					readingDocumentName={(documentId) => viewerState.state.documents.find((d) => d.id === documentId)?.name ?? documentId}
 					onSubmitAnswer={(output) => {
 						if (!pending) return;
+						// A reading's completion carries no graded answer and no reading-thinking.
+						if (pending.tool === "assign_reading") {
+							const reading = pending;
+							afterViewerFlush(() => submitAnswer(reading.tool, reading.toolCallId, output, reading.key));
+							return;
+						}
 						// THE ANSWER IS THE QUESTION CALL'S TOOL RESULT (fork 1, owner
 						// 2026-09-26): one input event, one turn — the hook appends
 						// the optimistic graded result (the AnsweredCard shows at
@@ -1825,7 +2047,8 @@ export function Chat({
 						const reading = readingThinkingRef.current.trim() || undefined;
 						// The pending-id effect clears this only when the question
 						// actually leaves. An offline preflight keeps the draft visible.
-						submitAnswer(pending.tool, pending.toolCallId, reading ? { ...output, readingThinking: reading } : output, pending.key);
+						const question = pending;
+						afterViewerFlush(() => submitAnswer(question.tool, question.toolCallId, reading ? { ...(output as QuestionAnswerData), readingThinking: reading } : output, question.key));
 					}}
 				/>
 				</Conversation>
@@ -1848,7 +2071,24 @@ export function Chat({
 				<AbortTurnDialog mode={abortAsk} onClose={() => setAbortAsk(null)} onConfirm={confirmAbort} busy={busy} />
 				</div>
 			</div>
+			{/* The document viewer panel, at the inline-end of the session area
+			    (right in LTR, left in RTL): side by side with the transcript, or
+			    over it full-width when the area is too narrow for both. */}
+			{viewerState.panelOpen && !viewerOverlay && (
+				<>
+					<ViewerSplitter containerRef={sessionAreaRef} width={panelFraction} onWidthChange={viewerState.setWidth} />
+					<div className="h-full shrink-0" style={{ width: `${panelFraction * 100}%` }}>
+						<DocumentViewerPanel chatId={chatId} />
+					</div>
+				</>
+			)}
+			{viewerState.panelOpen && viewerOverlay && (
+				<div className="absolute inset-0 z-30">
+					<DocumentViewerPanel chatId={chatId} />
+				</div>
+			)}
 		</div>
+		</DocumentViewerContext.Provider>
 		</JobsContext.Provider>
 		</SessionMermaidContext.Provider>
 		{/* The BYOK setup flow (owner, 2026-09-22): one mount serves the
@@ -2023,6 +2263,8 @@ function DockOverlay({
 	pricing,
 	composer,
 	onSubmitAnswer,
+	onRevealReading,
+	readingDocumentName,
 	chatId,
 	onModelChange,
 	onReserve,
@@ -2060,7 +2302,12 @@ function DockOverlay({
 	cliContextWindow: ReturnType<typeof cliContextWindowOf>;
 	pricing?: SessionPricing;
 	composer: React.ReactNode;
-	onSubmitAnswer: (output: QuestionAnswerData) => void;
+	/** The dock's result: a graded question answer, or a reading's completion. */
+	onSubmitAnswer: (output: ClientAnswerData) => void;
+	/** The reading dock's Go to passage. */
+	onRevealReading: (input: AssignReadingInput) => void;
+	/** A viewer document's display name (its id when unknown). */
+	readingDocumentName: (documentId: string) => string;
 	/** The model control's pass-through (the stats bar hosts it). */
 	chatId: string;
 	onModelChange: (model: string | undefined) => void;
@@ -2475,7 +2722,15 @@ function DockOverlay({
 							key={mode}
 							className={mode === initialModeRef.current ? "flow-root" : "flow-root dock-variant"}
 						>
-							{pending ? (
+							{pending?.tool === "assign_reading" ? (
+								<ReadingDock
+									input={pending.input as AssignReadingInput}
+									documentName={readingDocumentName((pending.input as AssignReadingInput).document)}
+									onGo={() => onRevealReading(pending.input as AssignReadingInput)}
+									onSubmit={(answer: ReadingAnswerData) => onSubmitAnswer(answer)}
+									disabled={compactionRunning}
+								/>
+							) : pending ? (
 								<QuestionDock
 									toolName={pending.tool as "quiz" | "probe" | "ask_user_question" | "explain" | "recall"}
 									toolCallId={pending.toolCallId}

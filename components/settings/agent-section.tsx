@@ -650,7 +650,7 @@ export function AgentSection({
 											models={catalog ?? undefined}
 											effectiveId={override?.model?.id}
 											effectiveProvider={override?.model?.provider}
-											vision={role === "visualMaker"}
+											vision={role === "visualMaker" || role === "scanReader"}
 											onPick={(entry) => {
 												onSectionChange(composeRoleModel(agent, role, { provider: entry.provider, id: entry.id }));
 												setOpenMenu(null);

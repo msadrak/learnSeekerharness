@@ -32,7 +32,10 @@ async function fixture(options: { login?: (id: string, interaction: ProviderAuth
 	};
 	return { controller, directory, sdk, opened, updates, scope, get refreshes() { return refreshes; }, async cleanup() { controller.close(); await fs.rm(directory, { recursive: true, force: true }); } };
 }
-test("main loader resolves Pi's import-only PUBLIC package exports and native OAuth without a CLI or network", async () => {
+// `loadSubscriptionSDK` adds the "import" condition through `module.registerHooks` while it calls `require.resolve`; Node 24.13 does not apply that hook to
+// `require.resolve` (ERR_PACKAGE_PATH_NOT_EXPORTED, in a plain Node process too). CI runs Node 26.
+const NODE_IGNORES_REQUIRE_HOOKS = Number(process.versions.node.split(".")[0]) < 26 && "fails on Node < 26: require.resolve ignores module.registerHooks";
+test("main loader resolves Pi's import-only PUBLIC package exports and native OAuth without a CLI or network", { skip: NODE_IGNORES_REQUIRE_HOOKS }, async () => {
 	const sdk = await loadSubscriptionSDK(path.resolve(import.meta.dirname, ".."));
 	assert.equal(typeof sdk.createModels, "function");
 	for (const [id, factory] of [["github-copilot", sdk.githubCopilotProvider], ["xai", sdk.xaiProvider]] as const) {
@@ -48,7 +51,7 @@ for (const id of ids) test(`${id}: independent default-ON file, restart, explici
 		await f.controller.login(id, false);
 		const saved = JSON.parse(await fs.readFile(path.join(f.directory, `${id}-credentials.json`), "utf8"));
 		assert.equal(saved.version, 1); assert.equal(saved.credential.type, "oauth"); assert.equal(saved.allowBackgroundUse, false);
-		assert.equal((await fs.stat(path.join(f.directory, `${id}-credentials.json`))).mode & 0o777, 0o600);
+		if (process.platform !== "win32") assert.equal((await fs.stat(path.join(f.directory, `${id}-credentials.json`))).mode & 0o777, 0o600);
 		const publicState = JSON.stringify(await f.controller.snapshot());
 		assert(!publicState.includes(saved.credential.access)); assert(!publicState.includes(saved.credential.refresh));
 		const scope = await f.scope(id), result = await f.controller.lease(scope, false);

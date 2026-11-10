@@ -20,18 +20,20 @@ import {
 	pendingQuestionOf,
 	failedResponseAtEnd,
 	measuredContextTokens,
+	parseChatInput,
 	newAnswerResult,
+	newDocumentExcerptMessage,
 	newNextMessage,
 	newProblemDismissedMarker,
 	newThinkingMessage,
 	newUserMessage,
 	projectView,
 	type ChatInput,
+	type ClientAnswerData,
 	type LhMarkerMessage,
 	type LhMessage,
 	type LhViewMessage,
 	type LiveExecution,
-	type QuestionAnswerData,
 	type QuestionDraft,
 } from "../src/core";
 
@@ -707,6 +709,16 @@ export class SessionModel {
 			// The move-on signal (owner round 16): the NEXT PROBLEM line
 			// renders the instant the chip/Enter fires.
 			optimistic.push({ ...newNextMessage(), id: localId() });
+		} else if (input.type === "excerpt") {
+			// The selected passage(s): absorption keys on customType + JSON(details),
+			// so the optimistic card is built from the SAME normalization the
+			// server applies to the request (parseChatInput), never the raw input.
+			try {
+				const sent = parseChatInput(input) as Extract<ChatInput, { type: "excerpt" }>;
+				optimistic.push({ ...newDocumentExcerptMessage(sent.action, sent.excerpts, sent.text), id: localId() });
+			} catch {
+				// A malformed excerpt gets no optimistic card; the server's 400 reports it.
+			}
 		} else if (input.type === "answer") {
 			const tool = pendingCallTool([...this.base, ...this.tail], input.toolCallId) ?? "quiz";
 			const result = { ...newAnswerResult(input.toolCallId, tool, input.answer), id: localId() };
@@ -839,7 +851,7 @@ export class SessionModel {
 
 	/** The answer path (the dock): the answer IS the question call's tool
 	 *  result (fork 1), riding as its input event. */
-	submitAnswer(tool: string, toolCallId: string, output: QuestionAnswerData, questionKey?: string): Promise<void> {
+	submitAnswer(tool: string, toolCallId: string, output: ClientAnswerData, questionKey?: string): Promise<void> {
 		void tool;
 		return this.send({ type: "answer", toolCallId, answer: output }, undefined, questionKey).then(() => undefined);
 	}
@@ -850,7 +862,7 @@ export class SessionModel {
 	 * user's choice; the next plain send is the wake. On failure the
 	 * durable record wins: the error surfaces, the record-changed sync
 	 * (or any later refetch) replaces the optimistic append with truth. */
-	async dismissQuestion(toolCallId: string, answer: QuestionAnswerData, questionKey?: string): Promise<void> {
+	async dismissQuestion(toolCallId: string, answer: ClientAnswerData, questionKey?: string): Promise<void> {
 		if (!this.readyRef) return;
 		const subject = pendingQuestionOf([...this.base, ...this.tail]);
 		if (questionKey !== undefined && (subject?.key !== questionKey || subject.toolCallId !== toolCallId)) return;

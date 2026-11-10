@@ -9,7 +9,9 @@ import { request as httpRequest } from "node:http";
 import { createServer as createNetServer } from "node:net";
 import { afterEach, beforeEach, mock, test } from "node:test";
 import {
+	createModels,
 	getSupportedThinkingLevels,
+	InMemoryCredentialStore,
 	normalizeContext,
 	type AssistantMessage,
 	type AssistantMessageEvent,
@@ -18,11 +20,15 @@ import {
 	type OAuthCredential,
 	type Provider,
 	type ProviderAuthInteraction,
+	type RefreshModelsContext,
 	type Tool,
 } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
 import { antigravityProvider, geminiCliProvider } from "../src/agent/google-cloudcode/index.ts";
 import { discoverAntigravityProject, discoverGeminiCliProject, parseAuthorizationInput } from "../src/agent/google-cloudcode/oauth.ts";
+import { antigravityModelsFromListing } from "../src/agent/google-cloudcode/models.ts";
+import { piEngineForSpec, piModels, registerProviderSource } from "../src/agent/models.ts";
+import type { ModelListingStore } from "../src/core/ports.ts";
 
 // ---------------------------------------------------------------------------
 // fetch stub
@@ -254,7 +260,7 @@ test("antigravity request: daily endpoint, agent envelope, system preamble, clau
 
 	const call = calls[0]!;
 	assert.equal(call.url, "https://daily-cloudcode-pa.sandbox.googleapis.com/v1internal:streamGenerateContent?alt=sse");
-	assert.match(call.headers["user-agent"]!, /^antigravity\/[\d.]+ /);
+	assert.equal(call.headers["user-agent"], "antigravity/hub/2.29.1 darwin/arm64");
 	assert.equal(call.headers["anthropic-beta"], "interleaved-thinking-2025-05-14");
 
 	const body = sentBody();
@@ -273,6 +279,46 @@ test("antigravity request: daily endpoint, agent envelope, system preamble, clau
 	assert.equal(declaration.parametersJsonSchema, undefined);
 	// Non-gemini models keep the call id on the wire.
 	assert.equal(body.request.contents[1].parts[1].functionCall.id, "call_1");
+});
+
+test("antigravity identity: PI_AI_ANTIGRAVITY_VERSION changes the version, PI_AI_ANTIGRAVITY_USER_AGENT replaces the whole string", async () => {
+	handler = () => sse([finishStop()]);
+	const model = modelOf(antigravity, "gemini-3-pro-high");
+	const send = async () => {
+		calls = [];
+		await run(antigravity.streamSimple(model, transcript(model), { apiKey: await apiKeyFor(antigravity) }));
+		return calls[0]!.headers["user-agent"];
+	};
+	const saved = { version: process.env.PI_AI_ANTIGRAVITY_VERSION, agent: process.env.PI_AI_ANTIGRAVITY_USER_AGENT };
+	try {
+		process.env.PI_AI_ANTIGRAVITY_VERSION = "9.9.9";
+		assert.equal(await send(), "antigravity/hub/9.9.9 darwin/arm64");
+		process.env.PI_AI_ANTIGRAVITY_USER_AGENT = "antigravity/cli/1.1.22 (aidev_client; os_type=windows; arch=amd64)";
+		assert.equal(await send(), "antigravity/cli/1.1.22 (aidev_client; os_type=windows; arch=amd64)", "the whole string wins over the version");
+		process.env.PI_AI_ANTIGRAVITY_USER_AGENT = "   ";
+		assert.equal(await send(), "antigravity/hub/9.9.9 darwin/arm64", "a blank override is ignored");
+	} finally {
+		for (const [key, value] of [["PI_AI_ANTIGRAVITY_VERSION", saved.version], ["PI_AI_ANTIGRAVITY_USER_AGENT", saved.agent]] as const) {
+			if (value === undefined) delete process.env[key];
+			else process.env[key] = value;
+		}
+	}
+});
+
+test("Google's 'no longer supported' reply is an error with the fix named, never streamed as model text", async () => {
+	const notice = "This version of Antigravity is no longer supported. Please download and install the latest version at https://antigravity.google/download to continue using the agent.";
+	handler = () => sse([chunk([{ text: notice }], { finishReason: "STOP" })]);
+	const model = modelOf(antigravity, "gemini-3-pro-high");
+	const { events, message } = await run(antigravity.stream(model, transcript(model), { apiKey: await apiKeyFor(antigravity) }));
+	assert.equal(message.stopReason, "error");
+	assert.match(message.errorMessage ?? "", /Google rejected this app's Antigravity client version.*PI_AI_ANTIGRAVITY_VERSION.*PI_AI_ANTIGRAVITY_USER_AGENT/);
+	assert.ok(!events.some((e) => e.type === "text_delta" || e.type === "text_start"), "the notice never reaches a consumer as text");
+	assert.equal(message.content.length, 0);
+
+	// The same words from a Gemini CLI model are just text: the check belongs to Antigravity only.
+	const geminiModel = modelOf(gemini, "gemini-2.5-flash");
+	const plain = await run(gemini.stream(geminiModel, transcript(geminiModel), { apiKey: await apiKeyFor(gemini) }));
+	assert.equal(plain.message.stopReason, "stop");
 });
 
 // ---------------------------------------------------------------------------
@@ -755,4 +801,234 @@ test("parseAuthorizationInput", () => {
 	assert.equal(parseAuthorizationInput("?code=q&state=s", "s"), "q");
 	assert.equal(parseAuthorizationInput("4/0AbCd", "s"), "4/0AbCd");
 	assert.throws(() => parseAuthorizationInput("http://localhost/x?state=s", "s"), /No authorization code/);
+});
+
+// ---------------------------------------------------------------------------
+// live model list (Google decides which models this account has)
+// ---------------------------------------------------------------------------
+
+/** Shaped like the answer third-party clients read from fetchAvailableModels. */
+const LISTING = {
+	models: {
+		"gemini-4-argon-high": { displayName: "Gemini 4 Argon (High)", maxTokens: 1048576, maxOutputTokens: 65536, supportsImages: true, supportsThinking: true },
+		"gemini-3-pro-high": { displayName: "Gemini 3 Pro (High)", maxTokens: 1000000, maxOutputTokens: 60000 },
+		"claude-sonnet-4-6": { displayName: "Claude Sonnet 4.6", supportsImages: true },
+		"text-only-x": { displayName: "Text Only X" },
+		"retired-model": { displayName: "Retired", disabled: true },
+		"broken-model": { displayName: "Broken", maxTokens: "lots" },
+		chat_20706: { displayName: "internal chat model" },
+	},
+	agentModelSorts: [
+		{ groups: [{ modelIds: ["gemini-4-argon-high", "gemini-3-pro-high"] }, { modelIds: ["claude-sonnet-4-6", "text-only-x", "retired-model", "broken-model", "not-in-models", "gemini-4-argon-high"] }] },
+	],
+};
+const listedIds = ["gemini-4-argon-high", "gemini-3-pro-high", "claude-sonnet-4-6", "text-only-x"];
+const idsOf = (models: readonly { id: string }[]) => models.map((m) => m.id);
+
+function refreshContext(over: Partial<RefreshModelsContext> = {}): RefreshModelsContext {
+	return {
+		credential: credential(),
+		allowNetwork: true,
+		signal: new AbortController().signal,
+		publish: async (publication) => {
+			publication.update?.();
+			return true;
+		},
+		...over,
+	};
+}
+const listingCalls = () => calls.filter((c) => c.url.endsWith("/v1internal:fetchAvailableModels"));
+
+test("the listing becomes the picker's models: Antigravity's own groups, not disabled, known models keep their pricing", () => {
+	const models = antigravityModelsFromListing(LISTING);
+	assert.deepEqual(idsOf(models), listedIds, "group order, deduplicated; disabled, malformed, ungrouped and missing entries left out");
+	const [argon, pro, sonnet, textOnly] = models as [Model<string>, Model<string>, Model<string>, Model<string>];
+
+	assert.equal(argon.name, "Gemini 4 Argon (High) (Antigravity)");
+	assert.deepEqual([argon.contextWindow, argon.maxTokens], [1048576, 65536]);
+	assert.deepEqual(argon.input, ["text", "image"]);
+	assert.equal(argon.reasoning, false, "an unknown model gets no thinking setting: its tier is in its id");
+	assert.deepEqual(argon.cost, { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 });
+	assert.equal(argon.provider, "google-antigravity");
+
+	assert.equal(pro.reasoning, true, "a known model keeps its thinking behaviour");
+	assert.deepEqual(pro.cost, { input: 2, output: 12, cacheRead: 0.2, cacheWrite: 2.375 });
+	assert.deepEqual([pro.contextWindow, pro.maxTokens], [1000000, 60000], "but takes Google's limits");
+	assert.ok(getSupportedThinkingLevels(pro).includes("high"));
+
+	assert.deepEqual([sonnet.contextWindow, sonnet.maxTokens], [200000, 32768], "conservative limits when none are listed");
+	assert.deepEqual(textOnly.input, ["text"], "image input only when Google says so");
+});
+
+test("a listing of an unexpected shape yields no models", () => {
+	for (const bad of [null, "text", {}, { models: {} }, { models: {}, agentModelSorts: [] }, { models: { a: { displayName: "A" } }, agentModelSorts: [{}] }, { models: [], agentModelSorts: [] }]) {
+		assert.deepEqual(antigravityModelsFromListing(bad), [], JSON.stringify(bad));
+	}
+});
+
+test("a refresh replaces the built-in list with Google's, using the chat identity and the account's project", async () => {
+	const provider = antigravityProvider();
+	assert.ok(idsOf(provider.getModels()).includes("gemini-3-pro-low"), "before any refresh the built-in list shows");
+	handler = () => json(LISTING);
+	await provider.refreshModels!(refreshContext());
+
+	assert.deepEqual(idsOf(provider.getModels()), listedIds, "retired built-in models are gone, not merged");
+	assert.deepEqual(idsOf(provider.getAllModels!()), listedIds);
+	const call = listingCalls()[0]!;
+	assert.equal(call.method, "POST");
+	assert.equal(call.url, "https://daily-cloudcode-pa.sandbox.googleapis.com/v1internal:fetchAvailableModels");
+	assert.equal(call.headers.authorization, "Bearer access-1");
+	assert.equal(call.headers["user-agent"], "antigravity/hub/2.29.1 darwin/arm64");
+	assert.deepEqual(JSON.parse(call.body), { project: "proj-1" });
+});
+
+test("a fresh list is not fetched again; force and the failure backoff decide the rest", async () => {
+	const provider = antigravityProvider();
+	handler = () => json(LISTING);
+	await provider.refreshModels!(refreshContext());
+	await provider.refreshModels!(refreshContext());
+	assert.equal(listingCalls().length, 1, "inside the freshness window nothing is fetched");
+	await provider.refreshModels!(refreshContext({ force: true }));
+	assert.equal(listingCalls().length, 2);
+
+	handler = () => new Response("down", { status: 500 });
+	await assert.rejects(provider.refreshModels!(refreshContext({ force: true })), /Cloud Code Assist API error \(500\)/);
+	assert.deepEqual(idsOf(provider.getModels()), listedIds, "a failed refresh keeps the last good list");
+	const afterFailure = listingCalls().length;
+	await provider.refreshModels!(refreshContext());
+	assert.equal(listingCalls().length, afterFailure, "no retry storm: the backoff holds");
+	handler = () => json({ ...LISTING, models: { ...LISTING.models, "gemini-4-argon-low": { displayName: "Gemini 4 Argon (Low)" } }, agentModelSorts: [{ groups: [{ modelIds: [...listedIds, "gemini-4-argon-low"] }] }] });
+	await provider.refreshModels!(refreshContext({ force: true }));
+	assert.ok(idsOf(provider.getModels()).includes("gemini-4-argon-low"), "force goes through the backoff and a later success replaces the list");
+});
+
+test("an unusable answer, Google's stale-client notice, or a missing login leave the list as it was", async () => {
+	const provider = antigravityProvider();
+	const builtIn = idsOf(provider.getModels());
+
+	handler = () => json({ models: {}, agentModelSorts: [] });
+	await assert.rejects(provider.refreshModels!(refreshContext({ force: true })), /no selectable models/);
+
+	handler = () => new Response("This version of Antigravity is no longer supported. Please download and install the latest version.", { status: 200 });
+	await assert.rejects(provider.refreshModels!(refreshContext({ force: true })), /Google rejected this app's Antigravity client version.*PI_AI_ANTIGRAVITY_VERSION/);
+
+	handler = () => new Response("not json", { status: 200 });
+	await assert.rejects(provider.refreshModels!(refreshContext({ force: true })), /unreadable model list/);
+	assert.deepEqual(idsOf(provider.getModels()), builtIn);
+
+	calls = [];
+	await provider.refreshModels!(refreshContext({ credential: undefined, force: true }));
+	await provider.refreshModels!(refreshContext({ credential: { type: "api_key", key: "k" } as never, force: true }));
+	await provider.refreshModels!(refreshContext({ allowNetwork: false, force: true }));
+	assert.equal(listingCalls().length, 0, "no login, no API key, no network permission: no request");
+});
+
+test("the listing falls back from the daily endpoint to production", async () => {
+	const provider = antigravityProvider();
+	handler = (call) => (call.url.startsWith("https://daily-") ? new Response("busy", { status: 503 }) : json(LISTING));
+	await provider.refreshModels!(refreshContext());
+	assert.deepEqual(
+		listingCalls().map((c) => new URL(c.url).host),
+		["daily-cloudcode-pa.sandbox.googleapis.com", "cloudcode-pa.googleapis.com"],
+	);
+	assert.deepEqual(idsOf(provider.getModels()), listedIds);
+});
+
+test("Models.refresh (what the picker triggers) fetches for a logged-in Antigravity account only", async () => {
+	handler = () => json(LISTING);
+	const store = new InMemoryCredentialStore();
+	const models = createModels({ credentials: store });
+	models.setProvider(antigravityProvider());
+
+	await models.refresh({ providers: ["google-antigravity"] });
+	assert.equal(listingCalls().length, 0, "not logged in: skipped");
+	assert.ok(idsOf(models.getModels("google-antigravity")).includes("gemini-3-pro-low"));
+
+	await store.modify("google-antigravity", async () => credential());
+	const result = await models.refresh({ providers: ["google-antigravity"] });
+	assert.equal(result.errors.size, 0);
+	assert.deepEqual(idsOf(models.getModels("google-antigravity")), listedIds);
+	assert.equal(models.getModel("google-antigravity", "gemini-3-pro-low"), undefined, "a retired model no longer resolves");
+});
+
+// ---------------------------------------------------------------------------
+// the discovered list survives a rebuild (restart / hot reload)
+// ---------------------------------------------------------------------------
+
+/** An in-memory ModelListingStore that records every write. */
+function memoryListings(initial?: unknown): ModelListingStore & { writes: unknown[] } {
+	let saved = initial;
+	const writes: unknown[] = [];
+	return {
+		writes,
+		read: () => saved,
+		write: (_providerId, listing) => {
+			writes.push(listing);
+			saved = listing;
+		},
+	};
+}
+
+test("a provider rebuilt from a saved listing already offers Google's models, and its first refresh still asks Google", async () => {
+	const provider = antigravityProvider(memoryListings(LISTING));
+	assert.deepEqual(idsOf(provider.getModels()), listedIds, "no network call yet");
+	assert.equal(calls.length, 0);
+
+	handler = () => json(LISTING);
+	await provider.refreshModels!(refreshContext());
+	assert.equal(listingCalls().length, 1, "a restored list is a start-up value, not a fresh one");
+});
+
+test("a good refresh saves the listing as received; a failed or unusable one saves nothing", async () => {
+	const listings = memoryListings();
+	const provider = antigravityProvider(listings);
+	handler = () => json(LISTING);
+	await provider.refreshModels!(refreshContext());
+	assert.deepEqual(listings.writes, [LISTING]);
+
+	handler = () => json({ models: {}, agentModelSorts: [] });
+	await assert.rejects(provider.refreshModels!(refreshContext({ force: true })), /no selectable models/);
+	handler = () => new Response("down", { status: 500 });
+	await assert.rejects(provider.refreshModels!(refreshContext({ force: true })), /500/);
+	assert.equal(listings.writes.length, 1);
+	assert.deepEqual(idsOf(provider.getModels()), listedIds);
+});
+
+test("an unusable saved listing leaves the built-in list, and a failed save does not lose the fetched list", async () => {
+	const provider = antigravityProvider(memoryListings({ models: "broken" }));
+	assert.ok(idsOf(provider.getModels()).includes("gemini-3-pro-low"));
+
+	const failing: ModelListingStore = { read: () => undefined, write: () => { throw new Error("disk full"); } };
+	const warn = mock.method(console, "warn", () => {});
+	try {
+		const other = antigravityProvider(failing);
+		handler = () => json(LISTING);
+		await other.refreshModels!(refreshContext());
+		assert.deepEqual(idsOf(other.getModels()), listedIds, "the list in memory is good");
+		assert.match(String(warn.mock.calls[0]?.arguments[0]), /Antigravity model list not saved: disk full/);
+	} finally {
+		warn.mock.restore();
+	}
+});
+
+test("a model pinned from Google's list still resolves after the model collection is rebuilt", async () => {
+	const listings = memoryListings();
+	const credentials = new InMemoryCredentialStore();
+	await credentials.modify("google-antigravity", async () => credential());
+	const spec = { provider: "google-antigravity", id: "gemini-4-argon-high" };
+
+	// The picker fetched the list; the server then restarts (a new source rebuilds the collection).
+	registerProviderSource({ credentials, stamp: () => "1", providers: () => [], listings });
+	handler = () => json(LISTING);
+	await piModels().refresh({ providers: ["google-antigravity"] });
+	assert.equal(piEngineForSpec(spec).model.id, "gemini-4-argon-high");
+
+	calls = [];
+	registerProviderSource({ credentials, stamp: () => "1", providers: () => [], listings });
+	assert.equal(piEngineForSpec(spec).model.id, "gemini-4-argon-high", "resolved from the saved list, with no request");
+	assert.equal(calls.length, 0);
+
+	// Without saved listings the same pin fails until the picker refreshes — the failure this guards against.
+	registerProviderSource({ credentials, stamp: () => "1", providers: () => [] });
+	assert.throws(() => piEngineForSpec(spec), /google-antigravity catalog has no model gemini-4-argon-high/);
 });

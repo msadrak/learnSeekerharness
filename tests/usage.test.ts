@@ -6,7 +6,7 @@ import { graphStore } from "../src/store/graph.ts";
 import { PATHS, SOURCES_FILE } from "../config.ts";
 import { callCost, jobCost, sessionCost, turnCost } from "../src/server/pricing.ts";
 import { sumSteps } from "../src/core/prices.ts";
-import type { CallUsage, ExtractionRunUsage, JobRecord, TurnUsage } from "../src/core/contracts.ts";
+import type { CallUsage, ExtractionRunUsage, JobRecord, ScanUsage, TurnUsage } from "../src/core/contracts.ts";
 
 const call = (over: Partial<CallUsage> = {}): CallUsage => ({
 	inputTokens: 0, outputTokens: 0, cacheReadTokens: undefined,
@@ -91,6 +91,23 @@ test("appendExtractionUsage: idempotent; failed runs persist; list omits log", (
 		assert.equal(chatStore.getChat(record.id)?.extractions?.length, 3);
 		assert.equal(chatStore.getChat(record.id)?.extractions?.at(-1)?.stats, undefined);
 		assert.equal("extractions" in chatStore.listChats().find((c) => c.id === record.id)!, false);
+	} finally { fs.unlinkSync(`${PATHS.chats}/${record.id}.json`); }
+});
+
+test("appendScanUsage: idempotent per id; list omits the log; session totals fold scans without a per-turn row", () => {
+	const record = chatStore.createChat("scan usage fixture");
+	try {
+		const scan: ScanUsage = { id: "scan_1", at: "x", documentId: "doc_0123456789ab", page: 2, model: "openrouter:z-ai/glm-5.3-flash", steps: [call({ inputTokens: 10_000, outputTokens: 2_000 })] };
+		chatStore.appendScanUsage(record.id, scan);
+		chatStore.appendScanUsage(record.id, scan);
+		chatStore.appendScanUsage(record.id, { ...scan, id: "scan_2", model: "not/a-model" });
+		const saved = chatStore.getChat(record.id)!;
+		assert.equal(saved.scans?.length, 2);
+		assert.equal("scans" in chatStore.listChats().find((c) => c.id === record.id)!, false);
+		const totals = sessionCost(saved);
+		assert.equal(totals.cost, turnCost({ ...scan, messageId: "scan" }), "the priced scan counts");
+		assert.equal(totals.unpriced, 1, "the unknown-model scan is counted unpriced, not free");
+		assert.deepEqual(totals.turnCosts, {}, "scans are not turn rows");
 	} finally { fs.unlinkSync(`${PATHS.chats}/${record.id}.json`); }
 });
 

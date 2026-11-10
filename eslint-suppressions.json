@@ -1,0 +1,1217 @@
+{
+  "app/api/chats/[id]/artifact-ui/route.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/api/chats/route.ts": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "app/api/graph/coverage/extract/route.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/api/keys/[id]/route.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "app/api/settings/[section]/route.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/activity-dock.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/artifacts/live-tool-card.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/attach-files-button.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/chain-navigation.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/chain-table.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/chat.tsx": {
+    "no-restricted-syntax": {
+      "count": 13
+    }
+  },
+  "components/dictation-language.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/dictation.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/document-viewer/docx-view.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/focus-hygiene.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/graph-canvas.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/graph-view.tsx": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "components/home.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/keyboard-shortcuts.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/md-blocks.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/model-picker.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/path-input-dom.ts": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "components/path-input.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/phase-divider.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/plan-block.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/question-dock.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/server-events.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/session-core.ts": {
+    "no-restricted-syntax": {
+      "count": 22
+    }
+  },
+  "components/session-find-dom.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/session-find.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/session-overlay.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/settings-signal.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/settings/agent-section.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/settings/appearance-section.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/settings/appearance.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/settings/keys-section.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/settings/subscription-client.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/sidebar.tsx": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "components/source-folder-tree.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/stats-bar.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "lib/i18n/server-errors.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "src/agent/background-capture.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/chatgpt-bridge.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/documents/annotate-docx.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "src/agent/documents/annotate.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/documents/registry.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "src/agent/documents/text.ts": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "src/agent/models.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/narration-guard.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/subagents/headless.ts": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "src/agent/subagents/pdf-markdown.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/subagents/pdf-ops.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/agent/subagents/pi-run.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/agent/subagents/researcher.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/subagents/runner.ts": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "src/agent/subagents/scan-locator.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/subagents/submit-agent.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/subagents/visual-maker.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/subscription-bridge.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/subscription-request-cycle.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/subscription-stream.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/teacher-agent.ts": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "src/agent/tool-execute.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "src/agent/tools/file-access.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/tools/fs-shared.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/tools/graph.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/tools/learner-image.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/tools/ls.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/tools/pdf-read.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/agent/tools/practice.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/core/argument-heal.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/core/compaction.ts": {
+    "no-restricted-syntax": {
+      "count": 8
+    }
+  },
+  "src/core/contracts/jobs.ts": {
+    "no-restricted-syntax": {
+      "count": 14
+    }
+  },
+  "src/core/contracts/plan.ts": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "src/core/coverage.ts": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "src/core/custom-providers.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/core/input-events.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/core/layout.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "src/core/native-messages.ts": {
+    "no-restricted-syntax": {
+      "count": 27
+    }
+  },
+  "src/core/pending.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/core/phases.ts": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "src/core/plan-blocks.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/core/ports.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "src/core/proposition-candidates.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/core/question-core.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/core/session-markdown.ts": {
+    "no-restricted-syntax": {
+      "count": 8
+    }
+  },
+  "src/core/settings.ts": {
+    "no-restricted-syntax": {
+      "count": 14
+    }
+  },
+  "src/core/view.ts": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "src/server/chat-handler.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/server/custom-provider.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/server/documents.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/server/events-stream.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/server/jobs.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/server/pi/call-ids.ts": {
+    "no-restricted-syntax": {
+      "count": 11
+    }
+  },
+  "src/server/pi/ui-stream.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/server/search.ts": {
+    "no-restricted-syntax": {
+      "count": 8
+    }
+  },
+  "src/server/settings-body.ts": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "src/server/source-organization.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "src/server/subscriptions.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/server/turn-service.ts": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "src/server/web-subscriptions.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/store/atomic-write.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/store/auth.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/store/chats.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/store/graph.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/store/scan-cache.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/store/settings.ts": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "src/store/source-organization.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/api-key-hook.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/artifact-ui.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/automatic-updates.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/backdrop-dismiss.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/background-capture.test.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/bidi-direction.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/browser-service-readiness.test.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/bulk-delete-sessions.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/byok-refusal.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/cache-retention.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/call-ids.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/chain-navigation-ui.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/chat-flow.test.ts": {
+    "no-restricted-syntax": {
+      "count": 53
+    }
+  },
+  "tests/chat-input-performance.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/chat-kind.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/chatgpt-background.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/chatgpt-catalog.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/chatgpt-connection-ui.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 20
+    }
+  },
+  "tests/chatgpt-dev-ipc.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/chatgpt-request-cycle.test.ts": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "tests/chatgpt-stream.test.ts": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "tests/chatgpt-ui.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/claude-code-context-ui.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/claude-code-status-ui.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/claude-code-stream.test.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/claude-code-usage.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/compaction-native-parity.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/compaction-service.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/compaction.test.ts": {
+    "no-restricted-syntax": {
+      "count": 13
+    }
+  },
+  "tests/completion.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/composer-actions.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/composer-attach.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "tests/custom-provider-boundaries.test.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/custom-provider-lifecycle.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/custom-provider-route.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/custom-provider-ui.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/demo-runtime-payload.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/demos.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 10
+    }
+  },
+  "tests/desktop-payload.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/dictation-flow.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/dictation-picker.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/dock-height.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/document-input.test.ts": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "tests/document-tools.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/document-viewer-route.test.ts": {
+    "no-restricted-syntax": {
+      "count": 7
+    }
+  },
+  "tests/enter-submits.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/exa-integration.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/extraction.test.ts": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "tests/file-access.test.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/file-path-drop-zone.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/fs-tools.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/golden-fixtures.test.ts": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "tests/graph-context.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/graph-pricing.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/job-delivery-recovery.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/jobs.test.ts": {
+    "no-restricted-syntax": {
+      "count": 20
+    }
+  },
+  "tests/katex-security.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/keyboard-layout-rebind.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/layout.test.ts": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "tests/learner-images.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "tests/malformed-question-recovery.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/mastery.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/model-catalog-setup.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "tests/models-settings-repair.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/narration-guard.test.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/notes-import.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "tests/path-input.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/pending-authority.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/pending-question-form.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/plan-blocks.test.ts": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "tests/plan-tree.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/practice-agents.test.ts": {
+    "no-restricted-syntax": {
+      "count": 7
+    }
+  },
+  "tests/practice-flow.test.ts": {
+    "no-restricted-syntax": {
+      "count": 9
+    }
+  },
+  "tests/practice-heal.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/practice-record.test.ts": {
+    "no-restricted-syntax": {
+      "count": 10
+    }
+  },
+  "tests/probe-done.test.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/prompt-overrides.test.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/provider-events.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/provider-neutral-agents.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/question-core.test.ts": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "tests/question-tools.test.ts": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "tests/read-tool.test.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/reading-thinking-field.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/region-ui.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/render-cards.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/render-chain-table.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/render-compaction-divider.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/render-composer.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/render-extraction-coverage.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/render-graph-chrome.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/render-markdown.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/render-md-blocks.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/render-new-session.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/render-phase-divider.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/render-practice-surface.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/render-settings.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/render-sidebar.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/render-source-folders.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/render-streaming-math.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/render-update-banner.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "tests/render-update-settings.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "tests/repair-math-display.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/research-settings.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/researcher-pdf.test.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "tests/search-expansion-integration.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/search.test.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/send-to-user.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/session-context.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/session-core.test.ts": {
+    "no-restricted-syntax": {
+      "count": 13
+    }
+  },
+  "tests/session-find.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 8
+    }
+  },
+  "tests/session-identity.test.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/session-markdown.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/settings-signal.test.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "tests/settings.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/setup-dialog-interaction.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/source-access.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/source-deletion-ui.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/source-name-ui.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "tests/source-organization.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/source-tree-drag.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "tests/stats-cache-interaction.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/stats-meter-interaction.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/subscription-background.test.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/subscription-connection-ui.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/subscription-stream.test.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "tests/subscription-usage.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/subscriptions-ui.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/svg-image.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/tool-abort.test.ts": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "tests/tool-content-interaction.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/tool-content-presentation.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/tool-heal.test.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/tool-parts.test.ts": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "tests/tooltip-mechanism.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "tests/verify-release.test.ts": {
+    "no-restricted-syntax": {
+      "count": 7
+    }
+  }
+}

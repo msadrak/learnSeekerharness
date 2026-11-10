@@ -26,7 +26,7 @@ import { useT } from "@/components/i18n";
  */
 
 /** What Esc is aborting — drives copy and the confirm action. */
-export type AbortMode = "turn" | "question" | "problem";
+export type AbortMode = "turn" | "question" | "problem" | "reading";
 /** The dialog's pure body — exported for SSR pins (the delete-node
  * pattern). The wrapper owns effects + the portal. */
 export function AbortTurnBody({

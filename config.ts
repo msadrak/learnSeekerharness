@@ -26,6 +26,15 @@ export const PATHS = {
 	/** Chat sessions (AI SDK UIMessage transcripts, one JSON file per chat). */
 	chats: path.join(DATA_ROOT, "chats"),
 	graph: path.join(DATA_ROOT, "graph"),
+	/** Documents uploaded into the viewer (browser-only mode), stored once per
+	 * content hash as <sha256><ext>; kept when sessions are deleted. */
+	documents: path.join(DATA_ROOT, "documents"),
+	/** Verbatim page transcripts of scanned PDFs, one JSON file per document identity
+	 * (src/store/scan-cache.ts): a page read by the scan reader is paid for once. */
+	scanCache: path.join(DATA_ROOT, "scan-cache"),
+	/** The last model listing a provider fetched from its service, one JSON file per provider
+	 * (src/store/model-listings.ts): a restart or reload still knows the models the learner pinned. */
+	modelListings: path.join(DATA_ROOT, "model-listings"),
 	/** Debug artifacts (env-gated): data/debug/provider-events/<chatId>.jsonl
 	 * raw provider stream recordings (src/agent/provider-events.ts). */
 	debug: path.join(DATA_ROOT, "debug"),
@@ -51,6 +60,7 @@ export type ModelRole =
 	| "demoBuilder"
 	| "visualMaker"
 	| "pdfReader"
+	| "scanReader"
 	| "extractor"
 	| "auditor";
 

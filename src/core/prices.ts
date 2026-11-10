@@ -75,19 +75,24 @@ export function turnCost(turn: Pick<TurnUsage, "model" | "steps">, price: CallPr
 	return total;
 }
 
-export function sessionCost(record: Pick<ChatRecord, "turns">, price: CallPricer): SessionPricing {
+export function sessionCost(record: Pick<ChatRecord, "turns" | "scans">, price: CallPricer): SessionPricing {
 	let cost = 0;
 	let unpriced = 0;
 	let subscription = 0;
 	const turnCosts: Record<string, number | null> = {};
-	for (const turn of record.turns ?? []) {
-		const dollars = turnCost(turn, price);
-		turnCosts[turn.id] = dollars;
-		if (isSubscriptionModel(turn.model)) subscription++;
+	const fold = (entry: Pick<TurnUsage, "model" | "steps">): number | null => {
+		const dollars = turnCost(entry, price);
+		if (isSubscriptionModel(entry.model)) subscription++;
 		else if (dollars === null) unpriced++;
 		else cost += dollars;
-	}
-	return { cost, unpriced, ...(subscription ? { subscription, subscriptionProviders: subscriptionLabels((record.turns ?? []).map((turn) => turn.model)) } : {}), turnCosts };
+		return dollars;
+	};
+	for (const turn of record.turns ?? []) turnCosts[turn.id] = fold(turn);
+	// Region transcriptions are billed work without a turn row: they count in
+	// the totals but have no per-turn entry.
+	for (const scan of record.scans ?? []) fold(scan);
+	const models = [...(record.turns ?? []), ...(record.scans ?? [])].map((entry) => entry.model);
+	return { cost, unpriced, ...(subscription ? { subscription, subscriptionProviders: subscriptionLabels(models) } : {}), turnCosts };
 }
 
 export function jobCost(job: Pick<JobRecord, "usage">, price: CallPricer): number | null {

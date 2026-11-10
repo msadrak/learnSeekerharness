@@ -180,6 +180,12 @@ export const cards = {
 			pdf: "Reading a PDF…",
 			plan_init: "Drawing up the plan…",
 			probe_done: "Concluding the assessment…",
+			read_document: "Reading a document…",
+			open_document: "Opening a document…",
+			point_to_passage: "Pointing to a passage…",
+			propose_annotation: "Proposing an annotation…",
+			assign_reading: "Assigning a reading…",
+			read_scanned_section: "Reading a scanned section…",
 		},
 		writingQuestion: "Writing a question…",
 		/** Display form of the client's stored "The tool call failed." (session-core/view). */
@@ -191,6 +197,32 @@ export const cards = {
 		output: "Output",
 		running: "running…",
 		imagesAttached: (n: number) => `[${n} image${n > 1 ? "s" : ""} attached to the model]`,
+	},
+	/** Document viewer transcript cards, the excerpt card and the reading dock. */
+	documents: {
+		opened: (name: string) => `Opened ${name}`,
+		pointed: "Look here",
+		proposal: "Proposed annotation",
+		status: {
+			pending: "Waiting for your decision",
+			accepted: "Written to the file",
+			rejected: "Rejected",
+			failed: "Not written",
+		},
+		go: "Go",
+		excerpt: {
+			explain: "Explain this passage",
+			quiz: "Quiz me on this passage",
+		},
+		reading: {
+			title: "Read",
+			go: "Go to passage",
+			done: "Done reading",
+			notePlaceholder: "Thoughts (optional)",
+			highlighted: "highlighted passage",
+			completed: "Done reading",
+			skipped: "Skipped",
+		},
 	},
 	malformed: {
 		message: (canRetry: boolean) => `This question could not be displayed.${canRetry ? " Retry it or send a message to continue." : ""}`,

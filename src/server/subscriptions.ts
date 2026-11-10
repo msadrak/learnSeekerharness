@@ -34,6 +34,7 @@ import {
 } from "../core/subscriptions.ts";
 import { credentialStore } from "../store/credentials.ts";
 import "./providers.ts"; // installs the credential store into piModels()
+import { refreshConnectionCatalog } from "./model-catalog.ts";
 
 const LOGIN_TIMEOUT_MS = 10 * 60_000;
 const FINISHED_TTL_MS = 10 * 60_000;
@@ -201,7 +202,11 @@ export function startLogin(providerId: string): StartLogin {
 	void piModels()
 		.login(providerId, "oauth", interaction)
 		.then(
-			() => finish(session, "succeeded"),
+			() => {
+				finish(session, "succeeded");
+				// A new login may serve a different model lineup: fetch it now so the picker is current at once.
+				void refreshConnectionCatalog(providerId).catch(() => {});
+			},
 			(err: unknown) => {
 				if (session.finishedAt !== null) return; // cancelled / timed out already
 				finish(session, controller.signal.aborted ? "cancelled" : "failed", controller.signal.aborted ? null : safeMessage(err));

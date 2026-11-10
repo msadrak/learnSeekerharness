@@ -33,9 +33,15 @@ Under **Settings → Agent → Models → Show advanced settings**, each Strong/
 
 These are **provider-dependent preferences**, not fixed-duration or cache-hit promises. Some adapters ignore them, subscription transports may omit them, and custom endpoints may reject unsupported parameters. LearnHarness does not retry with a different preference.
 
-Sessions inherit Strong's retention preference while keeping their own model choices. Background roles inherit their assigned slot's preference, even with a model override; summarization uses the conversation preference. Changes apply at the next model request, including an existing loop, without altering an in-flight call or issuing warm-up calls. Explicit choices override Pi's retention environment preference; Pi default removes the explicit choice.
+Sessions inherit Strong's retention preference while keeping their own model choices.
+Background roles inherit their assigned slot's preference, even with a model override; summarization uses the conversation preference.
+Changes apply at the next model request, including an existing loop, without altering an in-flight call or issuing warm-up calls.
+Explicit choices override Pi's retention environment preference; Pi default removes the explicit choice.
 
-For supported Anthropic routes, Short/Long map to five minutes/one hour, with cache writes costing 1.25×/2× ordinary input; reads use discounted cache-read pricing. Longer retention can help across pauses but cost more for a single call or short job. Other providers differ. Consult [Anthropic caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) and [OpenAI caching](https://developers.openai.com/api/docs/guides/prompt-caching) for current mappings/prices.
+For supported Anthropic routes, Short/Long map to five minutes/one hour, with cache writes costing 1.25×/2× ordinary input; reads use discounted cache-read pricing.
+Longer retention can help across pauses but cost more for a single call or short job.
+Other providers differ.
+Consult [Anthropic caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) and [OpenAI caching](https://developers.openai.com/api/docs/guides/prompt-caching) for current mappings/prices.
 
 ## Spending
 
@@ -54,11 +60,21 @@ Saved input counts are Pi-normalized **fresh input**, disjoint from cache bucket
 
 ## Compaction and maintainer references
 
-Compaction summarizes older context for future requests; original messages remain stored. The next-request estimate is separate from the displayed last-call measurement: it anchors on reported usage, estimates later messages, and falls back to active-transcript/system-prompt heuristics. The trigger is the smaller of the configured threshold and catalog window minus reserve. Unknown catalog windows use the configured threshold alone; CLI display metadata does not change that trigger.
+Compaction summarizes older context for future requests; original messages remain stored.
+The next-request estimate is separate from the displayed last-call measurement: it anchors on reported usage, estimates later messages, and falls back to active-transcript/system-prompt heuristics.
+The trigger is the smaller of the configured threshold and catalog window minus reserve.
+Unknown catalog windows use the configured threshold alone; CLI display metadata does not change that trigger.
 
-[`src/core/compaction.ts`](../src/core/compaction.ts) ports cutoff selection and sizing heuristics from **@earendil-works/pi-coding-agent 1.4.0**, without a coding-agent dependency. It walks backward to an approximate **20,000-token retained tail**, selecting a valid user/assistant boundary and preserving preceding calls when trailing results require them. Text/thinking/tool names/arguments use characters ÷ 4; images get a fixed 1,200-token allowance. Whole messages can overshoot; this is not an exact size guarantee, and encrypted signatures are not measured or stripped.
+[`src/core/compaction.ts`](../src/core/compaction.ts) ports cutoff selection and sizing heuristics from **@earendil-works/pi-coding-agent 1.4.0**, without a coding-agent dependency.
+It walks backward to an approximate **20,000-token retained tail**, selecting a valid user/assistant boundary and preserving preceding calls when trailing results require them.
+Text/thinking/tool names/arguments use characters ÷ 4; images get a fixed 1,200-token allowance.
+Whole messages can overshoot; this is not an exact size guarantee, and encrypted signatures are not measured or stripped.
 
-LearnHarness retains its own educational summary prompt, plan continuity, scheduling, authorization, and persistence. A cut dropping no history does not summarize. Requests include the latest summary once, then the retained transcript; later summaries receive the prior summary once plus newly superseded material. Unresolved cutoffs retain the existing full-history fallback. Output-limit (`length`) summaries fail rather than checkpointing incomplete output.
+LearnHarness retains its own educational summary prompt, plan continuity, scheduling, authorization, and persistence.
+A cut dropping no history does not summarize.
+Requests include the latest summary once, then the retained transcript; later summaries receive the prior summary once plus newly superseded material.
+Unresolved cutoffs retain the existing full-history fallback.
+Output-limit (`length`) summaries fail rather than checkpointing incomplete output.
 
 Implementation: [`server/compaction.ts`](../src/server/compaction.ts), [`context-usage.ts`](../src/core/context-usage.ts), [`server/pricing.ts`](../src/server/pricing.ts). Regressions: `compaction-native-parity`, `context-usage`, `pricing-native-parity`, `subscription-usage`, and `session-cache-hit-rate` under `tests/`, plus CLI/custom-provider suites.
 

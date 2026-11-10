@@ -17,6 +17,7 @@ import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import { type ModelRole } from "../../config.ts";
 import { antigravityProvider, geminiCliProvider } from "./google-cloudcode/index.ts";
 import { DEFAULT_THINKING_ORDER } from "../core/settings.ts";
+import type { ModelListingStore } from "../core/ports.ts";
 import packageMetadata from "../../package.json" with { type: "json" };
 import { chatGPTModel } from "./chatgpt-bridge.ts";
 import { chatGPTStream } from "./chatgpt-stream.ts";
@@ -72,6 +73,8 @@ export interface ProviderSource {
 	/** Cheap (stat-level) change detector; providers() re-runs when it moves. */
 	stamp(): string;
 	providers(): Provider[];
+	/** Saved model listings: the Antigravity provider is rebuilt with every collection rebuild (restart, hot reload) and restores its discovered models from here. */
+	listings?: ModelListingStore;
 }
 const SOURCE_KEY = Symbol.for("lh.providerSource");
 let appliedStamp: string | undefined;
@@ -144,7 +147,7 @@ export function piModels(): MutableModels {
 		}
 		collection.setProvider(createClaudeCodeProvider(streamClaudeCode));
 		collection.setProvider(geminiCliProvider());
-		collection.setProvider(antigravityProvider());
+		collection.setProvider(antigravityProvider(source?.listings));
 		appliedStamp = undefined;
 		appliedIds = [];
 	}

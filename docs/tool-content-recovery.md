@@ -21,7 +21,10 @@ Recovery must not change persisted arguments, option identities, shuffling, grad
 
 Inline prefix recovery includes physical LF + `u` → `\nu` and TAB + `o` → `\to`, with no word-length cutoff. Display math keeps physical LF/CRLF as formatting but can recover recognized non-newline prefixes. Correctly written commands remain commands; unrelated whitespace stays unchanged.
 
-This policy deliberately targets typical model-authored math: whitespace followed by a variable can ambiguously spell a command. TeX parse success cannot resolve that ambiguity. A guard rejects partial command changes that introduce a parse failure, but parse success alone does not prove semantic preservation. Unbalanced/unsupported content is not generally rewritten into new mathematics; there are no language-specific decoders.
+This policy deliberately targets typical model-authored math: whitespace followed by a variable can ambiguously spell a command.
+TeX parse success cannot resolve that ambiguity.
+A guard rejects partial command changes that introduce a parse failure, but parse success alone does not prove semantic preservation.
+Unbalanced/unsupported content is not generally rewritten into new mathematics; there are no language-specific decoders.
 
 In labelled answer/Why reveals, only the first direct paragraph is inline with its label; later paragraphs keep normal layout.
 

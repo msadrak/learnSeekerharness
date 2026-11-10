@@ -752,7 +752,7 @@ test("cwd is an empty temp dir; prompt and mcp config live in a separate private
 	assert.ok(!privateDir.startsWith(call.cwd + sep));
 	assert.equal(dirname(getFlagValue(call.args, "--mcp-config")), privateDir);
 	assert.equal(call.systemPrompt, "You are a tutor.");
-	assert.equal(call.mcpConfigMode, 0o600);
+	if (process.platform !== "win32") assert.equal(call.mcpConfigMode, 0o600);
 
 	const mcpConfig = JSON.parse(call.mcpConfig) as { mcpServers: Record<string, { url: string }> };
 	assert.match(mcpConfig.mcpServers.learnharness?.url ?? "", /^http:\/\/127\.0\.0\.1:\d+\/mcp$/);
@@ -1137,7 +1137,7 @@ test("output after MCP admission fails continuation instead of silently replayin
 	await assertCleanedUp(getOnlyCall(calls));
 });
 
-test("normal completion escalates termination when the child ignores SIGTERM", async (t) => {
+test("normal completion escalates termination when the child ignores SIGTERM", { skip: process.platform === "win32" && "Windows has no SIGTERM to ignore, and reports no signal for a killed child" }, async (t) => {
 	const { events, calls } = await runScenario(t, [JSON.stringify({ fake: "ignore-term" }), ...readFixtureLines("text.jsonl"), HOLD]);
 	assert.equal(getLastEvent(events).type, "done");
 	await assertCleanedUp(getOnlyCall(calls));

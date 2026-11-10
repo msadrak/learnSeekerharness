@@ -32,6 +32,7 @@ import type { TSchema } from "typebox";
 import { quizDisplayInputSchema, askInputSchema, askOptionProblems, quizInputProblems, explainInputProblems, explainDisplayInputSchema, type AskToolInput, type QuizToolInput, type ExplainToolInput } from "./question-core.ts";
 import { healEncodedArguments } from "./argument-heal.ts";
 import { probeDoneInputSchema, type ProbeDoneInput } from "./contracts/probe.ts";
+import { assignReadingInputSchema, type AssignReadingInput } from "./documents.ts";
 
 /** The pi-boundary parse step, mirrored here (live-smoke fix, 2026-09-26):
  *  pi-ai's validateToolArguments runs TypeBox's Value.Convert on the model's
@@ -113,10 +114,17 @@ export function parseExplainInput(input: unknown): ExplainToolInput | undefined 
 	return cleaned;
 }
 
+/** assign_reading parse for DISPLAY: the core-owned schema the tool declares
+ *  (the document and page checks run at the execute seam, against the session). */
+export function parseReadingInput(input: unknown): AssignReadingInput | undefined {
+	return boundaryParse<AssignReadingInput>(assignReadingInputSchema, healEncodedArguments(input, assignReadingInputSchema));
+}
+
 /** One display-validity decision for dock authority and recovery. Does not
  * mutate the recorded input or invent missing authoring fields. */
-export function parseQuestionInput(tool: string, input: unknown): QuizToolInput | AskToolInput | ExplainToolInput | undefined {
+export function parseQuestionInput(tool: string, input: unknown): QuizToolInput | AskToolInput | ExplainToolInput | AssignReadingInput | undefined {
 	switch (tool) {
+		case "assign_reading": return parseReadingInput(input);
 		case "quiz": case "probe": return parseQuizInput(input);
 		case "explain": case "recall": return parseExplainInput(input);
 		case "ask_user_question": return parseAskInput(input);

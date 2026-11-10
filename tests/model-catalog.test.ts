@@ -347,7 +347,7 @@ function withClaudeInstalled(installed: boolean, fn: () => void, enabled = true)
 	const settings = readSettings();
 	writeSettings({ ...(settings ?? { version: 1 }), claudeCode: { enabled } });
 
-	if (installed) fs.writeFileSync(path.join(dir, "claude"), "#!/bin/sh\n", { mode: 0o755 });
+	if (installed) fs.writeFileSync(path.join(dir, process.platform === "win32" ? "claude.exe" : "claude"), "#!/bin/sh\n", { mode: 0o755 });
 	process.env.PATH = dir;
 	process.env.HOME = dir;
 	delete process.env.npm_config_prefix;

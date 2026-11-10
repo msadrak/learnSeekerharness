@@ -13,8 +13,9 @@ import { createHash } from "node:crypto";
 import { PATHS } from "../../config.ts";
 import { emit } from "../core/events.ts";
 import type { ChatStore } from "../core/ports.ts";
-import type { ChatRecord, ChatSettings, ChatSummary, ExtractionRunUsage, ImageSnapshot, PlanTree, TurnUsage } from "../core/contracts.ts";
+import type { ChatRecord, ChatSettings, ChatSummary, ExtractionRunUsage, ImageSnapshot, PlanTree, ScanUsage, TurnUsage } from "../core/contracts.ts";
 import { CURRENT_CHAT_VERSION } from "../core/contracts.ts";
+import { viewerOf, type ChatViewerState } from "../core/documents.ts";
 import type { LhMessage } from "../core/native-messages.ts";
 import { activeProblemOf, danglingQuestionOf } from "../core/native-messages.ts";
 import { phaseAt3Lh } from "../core/phases.ts";
@@ -86,7 +87,7 @@ function listChats(): ChatSummary[] {
 			.filter((f) => f.endsWith(".json"))
 			.map((f) => getChat(f.slice(0, -5)))
 			.filter((r): r is ChatRecord => r !== null)
-			.map(({ messages, tree, turns, extractions, imageSnapshots: _imageSnapshots, ...summary }) => {
+			.map(({ messages, tree, turns, extractions, scans: _scans, imageSnapshots: _imageSnapshots, viewer: _viewer, ...summary }) => {
 				// Per-record isolation (Wave B): a record whose messages fail the
 				// projection (e.g. pre-Wave-B UIMessage-format scratch — the
 				// zero-back-compat wipe makes these "corrupt") must not blank the
@@ -176,6 +177,17 @@ function appendExtractionUsage(id: string, entry: ExtractionRunUsage): void {
 	writeChat(record);
 }
 
+/** Append one region-transcription usage entry to the record's scans log —
+ * idempotent per id, so a replayed append does not double-count spend. */
+function appendScanUsage(id: string, entry: ScanUsage): void {
+	const record = getChat(id);
+	if (!record) throw new Error(`Chat not found: ${id}`);
+	record.scans = record.scans?.some((s) => s.id === entry.id)
+		? record.scans
+		: [...(record.scans ?? []), entry];
+	writeChat(record);
+}
+
 /** Persist the per-chat model/thinking settings — replace-whole (the
  * picker sends the complete object; absent = config defaults). */
 function saveSettings(id: string, settings: ChatSettings): void {
@@ -226,6 +238,18 @@ function saveTree(id: string, tree: PlanTree): void {
 	writeChat(record);
 }
 
+/** Read-modify-write the viewer state in one synchronous call (no await between
+ *  the read and the write, so concurrent routes and turns never lose each
+ *  other's changes). Like saveTree: viewer changes are not conversation
+ *  activity — updatedAt stays put and nothing is emitted. */
+function updateViewer(id: string, update: (viewer: ChatViewerState) => ChatViewerState): ChatViewerState | null {
+	const record = getChat(id);
+	if (!record) return null;
+	record.viewer = update(viewerOf(record));
+	writeChat(record);
+	return record.viewer;
+}
+
 export const chatStore: ChatStore = {
 	createChat,
 	getChat,
@@ -238,4 +262,6 @@ export const chatStore: ChatStore = {
 	deleteChat,
 	appendTurnUsage,
 	appendExtractionUsage,
+	appendScanUsage,
+	updateViewer,
 };

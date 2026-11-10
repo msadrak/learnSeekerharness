@@ -46,6 +46,13 @@ import {
 import { compactAnswerForModel, type QuestionAnswerData } from "./question-core.ts";
 import { activeCompactionOf, keptIndexFor } from "./compaction.ts";
 import { parseQuestionInput } from "./tool-parts.ts";
+import {
+	compactReadingAnswer,
+	documentExcerptContent,
+	parseReadingAnswer,
+	type DocumentExcerpt,
+	type ReadingAnswerData,
+} from "./documents.ts";
 
 /** The hard-invariant wording for an aborted turn's unanswered calls —
  *  carried over verbatim from the pre-native era so the model's view
@@ -76,6 +83,8 @@ export interface LhMarkerMessage {
 		| "practice-thinking"
 		| "practice-next"
 		| "problem-dismissed"
+		| "document-excerpt"
+		| "document-viewer"
 		| "compaction";
 	/** The model-facing text ("" for plan blocks — UI-only). */
 	content: string;
@@ -213,11 +222,49 @@ export function newAnswerResult(
 		role: "toolResult",
 		toolCallId,
 		toolName,
-		content: [{ type: "text", text: JSON.stringify(compactAnswerForModel(answer as QuestionAnswerData)) }],
+		content: [{
+			type: "text",
+			text: JSON.stringify(toolName === "assign_reading"
+				? compactReadingAnswer(answer as ReadingAnswerData)
+				: compactAnswerForModel(answer as QuestionAnswerData)),
+		}],
 		// 0.87.1 narrowed ToolResultMessage.details to JsonRepresentation —
 		// our payloads are JSON-safe answer structures, so the cast is honest.
 		details: answer as ToolResultMessage["details"],
 		isError: false,
+		timestamp: Date.now(),
+	};
+}
+
+/** The learner's selected passage(s) from the document viewer. `content` is the
+ *  approved model wording; `details` is exactly what the transcript card renders
+ *  (the optimistic client copy and the server's append build it identically). */
+export function newDocumentExcerptMessage(
+	action: "explain" | "quiz" | "quote",
+	excerpts: DocumentExcerpt[],
+	text?: string,
+): LhMarkerMessage {
+	return {
+		id: newMessageId(),
+		role: "custom",
+		customType: "document-excerpt",
+		content: documentExcerptContent(action, excerpts, text),
+		display: true,
+		details: { action, excerpts, ...(text ? { text } : {}) },
+		timestamp: Date.now(),
+	};
+}
+
+/** A viewer note for the agent (reading position, annotation decisions):
+ *  model-visible scaffolding, never rendered. */
+export function newDocumentViewerNote(kind: "position" | "decisions", text: string): LhMarkerMessage {
+	return {
+		id: newMessageId(),
+		role: "custom",
+		customType: "document-viewer",
+		content: text,
+		display: false,
+		details: { kind },
 		timestamp: Date.now(),
 	};
 }
@@ -849,16 +896,20 @@ export function nativeInputCause(message: AgentMessage, history: readonly AgentM
 	if (message.role === "system" || message.role === "assistant") return "neutral";
 	if (message.role === "custom") {
 		if (["probe-handoff", "subagent-steer", "subagent-abort"].includes(message.customType)) return "automatic";
-		if (["practice-thinking", "practice-next"].includes(message.customType)) return "learner";
-		return ["graph-context", "plan-block", "problem-dismissed", "compaction"].includes(message.customType) ? "neutral" : "unrecognizable";
+		if (["practice-thinking", "practice-next", "document-excerpt"].includes(message.customType)) return "learner";
+		return ["graph-context", "plan-block", "problem-dismissed", "document-viewer", "compaction"].includes(message.customType) ? "neutral" : "unrecognizable";
 	}
 	if (message.role === "toolResult") {
 		if (message.isError && (message.details as { questionRecovery?: unknown } | null)?.questionRecovery === true) {
 			return questionCallsOf(history as readonly LhMessage[]).some(call => call.status === "malformed" && call.toolCallId === message.toolCallId && call.tool === message.toolName) ? "learner" : "unrecognizable";
 		}
 		if (!(QUESTION_TOOLS as readonly string[]).includes(message.toolName) || message.isError || message.details == null || (message.details as { dismissed?: boolean }).dismissed) return "neutral";
-		const details = message.details as Partial<QuestionAnswerData>;
-		if (!["quiz", "ask", "explain"].includes(details.kind ?? "") || typeof details.questionText !== "string" || typeof details.dontKnow !== "boolean" || !Array.isArray(details.answers) || typeof details.answeredAt !== "string") return "unrecognizable";
+		if (message.toolName === "assign_reading") {
+			if (!parseReadingAnswer(message.details)) return "unrecognizable";
+		} else {
+			const details = message.details as Partial<QuestionAnswerData>;
+			if (!["quiz", "ask", "explain"].includes(details.kind ?? "") || typeof details.questionText !== "string" || typeof details.dontKnow !== "boolean" || !Array.isArray(details.answers) || typeof details.answeredAt !== "string") return "unrecognizable";
+		}
 		const calls = history.flatMap((m) => m.role === "assistant" ? m.content.filter((b) => b.type === "toolCall" && b.id === message.toolCallId) : []);
 		return calls.length === 1 && calls[0]?.type === "toolCall" && calls[0].name === message.toolName ? "learner" : "unrecognizable";
 	}

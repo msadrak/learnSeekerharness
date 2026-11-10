@@ -90,17 +90,24 @@ describe("prober graph tools — registration", () => {
 		const tools = createProberTools({ ...baseCtx, chatStore, graphStore });
 		// The standing set (fix wave 2026-09-20: research + pdf are
 		// phase-omnipresent) plus the two graph-map readers.
+		// The document viewer set is always on in every agent's registry.
 		assert.deepEqual(Object.keys(tools).sort(), [
 			"ask_user_question",
+			"assign_reading",
 			"find",
 			"grep",
 			"list_propositions",
 			"list_sessions",
 			"ls",
+			"open_document",
 			"pdf",
+			"point_to_passage",
 			"probe",
 			"probe_done",
+			"propose_annotation",
 			"read",
+			"read_document",
+			"read_scanned_section",
 			"research",
 		]);
 	});

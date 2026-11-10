@@ -19,7 +19,10 @@ LearnHarness keeps control of its agent loop, tools, questions, saved history, a
 
 The launcher removes credentials injected **only by LearnHarness's key store**. Original launch-environment credentials, native CLI authentication, and routing remain available and may affect billing. LearnHarness does not copy its saved API keys into this provider.
 
-Each child runs without a shell in an empty temporary working directory. LearnHarness disables built-in tools, hooks, slash commands, CLI session persistence, and permission prompts, and exposes its own declared tools through a token-protected loopback MCP bridge. Streamed tool intent is insufficient: execution requires an authenticated MCP request whose unique identity, name, and arguments match the stream. There is no stdout-only fallback.
+Each child runs without a shell in an empty temporary working directory.
+LearnHarness disables built-in tools, hooks, slash commands, CLI session persistence, and permission prompts, and exposes its own declared tools through a token-protected loopback MCP bridge.
+Streamed tool intent is insufficient: execution requires an authenticated MCP request whose unique identity, name, and arguments match the stream.
+There is no stdout-only fallback.
 
 These are integration boundaries, **not an OS sandbox or a provider-policy certification**. User settings/authentication remain available. Managed settings still take precedence where the CLI defines them. Bounded CLI stderr is logged when the process closes, so server logs can contain CLI diagnostics.
 
@@ -35,7 +38,11 @@ Official references: [memory switch](https://code.claude.com/docs/en/env-vars#va
 
 The persisted LearnHarness transcript—not a CLI saved session—is authoritative. A child normally exits after its final response. It can stay alive while tools await results, including a learner question, and resume only for the same owner/session and compatible history, tools, model, prompt, effort, and environment.
 
-Held children expire after **10 minutes** idle. The CLI MCP timeout is **30 minutes**, providing headroom rather than a general model deadline. If no eligible child remains after timeout/restart/configuration change, the next call starts fresh and replays active history as labelled user/assistant/tool text, preserving user/tool images. This is not CLI `--resume` or exact native-role/thinking restoration. Admitted compatibility failures are reported, not silently hidden by replay.
+Held children expire after **10 minutes** idle.
+The CLI MCP timeout is **30 minutes**, providing headroom rather than a general model deadline.
+If no eligible child remains after timeout/restart/configuration change, the next call starts fresh and replays active history as labelled user/assistant/tool text, preserving user/tool images.
+This is not CLI `--resume` or exact native-role/thinking restoration.
+Admitted compatibility failures are reported, not silently hidden by replay.
 
 Abort terminates the child and active stream. Cancelling a queued tool request prevents later admission but cannot undo already admitted work. Normal exit, failure, abort, and idle expiry close bridge calls/listeners and remove temporary directories, escalating process termination if necessary. Cleanup is not guaranteed after an OS crash or forced server termination.
 

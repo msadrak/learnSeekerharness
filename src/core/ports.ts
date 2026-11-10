@@ -10,6 +10,7 @@
  */
 
 import type { LhMessage } from "./native-messages.ts";
+import type { ChatViewerState } from "./documents.ts";
 import type {
 	ChatRecord,
 	ImageSnapshot,
@@ -20,6 +21,7 @@ import type {
 	JobKind,
 	JobRecord,
 	ExtractionRunUsage,
+	ScanUsage,
 	PlanTree,
 	Position,
 	CoverageEntry,
@@ -54,6 +56,8 @@ export interface ChatStore {
 	appendTurnUsage(id: string, entry: TurnUsage): void;
 	/** Append one extraction-run usage entry — idempotent per startedAt. */
 	appendExtractionUsage(id: string, entry: ExtractionRunUsage): void;
+	/** Append one region-transcription usage entry — idempotent per id. */
+	appendScanUsage(id: string, entry: ScanUsage): void;
 	/** Persist the per-chat model/thinking settings (the model control).
 	 *  Replace-whole: the picker sends the complete settings object. */
 	saveSettings(id: string, settings: ChatSettings): void;
@@ -66,6 +70,10 @@ export interface ChatStore {
 	 *  job cleanup are the caller's choreography (core/graph-deletion.ts +
 	 *  the DELETE route), not the store's. */
 	deleteChat(id: string): boolean;
+	/** Read-modify-write the viewer state in one synchronous call. Never
+	 *  touches updatedAt, emits nothing; returns the saved state, or null for
+	 *  an unknown chat. */
+	updateViewer(id: string, update: (viewer: ChatViewerState) => ChatViewerState): ChatViewerState | null;
 }
 
 // ─── GraphStore — the append-only evidence ledgers (data/graph) ──────────────
@@ -231,5 +239,17 @@ export interface AuthStore {
 	setAuthVar(name: string, value: string): void;
 	/** Remove one VAR if present (absent = no-op, still a silent success). */
 	deleteAuthVar(name: string): void;
+}
+
+/**
+ * The last model listing a provider fetched from its service (Antigravity serves a different lineup per account, so its
+ * list is discovered, not built in). Kept so a restart or hot reload still resolves the models the learner pinned before
+ * the next fetch. The listing is opaque here: the provider's own parser reads it.
+ */
+export interface ModelListingStore {
+	/** The saved listing; undefined when none was saved or the file is unreadable. Never throws. */
+	read(providerId: string): unknown;
+	/** Replace the saved listing (atomic). */
+	write(providerId: string, listing: unknown): void;
 }
 

@@ -17,10 +17,12 @@
  * (2026-09-27): coverage fingerprints hash the line format and stay stable
  * (no mass re-extraction when presentation changes); markdown is
  * presentation. A failed tool call renders nothing (retry context, not
- * learning evidence); custom markers are invisible, same as the view.
+ * learning evidence); custom markers are invisible, same as the view — except
+ * the learner's document-viewer excerpt, which is learner speech.
  */
 
-import type { LhMessage } from "./native-messages.ts";
+import type { LhMarkerMessage, LhMessage } from "./native-messages.ts";
+import { parseReadingAnswer } from "./documents.ts";
 import {
 	failedOutputCallIds,
 	PRACTICE_CONCLUDE_TOOL,
@@ -67,6 +69,16 @@ function markdownContext(messages: ReadonlyArray<LhMessage>): MarkdownContext {
 function outcomeLabel(outcome: string): string {
 	const spaced = outcome.replace(/([a-z])([A-Z])/g, (_, lo: string, hi: string) => `${lo} ${hi.toLowerCase()}`);
 	return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+/** A document's display name from earlier viewer tool results, else its id. */
+function readingDocumentName(messages: ReadonlyArray<LhMessage>, documentId: string): string {
+	for (const m of messages) {
+		if ((m as { role?: string }).role !== "toolResult") continue;
+		const details = (m as ToolResultMessage).details as { documentId?: unknown; name?: unknown } | null | undefined;
+		if (details && details.documentId === documentId && typeof details.name === "string") return details.name;
+	}
+	return documentId;
 }
 
 /** One tool result's learner-visible outcome, rendered as body lines. */
@@ -146,6 +158,24 @@ function toolResultBody(result: ToolResultMessage, ctx?: MarkdownContext): { hea
 		return { heading: "Question", body };
 	}
 
+	if (ctx !== undefined && result.toolName === "assign_reading") {
+		const args = ctx.calls.get(result.toolCallId)?.args;
+		const docId = typeof args?.document === "string" ? args.document : "(unknown document)";
+		const name = readingDocumentName(ctx.messages, docId);
+		const page = typeof args?.page === "number" ? args.page : undefined;
+		const endPage = typeof args?.endPage === "number" ? args.endPage : undefined;
+		const locus = page === undefined ? "" : endPage !== undefined && endPage > page ? `, pages ${page}–${endPage}` : `, page ${page}`;
+		const instruction = typeof args?.instruction === "string" ? args.instruction.trim() : "";
+		const body = [`Assigned: ${name}${locus}${instruction ? ` — ${instruction}` : ""}`];
+		const reading = parseReadingAnswer(result.details);
+		if (reading?.done === true) {
+			body.push("Learner: done" + (reading.note ? `\n\n${reading.note}` : ""));
+		} else {
+			body.push("Learner: skipped");
+		}
+		return { heading: "Reading", body };
+	}
+
 	// Parity with the line builder: other clean tool results are one line.
 	return { heading: "Tool", body: [`*${result.toolName} result delivered*`] };
 }
@@ -173,6 +203,10 @@ export function messageMarkdown(
 		for (const text of userFacingTextOf((message as { content: unknown }).content, ctx?.failedOutputCalls ?? failedOutputCallIds([message]))) {
 			parts.push(`### Teacher${anchor}\n\n${text.trim()}`);
 		}
+	} else if (role === "custom") {
+		const marker = message as LhMarkerMessage;
+		// The learner's selected passage is learner speech; every other marker is invisible.
+		if (marker.customType === "document-excerpt") parts.push(`### Learner${anchor}\n\n${marker.content.trim()}`);
 	} else if (role === "toolResult") {
 		const result = message as ToolResultMessage;
 		if (result.isError || result.toolName === SEND_TO_USER_TOOL) return null; // retry context or output ack, not learning evidence
@@ -180,7 +214,6 @@ export function messageMarkdown(
 		parts.push(`### ${heading}${anchor}\n\n${body.join("\n\n")}`);
 	}
 
-	// custom markers are invisible, same as the extraction view.
 	return parts.length > 0 ? parts.join("\n\n") : null;
 }
 

@@ -7,6 +7,7 @@ import { ImageCard } from "@/components/artifacts/image-card";
 import { ProbeDoneCard } from "@/components/artifacts/probe-done-card";
 import { ToolCallCard } from "@/components/artifacts/tool-call-card";
 import { ProblemCard, ConcludeCard } from "@/components/practice-cards";
+import { AnnotationProposalCard, DocumentOpenCard, PassageCard } from "@/components/artifacts/document-cards";
 
 /**
  * Artifact renderer registry — the extension point for tool-part UI.
@@ -53,4 +54,11 @@ export const artifactRenderers: Record<string, ComponentType<ArtifactPartProps>>
 	// discipline (their results are pre-formatted strings too).
 	list_sessions: ToolCallCard,
 	list_propositions: ToolCallCard,
+	// The document viewer tools: the learner sees what the agent opened, pointed
+	// to or proposed (cards that link into the viewer); reading stays a quiet trace.
+	read_document: ToolCallCard,
+	read_scanned_section: ToolCallCard,
+	open_document: DocumentOpenCard,
+	point_to_passage: PassageCard,
+	propose_annotation: AnnotationProposalCard,
 };

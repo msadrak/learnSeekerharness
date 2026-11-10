@@ -12,7 +12,10 @@ LearnHarness supports **one custom OpenAI-compatible endpoint with multiple mode
 
 A key is bound to the canonical endpoint URL and authentication mode. Changing the URL requires a new effective key or explicit consent to reuse it; it is never silently forwarded. Clearing authentication selects Keyless. Use this editor—not generic key management—to change custom credentials.
 
-Connect requests `GET <base>/models`; reported metadata wins over duplicate entered IDs. A nonfatal discovery failure can fall back to entered IDs. At the same URL, fallback preserves the previous model snapshot/pins; a different URL starts its own snapshot. **401/403, redirects, response-size, and model-count violations fail even with entered IDs.** A failed connect without fallback leaves configuration unchanged.
+Connect requests `GET <base>/models`; reported metadata wins over duplicate entered IDs.
+A nonfatal discovery failure can fall back to entered IDs.
+At the same URL, fallback preserves the previous model snapshot/pins; a different URL starts its own snapshot.
+**401/403, redirects, response-size, and model-count violations fail even with entered IDs.** A failed connect without fallback leaves configuration unchanged.
 
 Discovery is not a continuous health or capability check. LearnHarness does not install a backend, download models, or perform custom-endpoint OAuth.
 
@@ -34,11 +37,19 @@ Reasoning support declares a capability; it does not enable execution. The norma
 
 All custom models are Vision-selectable; reported image-capable models appear first. Choose a backend that actually understands images.
 
-Every custom-engine image-bearing request attempts delivery even when discovery omitted image support. This includes file reads, PDF pages, and visual previews. A request-local model allowance lets Pi encode images without changing the catalog's capability claims. Text-only servers may reject them; errors surface without silent text-only fallback. Payload delivery tests do not establish real-model image quality.
+Every custom-engine image-bearing request attempts delivery even when discovery omitted image support.
+This includes file reads, PDF pages, and visual previews.
+A request-local model allowance lets Pi encode images without changing the catalog's capability claims.
+Text-only servers may reject them; errors surface without silent text-only fallback.
+Payload delivery tests do not establish real-model image quality.
 
 ## Editing, credentials, and recovery
 
-Nonsecret configuration lives in `settings.json.customProvider`; saved keys and an internal binding live in `auth.json`. Authorization requires matching binding IDs, URL, and mode. A crash between auth/settings writes leaves the provider disabled rather than sending a key to a mismatched endpoint. Keyless also needs a valid nonsecret binding but never resolves a key. Missing private storage can initialize; malformed/unreadable storage fails closed without overwrite.
+Nonsecret configuration lives in `settings.json.customProvider`; saved keys and an internal binding live in `auth.json`.
+Authorization requires matching binding IDs, URL, and mode.
+A crash between auth/settings writes leaves the provider disabled rather than sending a key to a mismatched endpoint.
+Keyless also needs a valid nonsecret binding but never resolves a key.
+Missing private storage can initialize; malformed/unreadable storage fails closed without overwrite.
 
 If authorization is interrupted, reload and explicitly reconnect. An environment key changing endpoints does not authorize a shadowed saved key for that new URL. Disconnect prevents a latent environment key from reviving the provider. These are crash/restart guards, not a power-loss/fsync transaction guarantee.
 

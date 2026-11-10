@@ -38,7 +38,7 @@ describe("AuthStore adapter", () => {
 		assert.equal(authStore.authVars().OPENROUTER_API_KEY, "sk-or-v1-abc");
 	});
 
-	it("the file is mode 0600 (secrets), also after rewrites", () => {
+	it("the file is mode 0600 (secrets), also after rewrites", { skip: process.platform === "win32" && "Windows has no POSIX file modes" }, () => {
 		authStore.setAuthVar("DEEPGRAM_API_KEY", "d".repeat(40));
 		const first = fs.statSync(AUTH_FILE).mode & 0o777;
 		assert.equal(first, 0o600);

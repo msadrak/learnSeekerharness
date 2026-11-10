@@ -318,6 +318,7 @@ export const settings = {
 				extractor: "Extractor",
 				auditor: "Auditor",
 				visualMaker: "Figure maker",
+				scanReader: "Scan reader",
 			},
 			modelAria: (role: string) => `${role} model`,
 		},

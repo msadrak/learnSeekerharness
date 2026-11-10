@@ -61,6 +61,7 @@ export function ChatSessionComposer({
 	placeholder,
 	nextProblem,
 	onNext,
+	hasQuotes = false,
 }: {
 	busy: boolean;
 	value: string;
@@ -76,10 +77,12 @@ export function ChatSessionComposer({
 	placeholder?: string;
 	nextProblem?: boolean;
 	onNext?: () => void;
+	/** Passages attached from the document viewer: a message even with no typed text. */
+	hasQuotes?: boolean;
 }) {
 	const [draft, setDraft] = useState(value);
 	useLayoutEffect(() => { setDraft(value); }, [revision, value]);
-	const canSend = sendAllowed && (draft.trim().length > 0 || dictationActive);
+	const canSend = sendAllowed && (draft.trim().length > 0 || dictationActive || hasQuotes);
 	const applyDraft = useCallback((next: string) => {
 		setDraft(next);
 		onChange(next);

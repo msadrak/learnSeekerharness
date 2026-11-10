@@ -335,7 +335,7 @@ export function serializeForSummary(messages: readonly LhMessage[]): string {
 		} else if (role === "custom") {
 			const marker = m as LhMarkerMessage;
 			if (marker.customType === "plan-block") continue; // UI-only
-			lines.push(`[SYSTEM NOTE] ${marker.content}`);
+			lines.push(`${marker.customType === "document-excerpt" ? "[LEARNER]" : "[SYSTEM NOTE]"} ${marker.content}`);
 		}
 	}
 	return lines.join("\n\n");

@@ -14,7 +14,10 @@ import { SubscriptionRequestCycle, type SubscriptionDispatchLifecycle } from "..
 import { reconstructRequestCause } from "../core/native-messages.ts";
 import { createJobRunner } from "../agent/subagents/runner.ts";
 import { createExtractionPipeline } from "../agent/subagents/extraction.ts";
-import type { ModelRole } from "../../config.ts";
+import { resolveEngine, retentionForSlot } from "./role-engine.ts";
+import { readScannedSection as readScannedSectionFor } from "./scan-section.ts";
+import { locateScanPassage as locateScanPassageFor } from "./scan-boxes.ts";
+import type { ScanPassageLocator, ScanSectionReader } from "../core/scan-section.ts";
 import {
 	deliverJobResult,
 	noteSteersDurable,
@@ -40,11 +43,11 @@ import {
 	extractionEnabled,
 	graphToolsEnabled,
 	resolveConversationSpec,
-	resolveRoleSpec,
 } from "../core/settings-resolution.ts";
-import { modelsNotConfigured, providerKeyMissing as providerKeyMissingEnvelope, ROLE_SLOT, type ModelSlotName, type ProviderKeyMissing } from "../core/settings.ts";
+import { modelsNotConfigured, providerKeyMissing as providerKeyMissingEnvelope, type ProviderKeyMissing } from "../core/settings.ts";
 import { beginTurn, endTurn } from "./turn-liveness.ts";
 import { applyParkedDismissal } from "./dismissal-park.ts";
+import { markViewerNotesReported, viewerNotesFor, withViewerNotes } from "./viewer-notes.ts";
 import { registerTurn, rememberTurnFailure, unregisterTurn } from "./turn-runs.ts";
 import { persistTurn, triggerExtraction, TurnPersistenceError } from "./turn-service.ts";
 import { hasProbeDone, hasUnresolvedQuestion } from "../core/native-messages.ts";
@@ -146,21 +149,6 @@ setTurnRunner(async (chatId, input) => {
 	await res.arrayBuffer().catch(() => undefined);
 	return res.status;
 });
-/** The settings-resolved engine for one role — BYOK (owner, 2026-09-22):
- *  the chain (role override → slot → NOTHING) may end empty, and undefined
- *  flows through to the per-need refusal gates (runner/extraction), read
- *  FRESH so a settings PUT between dispatch and spawn lands. */
-function resolveEngine(role: ModelRole): PiEngine | undefined {
-	const spec = resolveRoleSpec(role, stores.settingsStore.readSettings());
-	return spec ? piEngineForSpec(spec, true, undefined, retentionForSlot(ROLE_SLOT[role])) : undefined;
-}
-
-/** Slot policy is independent of model overrides. Read fresh per operation,
- * including parked conversations, background loops and compaction. */
-function retentionForSlot(slot: ModelSlotName) {
-	return () => stores.settingsStore.readSettings()?.models?.[slot]?.cacheRetention;
-}
-
 setJobRespawn((jobId) => void jobRunner.runJob(jobId));
 // The learner-filesystem policy (file-access wave): every tool registry is
 // built in this composition root, so the seam is installed here — the
@@ -369,7 +357,10 @@ export async function handleChatInput(
 	// truth instead of the pre-answer record. (Wave C: the wake's markers
 	// ride this same write-ahead - the pump de-queued them at fire, so this
 	// is the ONLY copy ever appended.)
-	const merged = [...record.messages, ...appends];
+	// The document viewer's notes (reading position, annotation decisions) ride
+	// the learner-driven inputs only, delta-only (viewer-notes.ts).
+	const viewerNotes = viewerNotesFor(record, input);
+	const merged = [...record.messages, ...withViewerNotes(appends, viewerNotes.notes)];
 	// Retry preserves every persisted attempt. Pi needs a non-assistant
 	// tail to start continue(), so its temporary history omits the trailing
 	// failures only. Count that SAME temporary prefix at settlement, or the
@@ -384,6 +375,8 @@ export async function handleChatInput(
 		endTurn(chatId);
 		return new Response("Your input could not be saved. Please try again.", { status: 500 });
 	}
+	// Delivered: the notes are durable now, so they are never re-sent.
+	if (!stagedAutomatic) markViewerNotesReported(stores.chatStore, chatId, viewerNotes);
 	// Visibility bookkeeping is not the canonical save. Its failure must
 	// neither misreport a saved input as lost nor prevent the turn running.
 	try {
@@ -461,6 +454,9 @@ export async function handleChatInput(
 		// prompt fresh per turn, swapping in any enabled override segments.
 		promptSwitches: effective.agent.prompts,
 	};
+	// The agents' way to the scan-reading model, in every agent's document tools: read_scanned_section, and placing a passage on a scanned page for propose_annotation.
+	const readScannedSection: ScanSectionReader = (doc, request, signal) => readScannedSectionFor(chatId, doc, request, { signal });
+	const locateScanPassage: ScanPassageLocator = (doc, page, quote, signal) => locateScanPassageFor(chatId, doc, page, quote, { signal });
 	// PRACTICE BRANCH (owner design, 2026-10-04): a kind:"practice"
 	// session builds the practitioner from turn 1 — no prober→teacher
 	// split, no plan/question/job tools; the whole registry is
@@ -489,6 +485,8 @@ export async function handleChatInput(
 							searchAvailable,
 						},
 						...(graphToolsEnabled(effective) ? { graph: { chatStore: stores.chatStore, graphStore: stores.graphStore } } : {}),
+						// The document viewer set: always on, like read/ls/find/grep.
+						documents: { chatId, chatStore: stores.chatStore, readScannedSection, locateScanPassage },
 					},
 					agentOpts,
 				)
@@ -502,6 +500,8 @@ export async function handleChatInput(
 						// The registry drop's signal (2026-09-20): no live engine
 						// = no research tool in the teacher's registry.
 						searchAvailable,
+						readScannedSection,
+						locateScanPassage,
 					},
 					agentOpts,
 				)
@@ -516,6 +516,8 @@ export async function handleChatInput(
 						jobStore: stores.jobStore,
 						spawn: (job, input) => void jobRunner.runJob(job.id, input),
 						searchAvailable,
+						readScannedSection,
+						locateScanPassage,
 						// The map reader (wave 7): the prober reads the learner's
 						// knowledge graph through tools when the gate opens —
 						// graph master switch AND the agent.graphTools toggle.

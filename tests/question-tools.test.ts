@@ -35,6 +35,10 @@ import { PATHS } from "../config.ts";
 const dataDir = path.join(PATHS.root, "data");
 fs.mkdirSync(dataDir, { recursive: true });
 
+/** The document viewer set is always on, in every agent and under every toggle. */
+const DOCUMENT_TOOLS = ["assign_reading", "open_document", "point_to_passage", "propose_annotation", "read_document", "read_scanned_section"];
+const withDocs = (names: string[]): string[] => [...names, ...DOCUMENT_TOOLS].sort();
+
 const createdChats: string[] = [];
 after(() => {
 	for (const id of createdChats) {
@@ -202,9 +206,9 @@ describe("the prober's quiz: no nodeId field at all", () => {
 		const tools = createProberTools({ chatId, chatStore, deliver: () => {}, jobStore, spawn: () => {} });
 		// Fix wave (2026-09-20): the owner ruling adds research + pdf dispatch
 		// to the probe phase's registry (demo/visual stay teach-only).
-		assert.deepEqual(Object.keys(tools).sort(), [
+		assert.deepEqual(Object.keys(tools).sort(), withDocs([
 			"ask_user_question", "find", "grep", "ls", "pdf", "probe", "probe_done", "read", "research",
-		]);
+		]));
 		const probe = tools.probe as AgentTool<any>;
 		assert.equal(Value.Check(probe.parameters, { ...validQuiz, nodeId: "anything" }), true, "no session check to fail");
 	});
@@ -266,23 +270,23 @@ describe("tool toggles (core/pending.ts + factories)", () => {
 	it("createProberTools: absent record = full set; explicit false drops exactly that tool; probe_done survives everything", () => {
 		const chatId = newChat("Prober: toggles");
 		const ctx = { chatId, chatStore, deliver: () => {}, jobStore, spawn: () => {} };
-		assert.deepEqual(Object.keys(createProberTools(ctx)).sort(), [
+		assert.deepEqual(Object.keys(createProberTools(ctx)).sort(), withDocs([
 			"ask_user_question", "find", "grep", "ls", "pdf", "probe", "probe_done", "read", "research",
-		]);
+		]));
 
 		const noAsk = createProberTools(ctx, { ask_user_question: false });
-		assert.deepEqual(Object.keys(noAsk).sort(), ["find", "grep", "ls", "pdf", "probe", "probe_done", "read", "research"]);
+		assert.deepEqual(Object.keys(noAsk).sort(), withDocs(["find", "grep", "ls", "pdf", "probe", "probe_done", "read", "research"]));
 
 		// Quizzing is mechanics-managed now (owner 2026-09-27): quiz/explain
 		// NEVER pass through the generic filter — hand-written quiz:false is a
 		// no-op (the wedge danger stands: a quiz-less prober collapses its
 		// assessment flow). probe_done is never droppable — it ends the phase.
 		const noQuiz = createProberTools(ctx, { quiz: false });
-		assert.deepEqual(Object.keys(noQuiz).sort(), ["ask_user_question", "find", "grep", "ls", "pdf", "probe", "probe_done", "read", "research"]);
+		assert.deepEqual(Object.keys(noQuiz).sort(), withDocs(["ask_user_question", "find", "grep", "ls", "pdf", "probe", "probe_done", "read", "research"]));
 		// The mechanic switch (owner 2026-09-27): tools.explain === true arms
 		// free-recall — explain in, quiz out, exactly one quizzing tool.
 		const free = createProberTools(ctx, { explain: true });
-		assert.deepEqual(Object.keys(free).sort(), ["ask_user_question", "find", "grep", "ls", "pdf", "probe_done", "read", "recall", "research"]);
+		assert.deepEqual(Object.keys(free).sort(), withDocs(["ask_user_question", "find", "grep", "ls", "pdf", "probe_done", "read", "recall", "research"]));
 		assert.ok(createProberTools(ctx, { probe_done: false }).probe_done, "probe_done always-on");
 	});
 
@@ -295,10 +299,10 @@ describe("tool toggles (core/pending.ts + factories)", () => {
 			spawn: () => {},
 		};
 		const full = Object.keys(createTeacherTools(ctx)).sort();
-		assert.deepEqual(full, ["ask_user_question", "demo", "find", "grep", "ls", "pdf", "plan_init", "quiz", "read", "research", "show_image", "visual"]);
+		assert.deepEqual(full, withDocs(["ask_user_question", "demo", "find", "grep", "ls", "pdf", "plan_init", "quiz", "read", "research", "show_image", "visual"]));
 
 		const noResearch = Object.keys(createTeacherTools(ctx, { research: false })).sort();
-		assert.deepEqual(noResearch, ["ask_user_question", "demo", "find", "grep", "ls", "pdf", "plan_init", "quiz", "read", "show_image", "visual"]);
+		assert.deepEqual(noResearch, withDocs(["ask_user_question", "demo", "find", "grep", "ls", "pdf", "plan_init", "quiz", "read", "show_image", "visual"]));
 
 		// absent = enabled: an empty record and undefined behave identically
 		assert.deepEqual(
@@ -309,7 +313,7 @@ describe("tool toggles (core/pending.ts + factories)", () => {
 
 		// The mechanic switch (owner 2026-09-27): free-recall swaps the teach
 		// quiz for the teach explain — one quizzing tool, whichever is armed.
-		const freeFull = ["ask_user_question", "demo", "explain", "find", "grep", "ls", "pdf", "plan_init", "read", "research", "show_image", "visual"];
+		const freeFull = withDocs(["ask_user_question", "demo", "explain", "find", "grep", "ls", "pdf", "plan_init", "read", "research", "show_image", "visual"]);
 		assert.deepEqual(Object.keys(createTeacherTools(ctx, { explain: true })).sort(), freeFull);
 		assert.deepEqual(
 			Object.keys(createTeacherTools(ctx, { explain: true, research: false })).sort(),

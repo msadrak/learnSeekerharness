@@ -68,16 +68,23 @@ async function normalize(bytes: Uint8Array, signal?: AbortSignal): Promise<Resiz
 	} finally { await worker.terminate(); }
 }
 
+/** Normalize in-memory image bytes into the bounded, upright, metadata-free snapshot (identity = SHA-256 of the stored bytes). */
+export async function snapshotImageBytes(bytes: Uint8Array, signal?: AbortSignal): Promise<ImageSnapshot & { snapshotId: string }> {
+	const mime = detectSupportedImageMimeType(bytes);
+	if (!mime) throw new Error("Not a supported image");
+	checkImageDimensions(bytes, mime);
+	const stored = await normalize(bytes, signal);
+	signal?.throwIfAborted();
+	if (stored.mimeType !== "image/png" && stored.mimeType !== "image/jpeg") throw new Error("Unexpected stored image format");
+	const snapshotId = createHash("sha256").update(Buffer.from(stored.data, "base64")).digest("hex");
+	return { snapshotId, mimeType: stored.mimeType, data: stored.data, width: stored.width, height: stored.height };
+}
+
 export async function loadLearnerImage(rawPath: string, signal?: AbortSignal): Promise<LearnerImage> {
 	signal?.throwIfAborted();
 	const absolute = await checkLearnerImage(rawPath);
 	const bytes = await readBounded(absolute, signal);
 	const mime = detectSupportedImageMimeType(bytes);
 	if (!mime) throw new Error(`Not a supported image: ${absolute}`);
-	checkImageDimensions(bytes, mime);
-	const stored = await normalize(bytes, signal);
-	signal?.throwIfAborted();
-	if (stored.mimeType !== "image/png" && stored.mimeType !== "image/jpeg") throw new Error("Unexpected stored image format");
-	const snapshotId = createHash("sha256").update(Buffer.from(stored.data, "base64")).digest("hex");
-	return { path: absolute, snapshotId, mimeType: stored.mimeType, data: stored.data, width: stored.width, height: stored.height };
+	return { path: absolute, ...(await snapshotImageBytes(bytes, signal)) };
 }

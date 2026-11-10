@@ -5,6 +5,9 @@
  */
 
 export * from "./chat-handler.ts";
+export * from "./multipart.ts";
+export * from "./documents.ts";
+export * from "./regions.ts";
 export * from "./events-stream.ts";
 export * from "./chats.ts";
 export * from "./graph.ts";

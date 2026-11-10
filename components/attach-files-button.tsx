@@ -6,7 +6,9 @@ import { PaperclipIcon } from "lucide-react";
 import { directoryReferencePath, quoteFilePath } from "@/src/core";
 import { Hint } from "@/components/ui/hint";
 import { INSERT_FILE_PATHS_EVENT } from "@/components/path-input";
+import { useDocumentViewer } from "@/components/document-viewer/viewer-context";
 import { useT } from "@/components/i18n";
+import { DOCUMENT_ACCEPT } from "@/lib/document-limits";
 
 /** Picked files → the rooted paths an editor chips (issue #285), via the
  *  desktop bridge. Same validity rule as drops: a file without a usable
@@ -50,15 +52,21 @@ function useDesktopPaths(): boolean {
  * The attach button (issue #285): the picker's twin of a file drop — files
  * stay where they are and only their quoted paths enter the draft, at the
  * caret of `editorRef` (a PathInput root). Any file type; the agent reads
- * what it can. Desktop only: a browser File has no local path, so there the
- * button explains instead (the drop zone's notice). The separate native
- * folder choice returns the directory itself, including an empty directory.
- * aria-disabled, not disabled, so the tooltip still shows.
+ * what it can. Desktop: Files / Folder menu. A browser File has no local
+ * path, so inside a chat (a document viewer is provided) the same button
+ * opens a picker for PDF / DOCX / Markdown and uploads each pick into the
+ * session's viewer, where the agent reads it by id. Before a session exists
+ * (home, new session) there is nothing to upload into: the button explains.
+ * The separate native folder choice returns the directory itself, including
+ * an empty directory. aria-disabled, not disabled, so the tooltip still shows.
  */
 export function AttachFilesButton({ editorRef }: { editorRef: React.RefObject<HTMLDivElement | null> }) {
 	const t = useT();
+	const viewer = useDocumentViewer();
 	const pickerRef = useRef<HTMLInputElement>(null);
 	const desktop = useDesktopPaths();
+	const uploads = !desktop && viewer !== null;
+	const inert = !desktop && viewer === null;
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const popupRef = useRef<HTMLDivElement>(null);
 	const choosingFolder = useRef(false);
@@ -125,24 +133,34 @@ export function AttachFilesButton({ editorRef }: { editorRef: React.RefObject<HT
 				type="file"
 				multiple
 				hidden
+				accept={uploads ? DOCUMENT_ACCEPT : undefined}
 				data-testid="attach-files-input"
 				onChange={(e) => {
-					const resolve = window.lh?.getPathForFile;
-					const { paths } = resolve ? pathsForFiles(Array.from(e.currentTarget.files ?? []), resolve) : { paths: [] };
-					if (paths.length > 0) editorRef.current?.dispatchEvent(new CustomEvent(INSERT_FILE_PATHS_EVENT, { detail: paths }));
+					const files = Array.from(e.currentTarget.files ?? []);
 					e.currentTarget.value = ""; // allow re-picking the same file
+					const resolve = window.lh?.getPathForFile;
+					if (resolve) {
+						const { paths } = pathsForFiles(files, resolve);
+						if (paths.length > 0) editorRef.current?.dispatchEvent(new CustomEvent(INSERT_FILE_PATHS_EVENT, { detail: paths }));
+					} else if (viewer) {
+						void (async () => { for (const file of files) await viewer.upload(file); })();
+					}
 				}}
 			/>
-			<Hint label={desktop ? t.shell.attach.filesOrFolder : t.shell.attach.browserNotice}>
+			<Hint label={desktop ? t.shell.attach.filesOrFolder : uploads ? t.shell.attach.document : t.shell.attach.startSessionFirst}>
 				<button
 					ref={buttonRef}
 					type="button"
 					aria-label={t.shell.attach.files}
-					aria-disabled={!desktop}
-					aria-haspopup="menu"
-					aria-expanded={open}
+					aria-disabled={inert}
+					aria-haspopup={desktop ? "menu" : undefined}
+					aria-expanded={desktop ? open : undefined}
 					data-testid="attach-files"
-					onClick={() => { if (desktop) { setNotice(""); setOpen(!open); } }}
+					onClick={() => {
+						if (desktop) { setNotice(""); setOpen(!open); }
+						else if (uploads) pickerRef.current?.click();
+						else setNotice(notice ? "" : t.shell.attach.startSessionFirst);
+					}}
 					className="flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors duration-150 motion-reduce:transition-none hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 aria-disabled:cursor-default aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted-foreground"
 				>
 					<PaperclipIcon className="size-4" />

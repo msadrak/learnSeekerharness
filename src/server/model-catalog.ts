@@ -24,12 +24,19 @@ import { customProviderAvailable } from "./custom-provider.ts";
 import { chatGPTConnected, chatGPTModel, chatGPTModels, refreshChatGPTModels } from "../agent/chatgpt-bridge.ts";
 import { NATIVE_SUBSCRIPTIONS } from "../core/contracts/subscriptions.ts";
 import { nativeSubscriptionId, nativeSubscriptionConnected, nativeSubscriptionModel, nativeSubscriptionModels, refreshSubscriptionModels } from "../agent/subscription-bridge.ts";
+import { ANTIGRAVITY_PROVIDER_ID } from "../agent/google-cloudcode/models.ts";
 
 export async function refreshConnectionCatalog(provider?: string): Promise<void> {
 	await Promise.all([
 		!provider || provider === "chatgpt" ? refreshChatGPTModels(piModels().getModels("openai").filter((m): m is Model<"openai-responses"> => m.api === "openai-responses")) : Promise.resolve(),
 		!provider || nativeSubscriptionId(provider) ? refreshSubscriptionModels() : Promise.resolve(),
+		!provider || provider === ANTIGRAVITY_PROVIDER_ID ? refreshAntigravityModels() : Promise.resolve(),
 	]);
+}
+/** Antigravity serves a different model lineup per account and changes it over time: ask Google (freshness and failure backoff live in the provider; a failure keeps the previous list). */
+async function refreshAntigravityModels(): Promise<void> {
+	const { errors } = await piModels().refresh({ providers: [ANTIGRAVITY_PROVIDER_ID] });
+	for (const error of errors.values()) console.warn(`[models] Antigravity model list not refreshed: ${error.message}`);
 }
 function connectionModel(provider: string, id: string): Model<Api> | undefined {
 	if (provider === CLAUDE_CODE_PROVIDER && !claudeCodeAvailable()) return undefined;

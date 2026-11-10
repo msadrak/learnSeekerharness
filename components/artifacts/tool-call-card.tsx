@@ -38,6 +38,7 @@ function headlineArg(tool: string, input: unknown): string {
 		const p = typeof inp.path === "string" && inp.path.length > 0 ? inp.path : "~";
 		return p;
 	}
+	if (typeof inp.document === "string" && inp.document.length > 0) return inp.document;
 	if (typeof inp.pattern === "string") return inp.pattern;
 	// list_propositions: the session id is the call's subject — the
 	// collapsed line reads "list_propositions chat_…". Shown as given

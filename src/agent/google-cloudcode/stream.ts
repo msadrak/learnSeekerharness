@@ -60,12 +60,25 @@ const GEMINI_CLI_HEADERS = {
 	"X-Goog-Api-Client": "gl-node/22.17.0",
 	"Client-Metadata": CLIENT_METADATA,
 };
-const DEFAULT_ANTIGRAVITY_VERSION = "1.15.8";
+
+/** The Antigravity client identity Google sees. Google gates models and refuses stale clients, so this moves: the default is the
+ *  current App release (2.29.1, Google's changelog, 6 Nov 2026) in the `hub` form third-party clients report Google accepting.
+ *  PI_AI_ANTIGRAVITY_VERSION changes only the version; PI_AI_ANTIGRAVITY_USER_AGENT replaces the whole string. */
+const DEFAULT_ANTIGRAVITY_VERSION = "2.29.1";
+const antigravityUserAgent = (): string =>
+	process.env.PI_AI_ANTIGRAVITY_USER_AGENT?.trim() ||
+	`antigravity/hub/${process.env.PI_AI_ANTIGRAVITY_VERSION?.trim() || DEFAULT_ANTIGRAVITY_VERSION} darwin/arm64`;
 const antigravityHeaders = () => ({
-	"User-Agent": `antigravity/${process.env.PI_AI_ANTIGRAVITY_VERSION || DEFAULT_ANTIGRAVITY_VERSION} darwin/arm64`,
+	"User-Agent": antigravityUserAgent(),
 	"X-Goog-Api-Client": "google-cloud-sdk vscode_cloudshelleditor/0.1",
 	"Client-Metadata": CLIENT_METADATA,
 });
+
+/** Google answers a stale client with an ordinary 200 whose "text" is this notice and which reports no usage. Left alone it reads
+ *  as model output — a job brief, a transcript, a finished section — so it is raised as the error it is. */
+const ANTIGRAVITY_REJECTION = /version of Antigravity is no longer supported/i;
+const ANTIGRAVITY_REJECTED_MESSAGE =
+	"Google rejected this app's Antigravity client version as no longer supported. Set PI_AI_ANTIGRAVITY_VERSION (or the whole PI_AI_ANTIGRAVITY_USER_AGENT) to a client version Google currently accepts, then restart the app.";
 
 // Antigravity system instruction (compact version from CLIProxyAPI).
 const ANTIGRAVITY_SYSTEM_INSTRUCTION =
@@ -439,6 +452,7 @@ export function streamCloudCode(model: Model<Api>, context: TranscriptContext, o
 
 				const handlePart = (part: CloudCodePart): void => {
 					if (part.text !== undefined) {
+						if (isAntigravity && ANTIGRAVITY_REJECTION.test(part.text)) throw new Error(ANTIGRAVITY_REJECTED_MESSAGE);
 						hasContent = true;
 						const thinking = isThinkingPart(part);
 						if (!current || (thinking && current.type !== "thinking") || (!thinking && current.type !== "text")) {
@@ -634,3 +648,47 @@ export const cloudCodeStreams: ProviderStreams = {
 	stream: (model, context, options) => streamCloudCode(model, context, options),
 	streamSimple: (model, context, options) => streamSimpleCloudCode(model, context, options),
 };
+
+// ---------------------------------------------------------------------------
+// Model listing
+// ---------------------------------------------------------------------------
+
+/**
+ * Google's list of the models this Antigravity account can use (`v1internal:fetchAvailableModels`), asked with the same
+ * identity and credential as chat requests. Tries the daily endpoint, then production. A stale-client notice becomes the
+ * clear error; any other failure surfaces as an error so the caller keeps its previous list.
+ */
+export async function fetchAntigravityListing(
+	credential: { token: string; projectId: string },
+	options: { signal?: AbortSignal; fetch?: typeof fetch } = {},
+): Promise<unknown> {
+	const fetchFn = options.fetch ?? globalThis.fetch;
+	let failure: Error | undefined;
+	for (const endpoint of ANTIGRAVITY_ENDPOINT_FALLBACKS) {
+		let response: Response;
+		try {
+			response = await fetchFn(`${endpoint}/v1internal:fetchAvailableModels`, {
+				method: "POST",
+				headers: { Authorization: `Bearer ${credential.token}`, "Content-Type": "application/json", ...antigravityHeaders() },
+				body: JSON.stringify({ project: credential.projectId }),
+				signal: options.signal,
+			});
+		} catch (error) {
+			if (options.signal?.aborted) throw error;
+			failure = error instanceof Error ? error : new Error(String(error));
+			continue;
+		}
+		const text = await response.text();
+		if (ANTIGRAVITY_REJECTION.test(text)) throw new Error(ANTIGRAVITY_REJECTED_MESSAGE);
+		if (!response.ok) {
+			failure = new Error(`Cloud Code Assist API error (${response.status}): ${extractErrorMessage(text)}`);
+			continue;
+		}
+		try {
+			return JSON.parse(text);
+		} catch {
+			failure = new Error("Cloud Code Assist returned an unreadable model list");
+		}
+	}
+	throw failure ?? new Error("Cloud Code Assist model list unavailable");
+}

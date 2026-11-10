@@ -10,7 +10,9 @@ import {
 	FileVideo,
 	Folder,
 } from "lucide-react";
-import { filePathLabel, isDirectoryReference, parseFilePaths } from "@/src/core";
+import { documentFormatOf, filePathLabel, isDirectoryReference, parseFilePaths } from "@/src/core";
+import { useDocumentViewer } from "@/components/document-viewer/viewer-context";
+import { useT } from "@/components/i18n";
 
 function fileIcon(label: string) {
 	const extension = label.split(".").at(-1)?.toLowerCase();
@@ -49,13 +51,36 @@ export function FilePathChip({ path, contentEditable, className }: FilePathChipP
 	);
 }
 
+/** A document path inside the session: the chip becomes a button that opens
+ *  the file in the document viewer (the chip itself stays presentation-only). */
+function ViewerPathChip({ path, openPath }: { path: string; openPath: (path: string) => Promise<void> }) {
+	const t = useT();
+	return (
+		<button
+			type="button"
+			title={t.chat.viewer.openInViewer}
+			onClick={() => void openPath(path)}
+			className="inline-flex max-w-full cursor-pointer rounded align-middle transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+		>
+			<FilePathChip path={path} />
+		</button>
+	);
+}
+
 /** Ordinary learner text stays ordinary text; only quoted paths become chips. */
 export function PathText({ text }: { text: string }) {
+	const viewer = useDocumentViewer();
 	return (
 		<>
 			{parseFilePaths(text).map((part) => (
 				<Fragment key={part.start}>
-					{part.kind === "path" ? <FilePathChip path={part.path} /> : part.text}
+					{part.kind !== "path" ? (
+						part.text
+					) : viewer && !isDirectoryReference(part.path) && documentFormatOf(part.path) !== null ? (
+						<ViewerPathChip path={part.path} openPath={viewer.openPath} />
+					) : (
+						<FilePathChip path={part.path} />
+					)}
 				</Fragment>
 			))}
 		</>

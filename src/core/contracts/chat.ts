@@ -10,6 +10,7 @@ import type { LhMessage } from "../native-messages.ts";
 import type { Phase3 } from "../phases.ts";
 import type { PlanNodeStatus, PlanTree } from "./plan.ts";
 import type { EmissionStats } from "./graph.ts";
+import type { ChatViewerState, DocumentFormat } from "../documents.ts";
 
 // ─── Chat records (the session store's on-disk format) ───────────────────────
 
@@ -52,8 +53,16 @@ export interface ChatRecord {
 	 *  spend too. Same parallel-log discipline as `turns` (nothing rides
 	 *  inside messages). Keyed by startedAt; idempotent appends. */
 	extractions?: ExtractionRunUsage[];
+	/** Append-only region-transcription usage log: one entry per scan-reader
+	 *  call on THIS chat, billed whether or not the learner then sends the
+	 *  text. Same parallel-log discipline as `turns`; idempotent per id. */
+	scans?: ScanUsage[];
 	/** Per-chat model/thinking overrides for the conversation agents. */
 	settings?: ChatSettings;
+	/** The document viewer's per-session state (documents, tabs, learner
+	 *  position, annotation proposals). Optional addition — absent on records
+	 *  that never opened a document; the chat version stays 1. */
+	viewer?: ChatViewerState;
 	/** SCHEMA STAMP (schema-versioning wave, owner 2026-10-10): LAZY v1 —
 	 *  existing records stay unstamped (absence reads as v1); every write
 	 *  stamps the current version. A record stamped NEWER than this build
@@ -112,6 +121,20 @@ export interface ExtractionRunUsage {
 		extractor: ExtractionStageUsage;
 		auditor: ExtractionStageUsage;
 	};
+}
+
+/** One scan-reader spend: a region or page transcription (`page` set), or a
+ *  section locator run that read several pages (`page` absent, one entry). `steps` has
+ *  the shape of TurnUsage.steps so the cost fold prices it the same way. */
+export interface ScanUsage {
+	/** Unique per request — the idempotency key for the append-only log. */
+	id: string;
+	at: string;
+	documentId: string;
+	page?: number;
+	/** The model that ran, provider-qualified ("provider:id"). */
+	model: string;
+	steps: CallUsage[];
 }
 
 // ─── Usage accounting (the money channel) ─────────────────────────────────────
@@ -315,6 +338,36 @@ export interface ShowImageDetails {
 	snapshotId: string;
 	width: number;
 	height: number;
+}
+
+/** open_document's record payload. */
+export interface OpenDocumentDetails {
+	documentId: string;
+	name: string;
+	format: DocumentFormat;
+	page?: number;
+}
+
+/** point_to_passage's record payload (page = the located page for PDFs). */
+export interface PassageDetails {
+	documentId: string;
+	name: string;
+	format: DocumentFormat;
+	quote: string;
+	page?: number;
+	occurrence: number;
+	note?: string;
+}
+
+/** propose_annotation's record payload; the decision lives in ChatViewerState.annotations. */
+export interface AnnotationProposalDetails {
+	annotationId: string;
+	documentId: string;
+	name: string;
+	format: DocumentFormat;
+	quote: string;
+	page?: number;
+	note: string;
 }
 
 // ─── Artifact renderer registry (client extension point) ────────────────────

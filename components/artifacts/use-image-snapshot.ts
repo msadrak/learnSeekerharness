@@ -4,8 +4,10 @@ import { useContext, useEffect, useState } from "react";
 import { ChatActionsContext } from "@/components/chat";
 import type { ImageSnapshot } from "@/src/core";
 
-export function useImageSnapshot(snapshotId?: string): { image?: ImageSnapshot; failed: boolean } {
-	const chatId = useContext(ChatActionsContext)?.chatId;
+/** The stored picture of a snapshot id. The chat comes from the transcript context unless a surface outside it (the document viewer panel) passes its own. */
+export function useImageSnapshot(snapshotId?: string, chatIdOverride?: string): { image?: ImageSnapshot; failed: boolean } {
+	const contextChatId = useContext(ChatActionsContext)?.chatId;
+	const chatId = chatIdOverride ?? contextChatId;
 	const key = chatId && snapshotId ? `${chatId}/${snapshotId}` : undefined;
 	const [loaded, setLoaded] = useState<{ key: string; image?: ImageSnapshot; failed: boolean }>();
 	useEffect(() => {

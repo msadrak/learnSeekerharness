@@ -4,7 +4,7 @@ import tsParser from "@typescript-eslint/parser";
 import importPlugin from "eslint-plugin-import";
 
 /**
- * ESLint with one job here: ENFORCE THE IMPORT LAW (the shell/core
+ * ESLint with one main job here: ENFORCE THE IMPORT LAW (the shell/core
  * architecture, docs/architecture.md). Everything else stays out of the
  * way — this is not a style linter.
  *
@@ -67,6 +67,28 @@ export default defineConfig([
 								"The agent layer receives its dependencies (storage ports via factories/closures) — it never imports the server layer or store adapters (architecture: docs/architecture.md).",
 						},
 					],
+				},
+			],
+			// Mechanical style patterns the reviewer used to catch by hand. Existing hits are grandfathered in
+			// eslint-suppressions.json (per-file counts): new code errors, and `eslint . --prune-suppressions`
+			// shrinks the file after a cleanup.
+			"no-restricted-syntax": [
+				"error",
+				{
+					selector: "TSTypeReference[typeName.name='ReturnType']",
+					message: "Name the type instead of `ReturnType<typeof fn>`: export it from the module that owns `fn`, or import the type it already exposes.",
+				},
+				{
+					selector: "TSImportType",
+					message: "Use a top-level `import type { X } from \"…\"` instead of an inline `import(\"…\").X` type.",
+				},
+				{
+					selector: "VariableDeclarator[id.name='isRecord'], FunctionDeclaration[id.name='isRecord']",
+					message: "Do not define a local `isRecord`. Parse at the boundary with a typebox schema (`Value.Check`), or check the properties you use.",
+				},
+				{
+					selector: "MemberExpression > TSAsExpression.object",
+					message: "No member access on an inline cast, `(x as T).member`. Give the value a typed variable first, or narrow it.",
 				},
 			],
 		},

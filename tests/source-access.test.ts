@@ -8,6 +8,7 @@ import { createCanvas } from "@napi-rs/canvas";
 import { createFauxCore } from "@earendil-works/pi-ai";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 import type { ChatStore, JobStore } from "../src/core/ports.ts";
+import { NO_FILE_SYMLINKS } from "./helpers/symlink.ts";
 
 // Set this test process's locations BEFORE importing config/agent modules.
 // Never read or modify the developer's actual home, keys or learning data.
@@ -48,11 +49,11 @@ const authTemp = await write(`keyfiles/custom-keys.json.tmp-${uuid}`);
 for (const name of ["chatgpt", "github-copilot", "xai"]) await write(`keyfiles/${name}-credentials.json.${uuid}.tmp`);
 const targetKey = await write("relocated-token");
 await link(path.join(root, "keyfiles"), path.join(root, "private"), true);
-await link(targetKey, auth);
+if (!NO_FILE_SYMLINKS) await link(targetKey, auth);
 await link(path.join(root, "transcripts"), path.join(home, ".claude"), true);
 await link(path.join(home, ".ssh"), path.join(home, "notes", "keys"), true);
-await link(targetKey, path.join(home, "notes", "key-alias"));
-await link(authTemp, path.join(home, "notes", "key-temp-alias"));
+if (!NO_FILE_SYMLINKS) await link(targetKey, path.join(home, "notes", "key-alias"));
+if (!NO_FILE_SYMLINKS) await link(authTemp, path.join(home, "notes", "key-temp-alias"));
 await link(home, path.join(root, "home-alias"), true);
 await link(home, path.join(root, "home-alias-2"), true);
 await write("keyfiles/data/chats/session.json", "synthetic learning conversation\n");
@@ -80,7 +81,7 @@ async function text(tool: AgentTool<any>, args: unknown): Promise<string> {
 }
 const denied = /Access denied: .* is a protected location/;
 
-describe("source access: configured credentials only", () => {
+describe("source access: configured credentials only", { skip: NO_FILE_SYMLINKS }, () => {
 	const protectedFiles = [
 		auth, targetKey, path.join(home, "notes", "key-alias"),
 		authTemp, `${auth}.tmp-${uuid}`, path.join(home, "notes", "key-temp-alias"),
@@ -182,7 +183,7 @@ describe("source access: canonical roots and all tool paths", () => {
 		}
 	});
 
-	it("uses the checked target for an ordinary file alias, and preserves missing-file errors", async () => {
+	it("uses the checked target for an ordinary file alias, and preserves missing-file errors", { skip: NO_FILE_SYMLINKS }, async () => {
 		const alias = path.join(home, "notes", "topic-alias");
 		await link(path.join(home, "notes", "topic.md"), alias);
 		assert.equal(resolveSourcePath(alias), path.join(home, "notes", "topic.md"));
@@ -192,7 +193,7 @@ describe("source access: canonical roots and all tool paths", () => {
 	});
 
 	for (const name of [".env", ".env.example", ".env.template", ".ENV.production"]) {
-		it(`denies ${name} outside home, including through a differently named alias`, async () => {
+		it(`denies ${name} outside home, including through a differently named alias`, { skip: NO_FILE_SYMLINKS }, async () => {
 			const file = path.join(root, "elsewhere", name);
 			const alias = path.join(home, "notes", `alias-${name}`);
 			await link(file, alias);
@@ -304,7 +305,7 @@ describe("source access: case-sensitive home-location variants", () => {
 	});
 });
 
-describe("source access: credential case aliases on the fixture filesystem", () => {
+describe("source access: credential case aliases on the fixture filesystem", { skip: NO_FILE_SYMLINKS }, () => {
 	async function caseAliasesAvailable(): Promise<boolean> {
 		try {
 			const [named, alias] = await Promise.all([fs.stat(path.join(root, "keyfiles")), fs.stat(path.join(root, "KEYFILES"))]);

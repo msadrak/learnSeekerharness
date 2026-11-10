@@ -1,7 +1,8 @@
 /**
  * The composer's attach button (issue #285): the picker's twin of a file
  * drop. Picked files become quoted path chips at the caret through the
- * desktop bridge; the browser build explains instead. Same linkedom
+ * desktop bridge; in a browser chat they upload into the session's document
+ * viewer, and before a session exists the button explains. Same linkedom
  * shims as file-path-drop-zone.test.tsx (no native Selection there).
  */
 import React, { act } from "react";
@@ -13,13 +14,14 @@ import { parseHTML } from "linkedom";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Composer } from "../components/composer.tsx";
 import { attachmentPopupPlacement, pathsForFiles } from "../components/attach-files-button.tsx";
+import { DocumentViewerContext, type DocumentViewerApi } from "../components/document-viewer/viewer-context.tsx";
 import { restorePathSelection } from "../components/path-input-dom.ts";
 import { quoteFilePath } from "../src/core/file-paths.ts";
 
 let cleanup: (() => Promise<void>) | undefined;
 afterEach(async () => { await cleanup?.(); cleanup = undefined; });
 
-async function fixture({ desktop = true } = {}) {
+async function fixture({ desktop = true, uploads }: { desktop?: boolean; uploads?: File[] } = {}) {
 	const { window: win, document: doc } = parseHTML("<html><body><div id='root'></div></body></html>");
 	let active: Element = doc.body;
 	Object.defineProperty(doc, "activeElement", { get: () => active });
@@ -57,7 +59,10 @@ async function fixture({ desktop = true } = {}) {
 	const { createRoot } = await import("react-dom/client");
 	const root = createRoot(doc.getElementById("root")!);
 	function draw() {
-		root.render(<div data-testid="clipping-dock" data-attachment-composer="" style={{ overflow: "hidden" }}><Composer busy={false} value={value} onChange={(next) => { value = next; draw(); }} onSend={() => { sends++; }} onStop={() => {}} canSend /></div>);
+		const composer = <Composer busy={false} value={value} onChange={(next) => { value = next; draw(); }} onSend={() => { sends++; }} onStop={() => {}} canSend />;
+		// Only `upload` is consumed by the attach button; the rest of the viewer API is irrelevant here.
+		const viewer = uploads ? { upload: async (file: File) => { uploads.push(file); } } as unknown as DocumentViewerApi : null;
+		root.render(<div data-testid="clipping-dock" data-attachment-composer="" style={{ overflow: "hidden" }}><DocumentViewerContext.Provider value={viewer}>{composer}</DocumentViewerContext.Provider></div>);
 	}
 	await act(async () => { draw(); });
 	const picker = doc.querySelector<HTMLInputElement>('[data-testid="attach-files-input"]')!;
@@ -72,6 +77,7 @@ async function fixture({ desktop = true } = {}) {
 	const editor = doc.querySelector<HTMLElement>("[data-file-path-input]")!;
 	return {
 		button: doc.querySelector<HTMLButtonElement>('[data-testid="attach-files"]')!,
+		picker,
 		get value() { return value; },
 		doc,
 		get pickerClicks() { return pickerClicks; },
@@ -259,12 +265,43 @@ describe("composer attach button", () => {
 		assert.equal(f.sends, 0);
 	});
 
-	it("browser: the button stays inert and the picker never opens", async () => {
+	it("browser before a session exists: clicking explains, the picker never opens, picks change nothing", async () => {
 		const f = await fixture({ desktop: false });
 		assert.equal(f.button.getAttribute("aria-disabled"), "true");
+		assert.equal(f.picker.getAttribute("accept"), null);
 		await act(async () => { f.button.click(); });
 		assert.equal(f.pickerClicks, 0);
+		assert.equal(f.doc.querySelector('[role="status"]')!.textContent, "Start the session first, then attach a document.");
+		await act(async () => { f.button.click(); });
+		assert.equal(f.doc.querySelector('[role="status"]'), null, "a second click dismisses the notice");
 		await f.pick([f.file("a.pdf", "/a.pdf")]);
 		assert.equal(f.value, "readthis");
+	});
+
+	it("browser in a chat: the button opens a document-only picker and uploads each pick into the viewer, in order", async () => {
+		const uploads: File[] = [];
+		const f = await fixture({ desktop: false, uploads });
+		assert.equal(f.button.getAttribute("aria-disabled"), "false");
+		assert.equal(f.button.hasAttribute("aria-haspopup"), false, "no Files/Folder menu without a path bridge");
+		assert.equal(f.picker.getAttribute("accept"), ".pdf,.docx,.md,.markdown");
+		await act(async () => { f.button.click(); });
+		assert.equal(f.pickerClicks, 1);
+		assert.equal(f.doc.querySelector('[role="menu"], [role="status"]'), null);
+		const picked = [f.file("week 3.pdf"), f.file("notes.md")];
+		await f.pick(picked);
+		assert.deepEqual(uploads, picked);
+		assert.equal(f.value, "readthis", "uploads never touch the draft");
+		assert.equal(f.byteReads, 0, "the button forwards Files; it never reads their bytes");
+	});
+
+	it("desktop inside a chat keeps path chips and never uploads", async () => {
+		const uploads: File[] = [];
+		const f = await fixture({ uploads });
+		f.caret(4);
+		await act(async () => { f.button.click(); });
+		await f.choice("Files");
+		await f.pick([f.file("week 3.pdf", "/course/week 3.pdf")]);
+		assert.equal(f.value, `read ${quoteFilePath("/course/week 3.pdf")} this`);
+		assert.deepEqual(uploads, []);
 	});
 });

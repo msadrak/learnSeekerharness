@@ -29,6 +29,15 @@
  */
 
 import type { QuestionAnswerData } from "./question-core.ts";
+import {
+	MAX_EXCERPTS_PER_MESSAGE,
+	parseDocumentExcerpt,
+	parseReadingAnswer,
+	viewerOf,
+	type ChatViewerState,
+	type DocumentExcerpt,
+	type ReadingAnswerData,
+} from "./documents.ts";
 import type { LhMessage } from "./native-messages.ts";
 import {
 	activeProblemOf,
@@ -39,16 +48,24 @@ import {
 	newProblemDismissedMarker,
 	newThinkingMessage,
 	newUserMessage,
+	newDocumentExcerptMessage,
 	newMessageId,
 	questionCallsOf,
 	pendingProblemDismissalOf,
 } from "./native-messages.ts";
 import { QUESTION_TOOLS, toolQuestionKind } from "./pending.ts";
 
+/** What the learner's answer to a pending dock tool carries: a graded question
+ *  answer, or a reading completion/skip (assign_reading). */
+export type ClientAnswerData = QuestionAnswerData | ReadingAnswerData;
+
 /** One client-originated input event (the POST body's `input`). */
 export type ChatInput =
 	| { type: "text"; text: string }
-	| { type: "answer"; toolCallId: string; answer: QuestionAnswerData }
+	| { type: "answer"; toolCallId: string; answer: ClientAnswerData }
+	/** Passage(s) the learner selected in the document viewer: Explain / Quiz me
+	 *  (exactly one excerpt, no text) or Quote in message (1..N, optional text). */
+	| { type: "excerpt"; action: "explain" | "quiz" | "quote"; excerpts: DocumentExcerpt[]; text?: string }
 	| { type: "continue" }
 	/** The failed-turn retry (issue #110): the banner's Retry button. */
 	| { type: "retry" }
@@ -82,7 +99,7 @@ export type TurnInput = ChatInput | SteerInput;
  *  wake-free. Parallel question calls each get their own dismiss event;
  *  results reference their calls by id, so the appends stay independent. */
 export type DismissInput =
-	| { type: "dismiss"; toolCallId: string; answer: QuestionAnswerData }
+	| { type: "dismiss"; toolCallId: string; answer: ClientAnswerData }
 	/** The problem discard (practice, owner 2026-10-04): ask-style — the
 	 *  silent route appends the UI-only marker and wakes nothing; the
 	 *  conclude pair rides the user's NEXT input (inputAppends). */
@@ -102,7 +119,7 @@ export function parseDismissInput(input: unknown): DismissInput {
 	if (typeof i.toolCallId !== "string" || i.toolCallId.length === 0) {
 		throw new ChatInputError("dismiss input requires toolCallId");
 	}
-	const answer = i.answer as QuestionAnswerData | undefined;
+	const answer = i.answer as ClientAnswerData | undefined;
 	if (typeof answer !== "object" || answer === null) {
 		throw new ChatInputError("dismiss input requires the dismissal answer object");
 	}
@@ -150,7 +167,11 @@ export function dismissAppends(record: { messages: LhMessage[] }, input: Dismiss
 	if (!pending || pending.toolCallId !== input.toolCallId) {
 		throw new ChatInputError("dismiss input targets no pending question call");
 	}
-	if (input.answer.kind !== toolQuestionKind(pending.tool)) {
+	if (pending.tool === "assign_reading") {
+		if (parseReadingAnswer(input.answer)?.dismissed !== true) {
+			throw new ChatInputError("dismiss input's answer must be a reading dismissal");
+		}
+	} else if (input.answer.kind !== toolQuestionKind(pending.tool)) {
 		throw new ChatInputError("dismiss input's answer kind does not match the question");
 	}
 	return [newAnswerResult(input.toolCallId, pending.tool, input.answer)];
@@ -176,7 +197,30 @@ export function parseChatInput(input: unknown): ChatInput {
 			if (typeof i.answer !== "object" || i.answer === null) {
 				throw new ChatInputError("answer input requires the graded answer object");
 			}
-			return { type: "answer", toolCallId: i.toolCallId, answer: i.answer as QuestionAnswerData };
+			return { type: "answer", toolCallId: i.toolCallId, answer: i.answer as ClientAnswerData };
+		case "excerpt": {
+			if (i.action !== "explain" && i.action !== "quiz" && i.action !== "quote") {
+				throw new ChatInputError("excerpt input requires action explain, quiz or quote");
+			}
+			if (!Array.isArray(i.excerpts)) throw new ChatInputError("excerpt input requires excerpts");
+			const excerpts = i.excerpts.map(parseDocumentExcerpt);
+			if (excerpts.some((e) => e === null)) throw new ChatInputError("excerpt input contains a malformed excerpt");
+			if (i.text !== undefined && typeof i.text !== "string") throw new ChatInputError("excerpt input text must be a string");
+			if (i.action === "quote") {
+				if (excerpts.length < 1 || excerpts.length > MAX_EXCERPTS_PER_MESSAGE) {
+					throw new ChatInputError(`quote input requires 1 to ${MAX_EXCERPTS_PER_MESSAGE} excerpts`);
+				}
+			} else {
+				if (excerpts.length !== 1) throw new ChatInputError(`${i.action} input requires exactly one excerpt`);
+				if (i.text !== undefined) throw new ChatInputError(`${i.action} input carries no text`);
+			}
+			return {
+				type: "excerpt",
+				action: i.action,
+				excerpts: excerpts as DocumentExcerpt[],
+				...(typeof i.text === "string" && i.text.trim().length > 0 ? { text: i.text } : {}),
+			};
+		}
 		case "continue":
 			return { type: "continue" };
 		case "retry":
@@ -212,7 +256,7 @@ export function parseChatInput(input: unknown): ChatInput {
  * double-answering.
  */
 export function inputAppends(
-	record: { messages: LhMessage[]; kind?: string },
+	record: { messages: LhMessage[]; kind?: string; viewer?: ChatViewerState; imageSnapshots?: Record<string, unknown> },
 	input: ChatInput,
 ): LhMessage[] {
 	switch (input.type) {
@@ -223,7 +267,23 @@ export function inputAppends(
 			if (!pending || pending.toolCallId !== input.toolCallId) {
 				throw new ChatInputError("answer input targets no pending question call");
 			}
+			if (pending.tool === "assign_reading") {
+				const reading = parseReadingAnswer(input.answer);
+				if (!reading || reading.dismissed === true) throw new ChatInputError("answer input is not a reading completion");
+			} else if ((input.answer as { kind?: unknown }).kind === "reading") {
+				throw new ChatInputError("answer input is not a question answer");
+			}
 			return [newAnswerResult(input.toolCallId, pending.tool, input.answer)];
+		}
+		case "excerpt": {
+			const registered = new Set(viewerOf(record).documents.map((d) => d.id));
+			if (input.excerpts.some((e) => !registered.has(e.documentId))) {
+				throw new ChatInputError("excerpt references a document not registered in this session");
+			}
+			if (input.excerpts.some((e) => e.snapshotId !== undefined && !record.imageSnapshots?.[e.snapshotId])) {
+				throw new ChatInputError("excerpt references a region image not stored in this session");
+			}
+			return [...dismissalConclusion(record), newDocumentExcerptMessage(input.action, input.excerpts, input.text)];
 		}
 		case "continue":
 			return dismissalConclusion(record);

@@ -1,5 +1,9 @@
 @import "tailwindcss";
 @import "./tokens.css";
+/* The document viewer's PDF page/text-layer styles, in their own layer so they
+   stay below Tailwind utilities. Imported here, not from the client component:
+   pdfjs-dist is a server-external package and the SSR pass cannot external a .css. */
+@import "pdfjs-dist/web/pdf_viewer.css" layer(pdfjs);
 
 @custom-variant dark (&:is(.dark *));
 
@@ -630,4 +634,59 @@ body {
 	background-color: var(--accent);
 	outline: 1px solid var(--border);
 	border-radius: 0.25rem;
+}
+
+/* Document viewer highlights (CSS Custom Highlight API; no DOM mutation).
+   flash = the passage a reveal landed on; pending = proposed annotations;
+   annotation = written annotations. */
+::highlight(lh-doc-flash) {
+	background-color: color-mix(in oklab, var(--color-brand) 35%, transparent);
+}
+::highlight(lh-doc-pending) {
+	background-color: color-mix(in oklab, var(--color-warning) 18%, transparent);
+	text-decoration: underline dashed var(--color-warning);
+}
+::highlight(lh-doc-annotation) {
+	background-color: color-mix(in oklab, var(--color-warning) 35%, transparent);
+}
+
+/* Screenshot regions (scanned PDFs). While the region tool is marking, the
+   page canvas is a drawing surface: crosshair, no text selection, no touch
+   panning (unlayered, so it beats pdf.js's own layer(pdfjs) rules). The flash
+   outlines a region a transcript card jumped back to, then fades. */
+[data-region="on"] .pdfViewer,
+[data-region="on"] .pdfViewer * {
+	cursor: crosshair;
+	user-select: none;
+}
+[data-region="on"] .pdfViewer {
+	touch-action: none;
+}
+.lh-region-flash {
+	position: absolute;
+	z-index: 5;
+	pointer-events: none;
+	border: 2px solid var(--color-brand);
+	border-radius: 2px;
+	background-color: color-mix(in oklab, var(--color-brand) 18%, transparent);
+	animation: lh-region-flash 3s ease-out forwards;
+}
+@keyframes lh-region-flash {
+	0%,
+	65% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+/* A proposed annotation on a scanned page (no text to underline): a dashed box where the vision model placed the passage, same
+   warning hue as the pending text underline. It stays until the learner accepts or rejects it. */
+.lh-annotation-box {
+	position: absolute;
+	z-index: 4;
+	pointer-events: none;
+	border: 1.5px dashed var(--color-warning);
+	border-radius: 2px;
+	background-color: color-mix(in oklab, var(--color-warning) 22%, transparent);
 }

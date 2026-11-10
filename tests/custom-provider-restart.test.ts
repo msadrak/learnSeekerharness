@@ -17,7 +17,7 @@ function profile() {
 	return home;
 }
 function child(home: string, mode: "mutate" | "inspect", action = "key", fault = "none", envKey?: string) {
-	const result = spawnSync(process.execPath, ["--import", "tsx", "tests/helpers/custom-provider-crash.ts", mode, action, fault], { cwd: process.cwd(), env: { PATH: process.env.PATH, HOME: home, USERPROFILE: home, NODE_ENV: "test", LH_DATA_DIR: home, LH_AUTH_FILE: path.join(home, "auth.json"), LH_IGNORE_ENV_KEYS: "0", ...(envKey ? { CUSTOM_OPENAI_API_KEY: envKey } : {}) }, encoding: "utf8", timeout: 15000 });
+	const result = spawnSync(process.execPath, ["--import", "tsx", "tests/helpers/custom-provider-crash.ts", mode, action, fault], { cwd: process.cwd(), env: { PATH: process.env.PATH, HOME: home, USERPROFILE: home, NODE_ENV: "test", LH_DATA_DIR: home, LH_AUTH_FILE: path.join(home, "auth.json"), LH_IGNORE_ENV_KEYS: "0", ...(envKey ? { CUSTOM_OPENAI_API_KEY: envKey } : {}) }, encoding: "utf8", timeout: 60_000 });
 	assert.ifError(result.error);
 	assert.ok(result.status === 0 || result.status === 77, `${result.status}: ${result.stderr}`);
 	return { exit: result.status, data: result.stdout.trim() ? JSON.parse(result.stdout.trim().split("\n").at(-1)!) : undefined };

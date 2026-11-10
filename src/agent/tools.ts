@@ -24,8 +24,10 @@ import { lsTool } from "./tools/ls.ts";
 import { findTool } from "./tools/find.ts";
 import { grepTool } from "./tools/grep.ts";
 import { createShowImageTool } from "./tools/show-image.ts";
+import { documentTools } from "./tools/documents.ts";
 import { healToolRecord } from "./tools/heal.ts";
 import type { GraphStore } from "../core/ports.ts";
+import type { ScanPassageLocator, ScanSectionReader } from "../core/scan-section.ts";
 
 export { jobTools };
 export type { ProbeDoneContext } from "./tools/probe.ts";
@@ -277,6 +279,10 @@ export interface ProberToolContext extends ProbeDoneContext {
 	 *  master switch AND the agent.graphTools toggle (settings-resolution).
 	 *  Absent = the gate is closed, no map tools (tests drive this seam). */
 	graphStore?: GraphStore;
+	/** The server's scanned-section reader for read_scanned_section (the composition root injects it). */
+	readScannedSection?: ScanSectionReader;
+	/** The server's scanned-page passage locator for propose_annotation on scans (the composition root injects it). */
+	locateScanPassage?: ScanPassageLocator;
 }
 
 /** The prober's tool set: probe quiz (no nodeId) + ask + the learner-fs
@@ -327,6 +333,9 @@ export function createProberTools(
 				ls: lsTool,
 				find: findTool,
 				grep: grepTool,
+				// The document viewer set (PDF / Word / Markdown shared with the
+				// learner) is always on in every phase and every agent.
+				...documentTools({ chatId: ctx.chatId, chatStore: ctx.chatStore, readScannedSection: ctx.readScannedSection, locateScanPassage: ctx.locateScanPassage }),
 				// Job dispatch in the probe phase (owner ruling, 2026-09-20):
 				// research + pdf are ALWAYS available in every phase — the
 				// prober can verify facts or read learner PDFs while assessing.
@@ -401,6 +410,10 @@ export interface TeacherToolContext extends PlanToolContext {
 	spawn: (job: JobRecord, input: ResearchInput | DemoInput | VisualInput | PdfInput) => void;
 	/** Retained search-status seam; research dispatch is available keylessly. */
 	searchAvailable?: () => boolean;
+	/** The server's scanned-section reader for read_scanned_section (the composition root injects it). */
+	readScannedSection?: ScanSectionReader;
+	/** The server's scanned-page passage locator for propose_annotation on scans (the composition root injects it). */
+	locateScanPassage?: ScanPassageLocator;
 }
 
 /**
@@ -461,6 +474,7 @@ export function createTeacherTools(
 			// The learner-image display twin of read (issue #363): teacher
 			// only, always on — it shows the learner their own file.
 			show_image: createShowImageTool(ctx),
+			...documentTools({ chatId: ctx.chatId, chatStore: ctx.chatStore, readScannedSection: ctx.readScannedSection, locateScanPassage: ctx.locateScanPassage }),
 			...planTools(ctx),
 			...jobTools({ chatId: ctx.chatId, jobStore: ctx.jobStore, spawn: ctx.spawn, searchAvailable: ctx.searchAvailable }),
 		},

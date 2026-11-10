@@ -209,6 +209,14 @@ describe("the slot tier (BYOK, owner 2026-09-22)", () => {
 			models: { vision: { model: { provider: "zai", id: "v" }, thinkingLevel: "low" } },
 		};
 		assert.deepEqual(resolveRoleSpec("pdfReader", visionRecord), { provider: "zai", id: "v", thinkingLevel: "low" });
+		// scanReader rides the vision slot by default and a role override pins Antigravity just for scans
+		assert.deepEqual(resolveRoleSpec("scanReader", visionRecord), { provider: "zai", id: "v", thinkingLevel: "low" });
+		const antigravity: UserSettings = {
+			...visionRecord,
+			agent: { models: { scanReader: { model: { provider: "google-antigravity", id: "gemini-3-pro-high" } } } },
+		};
+		assert.deepEqual(resolveRoleSpec("scanReader", antigravity), { provider: "google-antigravity", id: "gemini-3-pro-high", thinkingLevel: "low" });
+		assert.deepEqual(resolveRoleSpec("visualMaker", antigravity), { provider: "zai", id: "v", thinkingLevel: "low" }, "other vision roles are untouched");
 		assert.equal(resolveRoleSpec("teacher", null), undefined);
 	});
 });

@@ -33,13 +33,47 @@ Sessions are saved locally, including earlier messages when context is compacted
 
 Audio streams from your browser directly to Deepgram using a short-lived token. A `403 Insufficient permissions` error while obtaining that token can mean the key's role is insufficient.
 
+## Read documents beside a session
+
+Open the document viewer with the book button in the session's top bar (or **Mod+Shift+E**) and add a PDF, Word (`.docx`) or Markdown file with **Open document**, by dropping it on the panel, or with **Open in viewer** on a file path in the transcript.
+Each document is a tab.
+On the desktop the file stays where it is; in a plain browser it is uploaded and kept under your data folder (up to 100 MB).
+Drag the divider to resize the panel.
+
+Select a passage to **Explain** it, be **Quiz**zed on it, **Quote** it into your next message, or **Add to graph**.
+The agent can read your documents, point to a passage (you get a **Go** prompt; your view never moves by itself), assign a reading that waits for **Done reading**, and propose highlights with notes.
+A proposal changes your file only when you accept it: PDFs get a highlight annotation, Word files a comment, Markdown a `<mark>` plus a footnote.
+Accepting rewrites the file, so close a Word file before accepting.
+
+Scanned PDFs have no text to select.
+Use the crop button in the viewer's header (or hold **Alt** and drag) to draw a rectangle on a page, then choose **Explain this section**, **Quiz me on this section** or **Quote**.
+A vision model reads the rectangle into text and you can check and fix that text before it is sent; **Edit and resend** on the card in the chat sends a corrected version later.
+Reading scans needs a model that accepts images: in Settings → Agent, open the per-role overrides under the vision tier and pick one for **Scan reader** (for example a Gemini 3 model through your Google Antigravity login); without one it uses the vision tier's model.
+
+The agent can read scanned pages on its own too: ask about a chapter or topic in a scanned file and it names the section to the same vision model, which finds the pages (using the contents) and returns their text or a summary. Only the pages it needs are read, once: they are remembered for later questions. Section text is machine-read, so the agent treats it as possibly imperfect.
+
+The agent can also propose a highlight with a note on a scanned page. A vision model places the box on the page image; you see it as a dashed box and accept or reject it like any other proposal, and accepting writes a normal highlight into your PDF. The placement is the model's best reading of the page, so check the box before accepting; a box that is off is simply rejected.
+
 ## Use local files in a session
 
-In the desktop app, use the paperclip's **Files** or **Folder** choice, or drag files/folders into the content area, to insert their local paths. Files supports any file type and multiple selections; Folder attaches one directory path, including an empty folder, without expanding or reading its contents. Newly picked or dropped known folders get a trailing directory separator so their Folder icon survives saved messages and reloads; files stay unchanged. Older unmarked paths are not retrospectively classified. The agent can then locate/read supported content on the machine running LearnHarness under the existing file-access guards; attaching a path does not grant permissions. This is **not an upload**: originals stay where they are. Ordinary browsers cannot expose these local paths through the picker or drag-and-drop; you can paste a full path instead.
+In the desktop app, use the paperclip's **Files** or **Folder** choice, or drag files/folders into the content area, to insert their local paths.
+Files supports any file type and multiple selections; Folder attaches one directory path, including an empty folder, without expanding or reading its contents.
+Newly picked or dropped known folders get a trailing directory separator so their Folder icon survives saved messages and reloads; files stay unchanged.
+Older unmarked paths are not retrospectively classified.
+The agent can then locate/read supported content on the machine running LearnHarness under the existing file-access guards; attaching a path does not grant permissions.
+This is **not an upload**: originals stay where they are.
+Ordinary browsers cannot expose these local paths through the picker or drag-and-drop; you can paste a full path instead.
+
+In a browser, the paperclip inside a session uploads instead: it opens a picker for PDF, Word (`.docx`), and Markdown files, up to 100 MB each, and each pick opens in the document viewer, where the agent reads it by document id.
+The server keeps one copy per content hash under the data folder's `documents` directory.
+The new-session screen has no session to upload into yet, so there the paperclip only explains; start the session first.
 
 The teacher can show a local raster image or request an annotated visual based on it. Displayed/annotated pictures are saved as session-owned snapshots, so those saved results no longer depend on the original file. This does not snapshot every file attachment. Offline regression tests cover snapshot/payload behavior, not the quality of model-generated annotations.
 
-File tools are read-only but have broad filesystem access under the server's user; they are not confined to a selected folder. The sensitive-path guard blocks known credential/private locations, not all sensitive content. Review what you make available: file content read by an agent may be sent to its configured model provider. See [file-access boundaries](architecture.md#file-access-and-external-services).
+File tools are read-only but have broad filesystem access under the server's user; they are not confined to a selected folder.
+The sensitive-path guard blocks known credential/private locations, not all sensitive content.
+Review what you make available: file content read by an agent may be sent to its configured model provider.
+See [file-access boundaries](architecture.md#file-access-and-external-services).
 
 ## Extract into the graph
 

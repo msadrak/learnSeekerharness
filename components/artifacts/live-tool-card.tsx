@@ -38,6 +38,7 @@ export function LiveToolCard({ part }: ArtifactPartProps) {
 	// read/ls, pattern for find/grep, session for list_propositions.
 	let arg = "";
 	if (typeof inp.path === "string" && inp.path) arg = inp.path;
+	else if (typeof inp.document === "string" && inp.document) arg = inp.document;
 	else if (typeof inp.pattern === "string" && inp.pattern) arg = inp.pattern;
 	else if (typeof inp.session === "string" && inp.session) arg = inp.session;
 
@@ -45,9 +46,12 @@ export function LiveToolCard({ part }: ArtifactPartProps) {
 	// The activity label, translated here keyed by tool name (the same
 	// table as src/core toolActivityLabel, which stays English).
 	const activities: Record<string, string> = t.cards.tools.activity;
-	const activity = (QUESTION_TOOLS as readonly string[]).includes(tool)
-		? t.cards.tools.writingQuestion
-		: (activities[tool] ?? t.common.states.working);
+	const activity =
+		tool === "assign_reading"
+			? t.cards.tools.activity.assign_reading
+			: (QUESTION_TOOLS as readonly string[]).includes(tool)
+				? t.cards.tools.writingQuestion
+				: (activities[tool] ?? t.common.states.working);
 
 	return (
 		<details
