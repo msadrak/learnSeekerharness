@@ -12,7 +12,10 @@ const nextConfig: NextConfig = {
 	// 100 MiB document upload allowance. This is a proxy buffer, not a
 	// rejection gate: both routes bound their own reads (src/server/multipart.ts),
 	// validate actual file bytes and handle incomplete multipart bodies.
-	experimental: { proxyClientMaxBodySize: Math.max(MAX_IMPORT_BODY_BYTES, MAX_DOCUMENT_UPLOAD_BODY_BYTES) },
+	experimental: {
+		proxyClientMaxBodySize: Math.max(MAX_IMPORT_BODY_BYTES, MAX_DOCUMENT_UPLOAD_BODY_BYTES),
+		agentUpgrade: "security",
+	},
 	// Desktop target (Electron wrapper, 2026-09-17): standalone output = a
 	// self-contained .next/standalone/server.js the Electron shell spawns
 	// on 127.0.0.1. Harmless for plain web deploys (extra build output).
